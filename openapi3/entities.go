@@ -976,79 +976,13 @@ func (i PathItem) MarshalJSON() ([]byte, error) {
 
 // ParameterReference structure is generated from "#/definitions/ParameterReference".
 type ParameterReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *ParameterReference) WithMapOfStringValues(val map[string]string) *ParameterReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *ParameterReference) WithRef(val string) *ParameterReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *ParameterReference) WithAdditionalProperties(val map[string]interface{}) *ParameterReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *ParameterReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i ParameterReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // Parameter structure is generated from "#/definitions/Parameter".
@@ -1628,79 +1562,13 @@ func (i Schema) MarshalJSON() ([]byte, error) {
 
 // SchemaReference structure is generated from "#/definitions/SchemaReference".
 type SchemaReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *SchemaReference) WithMapOfStringValues(val map[string]string) *SchemaReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *SchemaReference) WithRef(val string) *SchemaReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *SchemaReference) WithAdditionalProperties(val map[string]interface{}) *SchemaReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *SchemaReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i SchemaReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // SchemaOrRef structure is generated from "#/definitions/SchemaOrRef".
@@ -2089,79 +1957,13 @@ func (i MediaType) MarshalJSON() ([]byte, error) {
 
 // ExampleReference structure is generated from "#/definitions/ExampleReference".
 type ExampleReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *ExampleReference) WithMapOfStringValues(val map[string]string) *ExampleReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *ExampleReference) WithRef(val string) *ExampleReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *ExampleReference) WithAdditionalProperties(val map[string]interface{}) *ExampleReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *ExampleReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i ExampleReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // Example structure is generated from "#/definitions/Example".
@@ -3115,79 +2917,13 @@ func (i Operation) MarshalJSON() ([]byte, error) {
 
 // RequestBodyReference structure is generated from "#/definitions/RequestBodyReference".
 type RequestBodyReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *RequestBodyReference) WithMapOfStringValues(val map[string]string) *RequestBodyReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *RequestBodyReference) WithRef(val string) *RequestBodyReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *RequestBodyReference) WithAdditionalProperties(val map[string]interface{}) *RequestBodyReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *RequestBodyReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i RequestBodyReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // RequestBody structure is generated from "#/definitions/RequestBody".
@@ -3434,79 +3170,13 @@ func (i Responses) MarshalJSON() ([]byte, error) {
 
 // ResponseReference structure is generated from "#/definitions/ResponseReference".
 type ResponseReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *ResponseReference) WithMapOfStringValues(val map[string]string) *ResponseReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *ResponseReference) WithRef(val string) *ResponseReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *ResponseReference) WithAdditionalProperties(val map[string]interface{}) *ResponseReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *ResponseReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i ResponseReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // Response structure is generated from "#/definitions/Response".
@@ -3616,79 +3286,13 @@ func (i Response) MarshalJSON() ([]byte, error) {
 
 // HeaderReference structure is generated from "#/definitions/HeaderReference".
 type HeaderReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *HeaderReference) WithMapOfStringValues(val map[string]string) *HeaderReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *HeaderReference) WithRef(val string) *HeaderReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *HeaderReference) WithAdditionalProperties(val map[string]interface{}) *HeaderReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *HeaderReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i HeaderReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // HeaderOrRef structure is generated from "#/definitions/HeaderOrRef".
@@ -3733,79 +3337,13 @@ func (i HeaderOrRef) MarshalJSON() ([]byte, error) {
 
 // LinkReference structure is generated from "#/definitions/LinkReference".
 type LinkReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *LinkReference) WithMapOfStringValues(val map[string]string) *LinkReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *LinkReference) WithRef(val string) *LinkReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *LinkReference) WithAdditionalProperties(val map[string]interface{}) *LinkReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *LinkReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i LinkReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // Link structure is generated from "#/definitions/Link".
@@ -4018,79 +3556,13 @@ func (i ResponseOrRef) MarshalJSON() ([]byte, error) {
 
 // CallbackReference structure is generated from "#/definitions/CallbackReference".
 type CallbackReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *CallbackReference) WithMapOfStringValues(val map[string]string) *CallbackReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *CallbackReference) WithRef(val string) *CallbackReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *CallbackReference) WithAdditionalProperties(val map[string]interface{}) *CallbackReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *CallbackReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i CallbackReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // Callback structure is generated from "#/definitions/Callback".
@@ -4898,79 +4370,13 @@ func (i ComponentsHeaders) MarshalJSON() ([]byte, error) {
 
 // SecuritySchemeReference structure is generated from "#/definitions/SecuritySchemeReference".
 type SecuritySchemeReference struct {
-	MapOfStringValues    map[string]string      `json:"-"` // Key must match pattern: ^\$ref$
-	AdditionalProperties map[string]interface{} `json:"-"` // All unmatched properties
+	Ref *string `json:"$ref,omitempty"`
 }
 
-// WithMapOfStringValues sets MapOfStringValues value.
-func (v *SecuritySchemeReference) WithMapOfStringValues(val map[string]string) *SecuritySchemeReference {
-	v.MapOfStringValues = val
+// WithRef sets Ref value.
+func (v *SecuritySchemeReference) WithRef(val string) *SecuritySchemeReference {
+	v.Ref = &val
 	return v
-}
-
-// WithAdditionalProperties sets AdditionalProperties value.
-func (v *SecuritySchemeReference) WithAdditionalProperties(val map[string]interface{}) *SecuritySchemeReference {
-	v.AdditionalProperties = val
-	return v
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *SecuritySchemeReference) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var m map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &m)
-	if err != nil {
-		m = nil
-	}
-
-	for key, rawValue := range m {
-		matched := false
-
-		if regexRef.MatchString(key) {
-			matched = true
-
-			if i.MapOfStringValues == nil {
-				i.MapOfStringValues = make(map[string]string, 1)
-			}
-
-			var val string
-
-			err = json.Unmarshal(rawValue, &val)
-			if err != nil {
-				return err
-			}
-
-			i.MapOfStringValues[key] = val
-		}
-
-		if matched {
-			delete(m, key)
-		}
-	}
-
-	for key, rawValue := range m {
-		if i.AdditionalProperties == nil {
-			i.AdditionalProperties = make(map[string]interface{}, 1)
-		}
-
-		var val interface{}
-
-		err = json.Unmarshal(rawValue, &val)
-		if err != nil {
-			return err
-		}
-
-		i.AdditionalProperties[key] = val
-	}
-
-	return nil
-}
-
-// MarshalJSON encodes JSON.
-func (i SecuritySchemeReference) MarshalJSON() ([]byte, error) {
-	return marshalUnion(i.MapOfStringValues, i.AdditionalProperties)
 }
 
 // APIKeySecurityScheme structure is generated from "#/definitions/APIKeySecurityScheme".
@@ -6704,7 +6110,6 @@ func marshalUnion(maps ...interface{}) ([]byte, error) {
 var (
 	regexX                                     = regexp.MustCompile("^x-")
 	regexGetPutPostDeleteOptionsHeadPatchTrace = regexp.MustCompile("^(get|put|post|delete|options|head|patch|trace)$")
-	regexRef                                   = regexp.MustCompile(`^\$ref$`)
 	regex15D2XX                                = regexp.MustCompile(`^[1-5](?:\d{2}|XX)$`)
 	regex                                      = regexp.MustCompile(`^\/`)
 	regexAZAZ09                                = regexp.MustCompile(`^[a-zA-Z0-9\.\-_]+$`)
