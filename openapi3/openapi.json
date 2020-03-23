@@ -1,0 +1,399 @@
+{
+ "openapi": "3.0.2",
+ "info": {
+  "title": "SampleAPI",
+  "version": "1.2.3"
+ },
+ "paths": {
+  "/somewhere/{in_path}": {
+   "summary": "Path Summary",
+   "description": "Path Description",
+   "get": {
+    "parameters": [
+     {
+      "name": "in_query1",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_query2",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_query3",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_path",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "in_cookie",
+      "in": "cookie",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "in_header",
+      "in": "header",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "",
+      "headers": {
+       "X-Header-Field": {
+        "style": "simple",
+        "description": "Sample header response.",
+        "schema": {
+         "type": "string",
+         "description": "Sample header response."
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Openapi3TestResp"
+        }
+       }
+      }
+     }
+    }
+   },
+   "post": {
+    "parameters": [
+     {
+      "name": "in_query1",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_query2",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_query3",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_path",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "in_cookie",
+      "in": "cookie",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "in_header",
+      "in": "header",
+      "schema": {
+       "type": "number"
+      }
+     },
+     {
+      "name": "uuid",
+      "in": "header",
+      "schema": {
+       "$ref": "#/components/schemas/Openapi3TestUUID"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Openapi3TestReq"
+       }
+      },
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/FormDataOpenapi3TestReq"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "",
+      "headers": {
+       "X-Header-Field": {
+        "style": "simple",
+        "description": "Sample header response.",
+        "schema": {
+         "type": "string",
+         "description": "Sample header response."
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Openapi3TestWeirdResp"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Openapi3TestWeirdResp"
+         },
+         "nullable": true
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "FormDataMultipartFile": {
+    "type": "string",
+    "format": "binary",
+    "nullable": true
+   },
+   "FormDataMultipartFileHeader": {
+    "type": "string",
+    "format": "binary",
+    "nullable": true
+   },
+   "FormDataOpenapi3TestReq": {
+    "type": "object",
+    "properties": {
+     "in_form1": {
+      "type": "string"
+     },
+     "in_form2": {
+      "type": "string"
+     },
+     "upload1": {
+      "$ref": "#/components/schemas/FormDataMultipartFile"
+     },
+     "upload2": {
+      "$ref": "#/components/schemas/FormDataMultipartFileHeader"
+     }
+    },
+    "nullable": true
+   },
+   "Openapi3TestISOWeek": {
+    "pattern": "^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$",
+    "type": "string",
+    "description": "ISO Week",
+    "example": "2006-W43"
+   },
+   "Openapi3TestReq": {
+    "type": "object",
+    "properties": {
+     "in_body1": {
+      "type": "integer"
+     },
+     "in_body2": {
+      "type": "string"
+     }
+    },
+    "nullable": true
+   },
+   "Openapi3TestResp": {
+    "title": "Sample Response",
+    "type": "object",
+    "properties": {
+     "arrayOfAnything": {
+      "type": "array",
+      "items": {}
+     },
+     "customType": {
+      "$ref": "#/components/schemas/Openapi3TestISOWeek"
+     },
+     "field1": {
+      "type": "integer"
+     },
+     "field2": {
+      "type": "string"
+     },
+     "info": {
+      "required": [
+       "foo"
+      ],
+      "type": "object",
+      "properties": {
+       "bar": {
+        "type": "number",
+        "description": "This is Bar."
+       },
+       "foo": {
+        "pattern": "\\d+",
+        "type": "string"
+       }
+      }
+     },
+     "map": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer"
+      }
+     },
+     "mapOfAnything": {
+      "type": "object",
+      "additionalProperties": {}
+     },
+     "nullableWhatever": {
+      "nullable": true
+     },
+     "parent": {
+      "$ref": "#/components/schemas/Openapi3TestResp"
+     },
+     "recursiveArray": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Openapi3TestWeirdResp"
+      }
+     },
+     "recursiveStructArray": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Openapi3TestResp"
+      }
+     },
+     "uuid": {
+      "$ref": "#/components/schemas/Openapi3TestUUID"
+     },
+     "whatever": {}
+    },
+    "description": "This is a sample response.",
+    "nullable": true,
+    "x-foo": "bar"
+   },
+   "Openapi3TestUUID": {
+    "type": "string",
+    "format": "uuid",
+    "example": "248df4b7-aa70-47b8-a036-33ac447e668d"
+   },
+   "Openapi3TestWeirdResp": {
+    "title": "Sample Response",
+    "type": "object",
+    "properties": {
+     "arrayOfAnything": {
+      "type": "array",
+      "items": {}
+     },
+     "customType": {
+      "$ref": "#/components/schemas/Openapi3TestISOWeek"
+     },
+     "field1": {
+      "type": "integer"
+     },
+     "field2": {
+      "type": "string"
+     },
+     "info": {
+      "required": [
+       "foo"
+      ],
+      "type": "object",
+      "properties": {
+       "bar": {
+        "type": "number",
+        "description": "This is Bar."
+       },
+       "foo": {
+        "pattern": "\\d+",
+        "type": "string"
+       }
+      }
+     },
+     "map": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer"
+      }
+     },
+     "mapOfAnything": {
+      "type": "object",
+      "additionalProperties": {}
+     },
+     "nullableWhatever": {
+      "nullable": true
+     },
+     "parent": {
+      "$ref": "#/components/schemas/Openapi3TestResp"
+     },
+     "recursiveArray": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Openapi3TestWeirdResp"
+      }
+     },
+     "recursiveStructArray": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Openapi3TestResp"
+      }
+     },
+     "uuid": {
+      "$ref": "#/components/schemas/Openapi3TestUUID"
+     },
+     "whatever": {}
+    },
+    "description": "This is a sample response.",
+    "nullable": true,
+    "x-foo": "bar"
+   }
+  }
+ }
+}
