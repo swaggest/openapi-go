@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"reflect"
@@ -8,16 +9,33 @@ import (
 	"strings"
 
 	"github.com/swaggest/jsonschema-go"
-	"github.com/swaggest/jsonschema-go/refl"
+	"github.com/swaggest/refl"
 )
 
-type Generator struct {
-	jsonschema.Generator
+type Reflector struct {
+	jsonschema.Reflector
 	Spec *Spec
 }
 
-func (g *Generator) SetRequest(o *Operation, input interface{}, httpMethod string) error {
-	return refl.JoinErrors(
+// joinErrors joins non-nil errors.
+func joinErrors(errs ...error) error {
+	join := ""
+
+	for _, err := range errs {
+		if err != nil {
+			join += ", " + err.Error()
+		}
+	}
+
+	if join != "" {
+		return errors.New(join[2:])
+	}
+
+	return nil
+}
+
+func (g *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
+	return joinErrors(
 		g.parseParametersIn(o, input, ParameterInQuery),
 		g.parseParametersIn(o, input, ParameterInPath),
 		g.parseParametersIn(o, input, ParameterInCookie),
@@ -38,7 +56,7 @@ const (
 	mimeMultipart      = "multipart/form-data"
 )
 
-func (g *Generator) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
+func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
 	httpMethod = strings.ToUpper(httpMethod)
 
 	if httpMethod == http.MethodGet || httpMethod == http.MethodHead || !refl.HasTaggedFields(input, tag) {
@@ -50,10 +68,10 @@ func (g *Generator) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	if tag != "json" {
 		definitionPefix += strings.Title(tag)
 	}
-	schema, err := g.Parse(input,
+	schema, err := g.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPefix),
 		jsonschema.PropertyNameTag(tag),
-		jsonschema.HijackType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
+		jsonschema.InterceptType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
 			vv := v.Interface()
 
 			found := false
@@ -124,122 +142,106 @@ func (g *Generator) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	return nil
 }
 
-func (g *Generator) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
-	var jpc *jsonschema.ParseContext
-
-	schema, err := g.Parse(input,
+func (g *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
+	_, err := g.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag(string(in)),
-		func(pc *jsonschema.ParseContext) { jpc = pc },
+		func(pc *jsonschema.ReflectContext) {
+			pc.InterceptProperty = func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+				s := SchemaOrRef{}
+				s.FromJSONSchema(propertySchema.ToSchemaOrBool())
+
+				p := Parameter{
+					Name:        name,
+					In:          in,
+					Description: propertySchema.Description,
+					Schema:      &s,
+					Content:     nil,
+					Example:     nil,
+					Examples:    nil,
+					Location:    nil,
+				}
+
+				swg2CollectionFormat := ""
+				refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
+				switch swg2CollectionFormat {
+				case "csv":
+					p.WithStyle("form").WithExplode(false)
+				case "ssv":
+					p.WithStyle("spaceDelimited").WithExplode(false)
+				case "pipes":
+					p.WithStyle("pipeDelimited").WithExplode(false)
+				case "multi":
+					p.WithStyle("form").WithExplode(true)
+				}
+
+				err := refl.PopulateFieldsFromTags(&p, field.Tag)
+				if err != nil {
+					return err
+				}
+
+				if in == ParameterInPath {
+					p.WithRequired(true)
+				}
+
+				o.Parameters = append(o.Parameters, ParameterOrRef{Parameter: &p})
+
+				return nil
+			}
+		},
 	)
 	if err != nil {
 		return err
 	}
 
-	required := map[string]bool{}
-	for _, name := range schema.Required {
-		required[name] = true
-	}
-
-	for _, name := range jpc.WalkedProperties {
-		prop, ok := schema.Properties[name]
-		if !ok {
-			continue
-		}
-
-		s := SchemaOrRef{}
-		s.FromJSONSchema(prop)
-
-		p := ParameterOrRef{
-			Parameter: &Parameter{
-				Name:            name,
-				In:              in,
-				Description:     prop.TypeObject.Description,
-				Required:        nil,
-				AllowEmptyValue: nil,
-				Style:           nil,
-				Explode:         nil,
-				AllowReserved:   nil,
-				Schema:          &s,
-				Content:         nil,
-				Example:         nil,
-				Examples:        nil,
-				Location:        nil,
-				MapOfAnything:   nil,
-			},
-		}
-
-		if s.Schema != nil {
-			p.Parameter.Deprecated = s.Schema.Deprecated
-		}
-
-		if in == ParameterInPath || required[name] {
-			p.Parameter.WithRequired(true)
-		}
-
-		o.Parameters = append(o.Parameters, p)
-	}
-
 	return nil
 }
 
-func (g *Generator) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
-	var jpc *jsonschema.ParseContext
+func (g *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
+	res := make(map[string]HeaderOrRef)
 
-	schema, err := g.Parse(output,
+	_, err := g.Reflect(output,
 		jsonschema.DefinitionsPrefix("#/components/headers/"),
 		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag("header"),
-		func(pc *jsonschema.ParseContext) { jpc = pc },
+		func(pc *jsonschema.ReflectContext) {
+			pc.InterceptProperty = func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+				s := SchemaOrRef{}
+				s.FromJSONSchema(propertySchema.ToSchemaOrBool())
+
+				header := Header{
+					Description:   propertySchema.Description,
+					Deprecated:    s.Schema.Deprecated,
+					Schema:        &s,
+					Content:       nil,
+					Example:       nil,
+					Examples:      nil,
+					MapOfAnything: nil,
+				}
+
+				err := refl.PopulateFieldsFromTags(&header, field.Tag)
+				if err != nil {
+					return err
+				}
+
+				res[name] = HeaderOrRef{
+					Header: &header,
+				}
+
+				return nil
+			}
+		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	required := map[string]bool{}
-	for _, name := range schema.Required {
-		required[name] = true
-	}
-
-	res := make(map[string]HeaderOrRef, len(schema.Properties))
-
-	for _, name := range jpc.WalkedProperties {
-		prop, ok := schema.Properties[name]
-		if !ok {
-			continue
-		}
-
-		s := SchemaOrRef{}
-		s.FromJSONSchema(prop)
-
-		header := Header{
-			Description:     prop.TypeObject.Description,
-			Deprecated:      s.Schema.Deprecated,
-			AllowEmptyValue: nil,
-			Explode:         nil,
-			AllowReserved:   nil,
-			Schema:          &s,
-			Content:         nil,
-			Example:         nil,
-			Examples:        nil,
-			MapOfAnything:   nil,
-		}
-
-		if required[name] {
-			header.WithRequired(true)
-		}
-
-		res[name] = HeaderOrRef{
-			Header: &header,
-		}
-	}
-
 	return res, nil
 }
 
-func (g *Generator) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
-	schema, err := g.Parse(output, jsonschema.DefinitionsPrefix("#/components/schemas/"))
+func (g *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
+	schema, err := g.Reflect(output, jsonschema.DefinitionsPrefix("#/components/schemas/"))
 	if err != nil {
 		return err
 	}

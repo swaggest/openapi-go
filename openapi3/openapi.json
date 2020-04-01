@@ -51,6 +51,7 @@
      {
       "name": "in_cookie",
       "in": "cookie",
+      "deprecated": true,
       "schema": {
        "type": "string"
       }
@@ -119,6 +120,53 @@
       }
      },
      {
+      "name": "array_csv",
+      "in": "query",
+      "explode": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     {
+      "name": "array_swg2_csv",
+      "in": "query",
+      "style": "form",
+      "explode": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     {
+      "name": "array_swg2_ssv",
+      "in": "query",
+      "style": "spaceDelimited",
+      "explode": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     {
+      "name": "array_swg2_pipes",
+      "in": "query",
+      "style": "pipeDelimited",
+      "explode": false,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     {
       "name": "in_path",
       "in": "path",
       "required": true,
@@ -129,6 +177,7 @@
      {
       "name": "in_cookie",
       "in": "cookie",
+      "deprecated": true,
       "schema": {
        "type": "string"
       }
@@ -185,6 +234,16 @@
      },
      "409": {
       "description": "",
+      "headers": {
+       "X-Header-Field": {
+        "style": "simple",
+        "description": "Sample header response.",
+        "schema": {
+         "type": "string",
+         "description": "Sample header response."
+        }
+       }
+      },
       "content": {
        "application/json": {
         "schema": {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/swaggest/jsonschema-go"
-	"github.com/swaggest/jsonschema-go/openapi3"
+	"github.com/swaggest/openapi-go/openapi3"
 	"github.com/swaggest/swgen"
 )
 
@@ -54,7 +54,7 @@ type Resp struct {
 	UUID                 UUID                   `json:"uuid"`
 }
 
-func (r *Resp) Describe() string {
+func (r *Resp) Description() string {
 	return "This is a sample response."
 }
 
@@ -68,19 +68,23 @@ func (r *Resp) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 type Req struct {
-	InQuery1 int                   `query:"in_query1" required:"true" description:"Query parameter."`
-	InQuery2 int                   `query:"in_query2" required:"true" description:"Query parameter."`
-	InQuery3 int                   `query:"in_query3" required:"true" description:"Query parameter."`
-	InPath   int                   `path:"in_path"`
-	InCookie string                `cookie:"in_cookie" deprecated:"true"`
-	InHeader float64               `header:"in_header"`
-	InBody1  int                   `json:"in_body1"`
-	InBody2  string                `json:"in_body2"`
-	InForm1  string                `formData:"in_form1"`
-	InForm2  string                `formData:"in_form2"`
-	File1    multipart.File        `formData:"upload1"`
-	File2    *multipart.FileHeader `formData:"upload2"`
-	UUID     UUID                  `header:"uuid"`
+	InQuery1       int                   `query:"in_query1" required:"true" description:"Query parameter."`
+	InQuery2       int                   `query:"in_query2" required:"true" description:"Query parameter."`
+	InQuery3       int                   `query:"in_query3" required:"true" description:"Query parameter."`
+	InPath         int                   `path:"in_path"`
+	InCookie       string                `cookie:"in_cookie" deprecated:"true"`
+	InHeader       float64               `header:"in_header"`
+	InBody1        int                   `json:"in_body1"`
+	InBody2        string                `json:"in_body2"`
+	InForm1        string                `formData:"in_form1"`
+	InForm2        string                `formData:"in_form2"`
+	File1          multipart.File        `formData:"upload1"`
+	File2          *multipart.FileHeader `formData:"upload2"`
+	UUID           UUID                  `header:"uuid"`
+	ArrayCSV       []string              `query:"array_csv" explode:"false"`
+	ArraySwg2CSV   []string              `query:"array_swg2_csv" collectionFormat:"csv"`
+	ArraySwg2SSV   []string              `query:"array_swg2_ssv" collectionFormat:"ssv"`
+	ArraySwg2Pipes []string              `query:"array_swg2_pipes" collectionFormat:"pipes"`
 }
 
 type GetReq struct {
@@ -93,8 +97,8 @@ type GetReq struct {
 }
 
 func TestGenerator_SetResponse(t *testing.T) {
-	g := openapi3.Generator{}
-	g.DefaultOptions = append(g.DefaultOptions, jsonschema.HijackType(openapi3.SwgenHijacker))
+	g := openapi3.Reflector{}
+	g.DefaultOptions = append(g.DefaultOptions, jsonschema.InterceptType(openapi3.SwgenHijacker))
 
 	// Add custom type mappings
 	uuidDef := swgen.SwaggerData{}
