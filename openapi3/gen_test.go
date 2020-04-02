@@ -8,9 +8,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/swaggest/assertjson"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go/openapi3"
 	"github.com/swaggest/swgen"
+	"github.com/swaggest/swgen/swjschema"
 )
 
 // ISOWeek is a week identifier.
@@ -98,7 +101,7 @@ type GetReq struct {
 
 func TestGenerator_SetResponse(t *testing.T) {
 	g := openapi3.Reflector{}
-	g.DefaultOptions = append(g.DefaultOptions, jsonschema.InterceptType(openapi3.SwgenHijacker))
+	g.DefaultOptions = append(g.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 
 	// Add custom type mappings
 	uuidDef := swgen.SwaggerData{}
@@ -109,6 +112,7 @@ func TestGenerator_SetResponse(t *testing.T) {
 	g.AddTypeMapping(UUID{}, uuidDef)
 
 	s := openapi3.Spec{}
+	s.Openapi = "3.0.2"
 	s.Info.Title = "SampleAPI"
 	s.Info.Version = "1.2.3"
 
@@ -116,8 +120,6 @@ func TestGenerator_SetResponse(t *testing.T) {
 	g.AddTypeMapping(new(WeirdResp), new(Resp))
 
 	op := openapi3.Operation{}
-
-	//op.WithDeprecated(true)
 
 	err := g.SetRequest(&op, new(Req), http.MethodPost)
 	assert.NoError(t, err)
@@ -153,6 +155,10 @@ func TestGenerator_SetResponse(t *testing.T) {
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)
 
-	ioutil.WriteFile("openapi.json", b, 0640)
-	println(string(b))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0640))
+
+	expected, err := ioutil.ReadFile("_testdata/openapi.json")
+	require.NoError(t, err)
+
+	assertjson.Equal(t, expected, b)
 }

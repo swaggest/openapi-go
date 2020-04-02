@@ -38,9 +38,11 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	os.Required = js.Required
 	os.Default = js.Default
 	os.Enum = js.Enum
+
 	if len(js.Examples) > 0 {
 		os.Example = &js.Examples[0]
 	}
+
 	if deprecated, ok := js.ExtraProperties["deprecated"].(bool); ok {
 		os.Deprecated = &deprecated
 	}
@@ -94,19 +96,23 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	}
 
 	os.Format = js.Format
+
 	if js.MinItems != 0 {
 		os.MinItems = &js.MinItems
 	}
+
 	os.MaxItems = js.MaxItems
 
 	if js.MinLength != 0 {
 		os.MinLength = &js.MinLength
 	}
+
 	os.MaxLength = js.MaxLength
 
 	if js.MinProperties != 0 {
 		os.MinProperties = &js.MinProperties
 	}
+
 	os.MaxProperties = js.MaxProperties
 
 	os.MultipleOf = js.MultipleOf
@@ -115,6 +121,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 
 	if len(js.Properties) > 0 {
 		os.Properties = make(map[string]SchemaOrRef, len(js.Properties))
+
 		for name, jsp := range js.Properties {
 			osp := SchemaOrRef{}
 			osp.FromJSONSchema(jsp)
@@ -124,6 +131,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 
 	os.ReadOnly = js.ReadOnly
 	os.UniqueItems = js.UniqueItems
+
 	if writeOnly, ok := js.ExtraProperties["writeOnly"].(bool); ok {
 		os.WriteOnly = &writeOnly
 	}
@@ -139,11 +147,6 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 			}
 		}
 	}
-
-	// TODO support these:
-	// * os.ExternalDocs
-	// * os.Discriminator
-	// * os.XML
 }
 
 func fromSchemaArray(os *[]SchemaOrRef, js []jsonschema.SchemaOrBool) {
@@ -152,12 +155,14 @@ func fromSchemaArray(os *[]SchemaOrRef, js []jsonschema.SchemaOrBool) {
 	}
 
 	osa := make([]SchemaOrRef, len(js))
+
 	for i, jso := range js {
 		oso := SchemaOrRef{}
 		oso.FromJSONSchema(jso)
 		osa[i] = oso
 	}
-	os = &osa
+
+	*os = osa
 }
 
 func (s *SchemaOrRef) fromBool(val bool) {

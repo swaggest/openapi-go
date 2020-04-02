@@ -15,6 +15,9 @@ import (
 //
 // Validation schema for OpenAPI Specification 3.0.X.
 type Spec struct {
+	// Value must match pattern: `^3\.0\.\d(-.+)?$`.
+	// Required.
+	Openapi       string                 `json:"openapi"`
 	Info          Info                   `json:"info"` // Required.
 	ExternalDocs  *ExternalDocumentation `json:"externalDocs,omitempty"`
 	Servers       []Server               `json:"servers,omitempty"`
@@ -23,6 +26,12 @@ type Spec struct {
 	Paths         Paths                  `json:"paths"` // Required.
 	Components    *Components            `json:"components,omitempty"`
 	MapOfAnything map[string]interface{} `json:"-"` // Key must match pattern: `^x-`.
+}
+
+// WithOpenapi sets Openapi value.
+func (s *Spec) WithOpenapi(val string) *Spec {
+	s.Openapi = val
+	return s
 }
 
 // WithInfo sets Info value.
@@ -87,6 +96,7 @@ func (s *Spec) WithMapOfAnythingItem(key string, val interface{}) *Spec {
 type marshalSpec Spec
 
 var knownKeysSpec = []string{
+	"openapi",
 	"info",
 	"externalDocs",
 	"servers",
@@ -94,7 +104,6 @@ var knownKeysSpec = []string{
 	"tags",
 	"paths",
 	"components",
-	"openapi",
 }
 
 var requireKeysSpec = []string{
@@ -126,12 +135,6 @@ func (s *Spec) UnmarshalJSON(data []byte) error {
 			return errors.New("required key missing: " + key)
 		}
 	}
-
-	if v, ok := rawMap["openapi"]; !ok || string(v) != `"3.0.2"` {
-		return fmt.Errorf(`bad or missing const value for "openapi" ("3.0.2" expected, %s received)`, v)
-	}
-
-	delete(rawMap, "openapi")
 
 	for _, key := range knownKeysSpec {
 		delete(rawMap, key)
@@ -177,14 +180,9 @@ func (s *Spec) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSpec is unconditionally added to JSON.
-	constSpec = json.RawMessage(`{"openapi":"3.0.2"}`)
-)
-
 // MarshalJSON encodes JSON.
 func (s Spec) MarshalJSON() ([]byte, error) {
-	return marshalUnion(constSpec, marshalSpec(s), s.MapOfAnything)
+	return marshalUnion(marshalSpec(s), s.MapOfAnything)
 }
 
 // Info structure is generated from "#/definitions/Info".

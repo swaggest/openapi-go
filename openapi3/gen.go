@@ -34,14 +34,14 @@ func joinErrors(errs ...error) error {
 	return nil
 }
 
-func (g *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
+func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
 	return joinErrors(
-		g.parseParametersIn(o, input, ParameterInQuery),
-		g.parseParametersIn(o, input, ParameterInPath),
-		g.parseParametersIn(o, input, ParameterInCookie),
-		g.parseParametersIn(o, input, ParameterInHeader),
-		g.parseRequestBody(o, input, "json", mimeJSON, httpMethod),
-		g.parseRequestBody(o, input, "formData", mimeFormUrlencoded, httpMethod),
+		r.parseParametersIn(o, input, ParameterInQuery),
+		r.parseParametersIn(o, input, ParameterInPath),
+		r.parseParametersIn(o, input, ParameterInCookie),
+		r.parseParametersIn(o, input, ParameterInHeader),
+		r.parseRequestBody(o, input, "json", mimeJSON, httpMethod),
+		r.parseRequestBody(o, input, "formData", mimeFormUrlencoded, httpMethod),
 	)
 }
 
@@ -56,7 +56,7 @@ const (
 	mimeMultipart      = "multipart/form-data"
 )
 
-func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
+func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
 	httpMethod = strings.ToUpper(httpMethod)
 
 	if httpMethod == http.MethodGet || httpMethod == http.MethodHead || !refl.HasTaggedFields(input, tag) {
@@ -65,11 +65,14 @@ func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 
 	hasFileUpload := false
 	definitionPefix := ""
+
 	if tag != "json" {
 		definitionPefix += strings.Title(tag)
 	}
-	schema, err := g.Reflect(input,
+
+	schema, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPefix),
+		jsonschema.RootRef,
 		jsonschema.PropertyNameTag(tag),
 		jsonschema.InterceptType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
 			vv := v.Interface()
@@ -98,6 +101,7 @@ func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 			return false, nil
 		}),
 	)
+
 	if err != nil {
 		return err
 	}
@@ -109,16 +113,19 @@ func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	}
 
 	for name, def := range schema.Definitions {
-		if g.Spec.Components == nil {
-			g.Spec.Components = &Components{}
+		if r.Spec.Components == nil {
+			r.Spec.Components = &Components{}
 		}
-		if g.Spec.Components.Schemas == nil {
-			g.Spec.Components.Schemas = &ComponentsSchemas{}
+
+		if r.Spec.Components.Schemas == nil {
+			r.Spec.Components.Schemas = &ComponentsSchemas{}
 		}
+
 		s := SchemaOrRef{}
+
 		s.FromJSONSchema(def)
 
-		g.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
+		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
 	}
 
 	if o.RequestBody == nil {
@@ -142,10 +149,9 @@ func (g *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	return nil
 }
 
-func (g *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
-	_, err := g.Reflect(input,
+func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
+	_, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
-		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag(string(in)),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -197,12 +203,11 @@ func (g *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 	return nil
 }
 
-func (g *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
+func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
 	res := make(map[string]HeaderOrRef)
 
-	_, err := g.Reflect(output,
+	_, err := r.Reflect(output,
 		jsonschema.DefinitionsPrefix("#/components/headers/"),
-		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -238,8 +243,8 @@ func (g *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	return res, nil
 }
 
-func (g *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
-	schema, err := g.Reflect(output, jsonschema.DefinitionsPrefix("#/components/schemas/"))
+func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
+	schema, err := r.Reflect(output, jsonschema.RootRef, jsonschema.DefinitionsPrefix("#/components/schemas/"))
 	if err != nil {
 		return err
 	}
@@ -263,22 +268,24 @@ func (g *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		},
 	}
 
-	resp.Headers, err = g.parseResponseHeader(output)
+	resp.Headers, err = r.parseResponseHeader(output)
 	if err != nil {
 		return err
 	}
 
 	for name, def := range schema.Definitions {
-		if g.Spec.Components == nil {
-			g.Spec.Components = &Components{}
+		if r.Spec.Components == nil {
+			r.Spec.Components = &Components{}
 		}
-		if g.Spec.Components.Schemas == nil {
-			g.Spec.Components.Schemas = &ComponentsSchemas{}
+
+		if r.Spec.Components.Schemas == nil {
+			r.Spec.Components.Schemas = &ComponentsSchemas{}
 		}
+
 		s := SchemaOrRef{}
 		s.FromJSONSchema(def)
 
-		g.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(name, s)
+		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(name, s)
 	}
 
 	o.Responses.MapOfResponseOrRefValues[strconv.Itoa(httpStatus)] = ResponseOrRef{
