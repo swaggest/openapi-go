@@ -147,50 +147,49 @@ func (g *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag(string(in)),
-		func(pc *jsonschema.ReflectContext) {
-			pc.InterceptProperty = func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
-				s := SchemaOrRef{}
-				s.FromJSONSchema(propertySchema.ToSchemaOrBool())
+		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+			s := SchemaOrRef{}
+			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
-				p := Parameter{
-					Name:        name,
-					In:          in,
-					Description: propertySchema.Description,
-					Schema:      &s,
-					Content:     nil,
-					Example:     nil,
-					Examples:    nil,
-					Location:    nil,
-				}
-
-				swg2CollectionFormat := ""
-				refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
-				switch swg2CollectionFormat {
-				case "csv":
-					p.WithStyle("form").WithExplode(false)
-				case "ssv":
-					p.WithStyle("spaceDelimited").WithExplode(false)
-				case "pipes":
-					p.WithStyle("pipeDelimited").WithExplode(false)
-				case "multi":
-					p.WithStyle("form").WithExplode(true)
-				}
-
-				err := refl.PopulateFieldsFromTags(&p, field.Tag)
-				if err != nil {
-					return err
-				}
-
-				if in == ParameterInPath {
-					p.WithRequired(true)
-				}
-
-				o.Parameters = append(o.Parameters, ParameterOrRef{Parameter: &p})
-
-				return nil
+			p := Parameter{
+				Name:        name,
+				In:          in,
+				Description: propertySchema.Description,
+				Schema:      &s,
+				Content:     nil,
+				Example:     nil,
+				Examples:    nil,
+				Location:    nil,
 			}
-		},
+
+			swg2CollectionFormat := ""
+			refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
+			switch swg2CollectionFormat {
+			case "csv":
+				p.WithStyle("form").WithExplode(false)
+			case "ssv":
+				p.WithStyle("spaceDelimited").WithExplode(false)
+			case "pipes":
+				p.WithStyle("pipeDelimited").WithExplode(false)
+			case "multi":
+				p.WithStyle("form").WithExplode(true)
+			}
+
+			err := refl.PopulateFieldsFromTags(&p, field.Tag)
+			if err != nil {
+				return err
+			}
+
+			if in == ParameterInPath {
+				p.WithRequired(true)
+			}
+
+			o.Parameters = append(o.Parameters, ParameterOrRef{Parameter: &p})
+
+			return nil
+		}),
 	)
+
 	if err != nil {
 		return err
 	}
@@ -205,34 +204,33 @@ func (g *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 		jsonschema.DefinitionsPrefix("#/components/headers/"),
 		jsonschema.InlineRoot,
 		jsonschema.PropertyNameTag("header"),
-		func(pc *jsonschema.ReflectContext) {
-			pc.InterceptProperty = func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
-				s := SchemaOrRef{}
-				s.FromJSONSchema(propertySchema.ToSchemaOrBool())
+		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+			s := SchemaOrRef{}
+			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
-				header := Header{
-					Description:   propertySchema.Description,
-					Deprecated:    s.Schema.Deprecated,
-					Schema:        &s,
-					Content:       nil,
-					Example:       nil,
-					Examples:      nil,
-					MapOfAnything: nil,
-				}
-
-				err := refl.PopulateFieldsFromTags(&header, field.Tag)
-				if err != nil {
-					return err
-				}
-
-				res[name] = HeaderOrRef{
-					Header: &header,
-				}
-
-				return nil
+			header := Header{
+				Description:   propertySchema.Description,
+				Deprecated:    s.Schema.Deprecated,
+				Schema:        &s,
+				Content:       nil,
+				Example:       nil,
+				Examples:      nil,
+				MapOfAnything: nil,
 			}
-		},
+
+			err := refl.PopulateFieldsFromTags(&header, field.Tag)
+			if err != nil {
+				return err
+			}
+
+			res[name] = HeaderOrRef{
+				Header: &header,
+			}
+
+			return nil
+		}),
 	)
+
 	if err != nil {
 		return nil, err
 	}
