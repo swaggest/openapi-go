@@ -100,8 +100,8 @@ type GetReq struct {
 }
 
 func TestGenerator_SetResponse(t *testing.T) {
-	g := openapi3.Reflector{}
-	g.DefaultOptions = append(g.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
+	reflector := openapi3.Reflector{}
+	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 
 	// Add custom type mappings
 	uuidDef := swgen.SwaggerData{}
@@ -109,25 +109,25 @@ func TestGenerator_SetResponse(t *testing.T) {
 	uuidDef.Format = "uuid"
 	uuidDef.Example = "248df4b7-aa70-47b8-a036-33ac447e668d"
 
-	g.AddTypeMapping(UUID{}, uuidDef)
+	reflector.AddTypeMapping(UUID{}, uuidDef)
 
 	s := openapi3.Spec{}
 	s.Openapi = "3.0.2"
 	s.Info.Title = "SampleAPI"
 	s.Info.Version = "1.2.3"
 
-	g.Spec = &s
-	g.AddTypeMapping(new(WeirdResp), new(Resp))
+	reflector.Spec = &s
+	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
 
 	op := openapi3.Operation{}
 
-	err := g.SetRequest(&op, new(Req), http.MethodPost)
+	err := reflector.SetRequest(&op, new(Req), http.MethodPost)
 	assert.NoError(t, err)
 
-	err = g.SetJSONResponse(&op, new(WeirdResp), http.StatusOK)
+	err = reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK)
 	assert.NoError(t, err)
 
-	err = g.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
+	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
 	assert.NoError(t, err)
 
 	pathItem := s.Paths.MapOfPathItemValues["/somewhere/{in_path}"]
@@ -139,10 +139,10 @@ func TestGenerator_SetResponse(t *testing.T) {
 
 	op = openapi3.Operation{}
 
-	err = g.SetRequest(&op, new(GetReq), http.MethodGet)
+	err = reflector.SetRequest(&op, new(GetReq), http.MethodGet)
 	assert.NoError(t, err)
 
-	err = g.SetJSONResponse(&op, new(Resp), http.StatusOK)
+	err = reflector.SetJSONResponse(&op, new(Resp), http.StatusOK)
 	assert.NoError(t, err)
 
 	pathItem.WithOperation(http.MethodGet, op)
