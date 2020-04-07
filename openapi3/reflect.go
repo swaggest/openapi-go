@@ -12,6 +12,7 @@ import (
 	"github.com/swaggest/refl"
 )
 
+// Reflector builds OpenAPI Schema with reflected structures.
 type Reflector struct {
 	jsonschema.Reflector
 	Spec *Spec
@@ -34,6 +35,16 @@ func joinErrors(errs ...error) error {
 	return nil
 }
 
+// SpecEns ensures returned Spec is not nil.
+func (r *Reflector) SpecEns() *Spec {
+	if r.Spec == nil {
+		r.Spec = &Spec{Openapi: "3.0.2"}
+	}
+
+	return r.Spec
+}
+
+// SetRequest sets up operation parameters.
 func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
 	return joinErrors(
 		r.parseParametersIn(o, input, ParameterInQuery),
@@ -243,6 +254,7 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	return res, nil
 }
 
+// SetJSONResponse sets up operation JSON response.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
 	schema, err := r.Reflect(output, jsonschema.RootRef, jsonschema.DefinitionsPrefix("#/components/schemas/"))
 	if err != nil {
