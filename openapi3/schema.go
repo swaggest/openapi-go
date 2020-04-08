@@ -6,6 +6,152 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+// ToJSONSchema converts OpenAPI Schema to JSON Schema.
+//
+// Local references are resolved against `#/components/schemas` in spec.
+func (s *SchemaOrRef) ToJSONSchema(spec *Spec) jsonschema.SchemaOrBool {
+	refsProcessed := map[string]jsonschema.SchemaOrBool{}
+	js := s.toJSONSchema(spec, refsProcessed)
+
+	if len(refsProcessed) > 0 {
+		js.TypeObjectEns().WithExtraPropertiesItem("components", map[string]interface{}{"schemas": refsProcessed})
+	}
+
+	return js
+}
+
+func (s *SchemaOrRef) toJSONSchema(spec *Spec, refsProcessed map[string]jsonschema.SchemaOrBool) jsonschema.SchemaOrBool {
+	js := jsonschema.SchemaOrBool{}
+	jso := js.TypeObjectEns()
+
+	if s.SchemaReference != nil {
+		jso.WithRef(s.SchemaReference.Ref)
+
+		if strings.HasPrefix(s.SchemaReference.Ref, "#/components/schemas/") {
+			dstName := strings.TrimPrefix(s.SchemaReference.Ref, "#/components/schemas/")
+
+			if _, alreadyProcessed := refsProcessed[dstName]; !alreadyProcessed {
+				refsProcessed[dstName] = jsonschema.SchemaOrBool{}
+
+				dst := spec.Components.Schemas.MapOfSchemaOrRefValues[dstName]
+				refsProcessed[dstName] = dst.toJSONSchema(spec, refsProcessed)
+			}
+		}
+
+		return js
+	}
+
+	if s.Schema == nil {
+		return js
+	}
+
+	ss := s.Schema
+
+	jso.Description = ss.Description
+	jso.Title = ss.Title
+
+	if ss.Type != nil {
+		jso.AddType(jsonschema.SimpleType(*ss.Type))
+	}
+
+	if ss.Nullable != nil && *ss.Nullable {
+		jso.AddType(jsonschema.Null)
+	}
+
+	jso.MultipleOf = ss.MultipleOf
+	if ss.ExclusiveMaximum != nil && *ss.ExclusiveMaximum {
+		jso.ExclusiveMaximum = ss.Maximum
+	} else {
+		jso.Maximum = ss.Maximum
+	}
+
+	if ss.ExclusiveMinimum != nil && *ss.ExclusiveMinimum {
+		jso.ExclusiveMinimum = ss.Minimum
+	} else {
+		jso.Minimum = ss.Minimum
+	}
+
+	jso.MaxLength = ss.MaxLength
+
+	if ss.MinLength != nil {
+		jso.MinLength = *ss.MinLength
+	}
+
+	jso.Pattern = ss.Pattern
+	jso.MaxItems = ss.MaxItems
+
+	if ss.MinItems != nil {
+		jso.MinItems = *ss.MinItems
+	}
+
+	jso.UniqueItems = ss.UniqueItems
+	jso.MaxProperties = ss.MaxProperties
+
+	if ss.MinProperties != nil {
+		jso.MinProperties = *ss.MinProperties
+	}
+
+	jso.Required = ss.Required
+	jso.Enum = ss.Enum
+
+	if ss.Not != nil {
+		jso.WithNot(ss.Not.toJSONSchema(spec, refsProcessed))
+	}
+
+	if len(ss.AllOf) != 0 {
+		for _, allOf := range ss.AllOf {
+			jso.AllOf = append(jso.AllOf, allOf.toJSONSchema(spec, refsProcessed))
+		}
+	}
+
+	if len(ss.OneOf) != 0 {
+		for _, oneOf := range ss.OneOf {
+			jso.OneOf = append(jso.OneOf, oneOf.toJSONSchema(spec, refsProcessed))
+		}
+	}
+
+	if len(ss.AnyOf) != 0 {
+		for _, anyOf := range ss.AnyOf {
+			jso.AnyOf = append(jso.AnyOf, anyOf.toJSONSchema(spec, refsProcessed))
+		}
+	}
+
+	if ss.Items != nil {
+		jso.ItemsEns().WithSchemaOrBool(ss.Items.toJSONSchema(spec, refsProcessed))
+	}
+
+	if ss.Properties != nil {
+		for propName, propSchema := range ss.Properties {
+			jso.WithPropertiesItem(propName, propSchema.toJSONSchema(spec, refsProcessed))
+		}
+	}
+
+	if ss.AdditionalProperties != nil {
+		if ss.AdditionalProperties.Bool != nil {
+			jso.AdditionalProperties = &jsonschema.SchemaOrBool{
+				TypeBoolean: ss.AdditionalProperties.Bool,
+			}
+		} else if ss.AdditionalProperties.SchemaOrRef != nil {
+			jso.WithAdditionalProperties(ss.AdditionalProperties.SchemaOrRef.toJSONSchema(spec, refsProcessed))
+		}
+	}
+
+	jso.Format = ss.Format
+	jso.Default = ss.Default
+	jso.ReadOnly = ss.ReadOnly
+
+	if ss.Example != nil {
+		jso.WithExamples(*ss.Example)
+	}
+
+	for k, v := range ss.MapOfAnything {
+		jso.WithExtraPropertiesItem(k, v)
+	}
+
+	return js
+}
+
+// FromJSONSchema loads OpenAPI Schema from JSON Schema.
 func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	if schema.TypeBoolean != nil {
 		s.fromBool(*schema.TypeBoolean)

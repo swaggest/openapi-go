@@ -112,7 +112,6 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 			return false, nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -206,7 +205,6 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -218,7 +216,7 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	res := make(map[string]HeaderOrRef)
 
 	_, err := r.Reflect(output,
-		jsonschema.DefinitionsPrefix("#/components/headers/"),
+		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -246,7 +244,6 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return nil, err
 	}
