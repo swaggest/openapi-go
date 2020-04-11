@@ -6,21 +6,43 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+type toJSONSchemaContext struct {
+	refsProcessed map[string]jsonschema.SchemaOrBool
+	refsCount     map[string]int
+	spec          *Spec
+}
+
 // ToJSONSchema converts OpenAPI Schema to JSON Schema.
 //
 // Local references are resolved against `#/components/schemas` in spec.
 func (s *SchemaOrRef) ToJSONSchema(spec *Spec) jsonschema.SchemaOrBool {
-	refsProcessed := map[string]jsonschema.SchemaOrBool{}
-	js := s.toJSONSchema(spec, refsProcessed)
+	ctx := toJSONSchemaContext{
+		refsProcessed: map[string]jsonschema.SchemaOrBool{},
+		refsCount:     map[string]int{},
+		spec:          spec,
+	}
+	js := s.toJSONSchema(ctx)
 
-	if len(refsProcessed) > 0 {
-		js.TypeObjectEns().WithExtraPropertiesItem("components", map[string]interface{}{"schemas": refsProcessed})
+	// Inline root reference without recursions.
+	if s.SchemaReference != nil {
+		dstName := strings.TrimPrefix(s.SchemaReference.Ref, "#/components/schemas/")
+		if ctx.refsCount[dstName] == 1 {
+			js = ctx.refsProcessed[dstName]
+			delete(ctx.refsProcessed, dstName)
+		}
+	}
+
+	if len(ctx.refsProcessed) > 0 {
+		js.TypeObjectEns().WithExtraPropertiesItem(
+			"components",
+			map[string]interface{}{"schemas": ctx.refsProcessed},
+		)
 	}
 
 	return js
 }
 
-func (s *SchemaOrRef) toJSONSchema(spec *Spec, refsProcessed map[string]jsonschema.SchemaOrBool) jsonschema.SchemaOrBool {
+func (s *SchemaOrRef) toJSONSchema(ctx toJSONSchemaContext) jsonschema.SchemaOrBool {
 	js := jsonschema.SchemaOrBool{}
 	jso := js.TypeObjectEns()
 
@@ -30,12 +52,14 @@ func (s *SchemaOrRef) toJSONSchema(spec *Spec, refsProcessed map[string]jsonsche
 		if strings.HasPrefix(s.SchemaReference.Ref, "#/components/schemas/") {
 			dstName := strings.TrimPrefix(s.SchemaReference.Ref, "#/components/schemas/")
 
-			if _, alreadyProcessed := refsProcessed[dstName]; !alreadyProcessed {
-				refsProcessed[dstName] = jsonschema.SchemaOrBool{}
+			if _, alreadyProcessed := ctx.refsProcessed[dstName]; !alreadyProcessed {
+				ctx.refsProcessed[dstName] = jsonschema.SchemaOrBool{}
 
-				dst := spec.Components.Schemas.MapOfSchemaOrRefValues[dstName]
-				refsProcessed[dstName] = dst.toJSONSchema(spec, refsProcessed)
+				dst := ctx.spec.Components.Schemas.MapOfSchemaOrRefValues[dstName]
+				ctx.refsProcessed[dstName] = dst.toJSONSchema(ctx)
 			}
+
+			ctx.refsCount[dstName]++
 		}
 
 		return js
@@ -95,34 +119,34 @@ func (s *SchemaOrRef) toJSONSchema(spec *Spec, refsProcessed map[string]jsonsche
 	jso.Enum = ss.Enum
 
 	if ss.Not != nil {
-		jso.WithNot(ss.Not.toJSONSchema(spec, refsProcessed))
+		jso.WithNot(ss.Not.toJSONSchema(ctx))
 	}
 
 	if len(ss.AllOf) != 0 {
 		for _, allOf := range ss.AllOf {
-			jso.AllOf = append(jso.AllOf, allOf.toJSONSchema(spec, refsProcessed))
+			jso.AllOf = append(jso.AllOf, allOf.toJSONSchema(ctx))
 		}
 	}
 
 	if len(ss.OneOf) != 0 {
 		for _, oneOf := range ss.OneOf {
-			jso.OneOf = append(jso.OneOf, oneOf.toJSONSchema(spec, refsProcessed))
+			jso.OneOf = append(jso.OneOf, oneOf.toJSONSchema(ctx))
 		}
 	}
 
 	if len(ss.AnyOf) != 0 {
 		for _, anyOf := range ss.AnyOf {
-			jso.AnyOf = append(jso.AnyOf, anyOf.toJSONSchema(spec, refsProcessed))
+			jso.AnyOf = append(jso.AnyOf, anyOf.toJSONSchema(ctx))
 		}
 	}
 
 	if ss.Items != nil {
-		jso.ItemsEns().WithSchemaOrBool(ss.Items.toJSONSchema(spec, refsProcessed))
+		jso.ItemsEns().WithSchemaOrBool(ss.Items.toJSONSchema(ctx))
 	}
 
 	if ss.Properties != nil {
 		for propName, propSchema := range ss.Properties {
-			jso.WithPropertiesItem(propName, propSchema.toJSONSchema(spec, refsProcessed))
+			jso.WithPropertiesItem(propName, propSchema.toJSONSchema(ctx))
 		}
 	}
 
@@ -132,7 +156,7 @@ func (s *SchemaOrRef) toJSONSchema(spec *Spec, refsProcessed map[string]jsonsche
 				TypeBoolean: ss.AdditionalProperties.Bool,
 			}
 		} else if ss.AdditionalProperties.SchemaOrRef != nil {
-			jso.WithAdditionalProperties(ss.AdditionalProperties.SchemaOrRef.toJSONSchema(spec, refsProcessed))
+			jso.WithAdditionalProperties(ss.AdditionalProperties.SchemaOrRef.toJSONSchema(ctx))
 		}
 	}
 

@@ -122,39 +122,26 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 		},
 	}
 
+	rootDefName := strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
+
 	for name, def := range schema.Definitions {
-		if r.Spec.Components == nil {
-			r.Spec.Components = &Components{}
-		}
-
-		if r.Spec.Components.Schemas == nil {
-			r.Spec.Components.Schemas = &ComponentsSchemas{}
-		}
-
 		s := SchemaOrRef{}
 
 		s.FromJSONSchema(def)
 
-		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
-	}
+		// Disable nullability of request bodies.
+		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
+			s.Schema.Nullable = nil
+		}
 
-	if o.RequestBody == nil {
-		o.RequestBody = &RequestBodyOrRef{}
-	}
-
-	if o.RequestBody.RequestBody == nil {
-		o.RequestBody.RequestBody = &RequestBody{}
-	}
-
-	if o.RequestBody.RequestBody.Content == nil {
-		o.RequestBody.RequestBody.Content = map[string]MediaType{}
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
 	}
 
 	if mime == mimeFormUrlencoded && hasFileUpload {
 		mime = mimeMultipart
 	}
 
-	o.RequestBody.RequestBody.Content[mime] = mt
+	o.RequestBodyEns().RequestBodyEns().WithContentItem(mime, mt)
 
 	return nil
 }
@@ -258,10 +245,6 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		return err
 	}
 
-	if o.Responses.MapOfResponseOrRefValues == nil {
-		o.Responses.MapOfResponseOrRefValues = make(map[string]ResponseOrRef, 1)
-	}
-
 	oaiSchema := SchemaOrRef{}
 	oaiSchema.FromJSONSchema(schema.ToSchemaOrBool())
 
@@ -283,23 +266,15 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 	}
 
 	for name, def := range schema.Definitions {
-		if r.Spec.Components == nil {
-			r.Spec.Components = &Components{}
-		}
-
-		if r.Spec.Components.Schemas == nil {
-			r.Spec.Components.Schemas = &ComponentsSchemas{}
-		}
-
 		s := SchemaOrRef{}
 		s.FromJSONSchema(def)
 
-		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(name, s)
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 	}
 
-	o.Responses.MapOfResponseOrRefValues[strconv.Itoa(httpStatus)] = ResponseOrRef{
+	o.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(httpStatus), ResponseOrRef{
 		Response: &resp,
-	}
+	})
 
 	return nil
 }

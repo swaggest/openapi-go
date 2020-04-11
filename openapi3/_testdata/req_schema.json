@@ -1,21 +1,11 @@
 {
-  "$ref": "#/components/schemas/Openapi3TestReq",
-  "components": {
-    "schemas": {
-      "Openapi3TestReq": {
-        "properties": {
-          "in_body1": {
-            "type": "integer"
-          },
-          "in_body2": {
-            "type": "string"
-          }
-        },
-        "type": [
-          "object",
-          "null"
-        ]
-      }
+  "properties": {
+    "in_body1": {
+      "type": "integer"
+    },
+    "in_body2": {
+      "type": "string"
     }
-  }
+  },
+  "type": "object"
 }

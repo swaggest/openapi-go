@@ -305,8 +305,7 @@
      "in_body2": {
       "type": "string"
      }
-    },
-    "nullable": true
+    }
    },
    "Openapi3TestResp": {
     "title": "Sample Response",
