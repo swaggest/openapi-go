@@ -260,6 +260,12 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		},
 	}
 
+	if schema.Description != nil {
+		resp.Description = *schema.Description
+	} else {
+		resp.Description = http.StatusText(httpStatus)
+	}
+
 	resp.Headers, err = r.parseResponseHeader(output)
 	if err != nil {
 		return err
