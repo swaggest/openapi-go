@@ -76,10 +76,7 @@
           },
           "whatever": {}
         },
-        "type": [
-          "object",
-          "null"
-        ],
+        "type": "object",
         "x-foo": "bar"
       },
       "Openapi3TestUUID": {
