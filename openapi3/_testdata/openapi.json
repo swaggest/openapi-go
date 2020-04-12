@@ -66,7 +66,7 @@
     ],
     "responses": {
      "200": {
-      "description": "",
+      "description": "OK",
       "headers": {
        "X-Header-Field": {
         "style": "simple",
@@ -213,7 +213,7 @@
     },
     "responses": {
      "200": {
-      "description": "",
+      "description": "OK",
       "headers": {
        "X-Header-Field": {
         "style": "simple",
@@ -233,7 +233,7 @@
       }
      },
      "409": {
-      "description": "",
+      "description": "Conflict",
       "headers": {
        "X-Header-Field": {
         "style": "simple",
@@ -305,8 +305,7 @@
      "in_body2": {
       "type": "string"
      }
-    },
-    "nullable": true
+    }
    },
    "Openapi3TestResp": {
     "title": "Sample Response",
@@ -375,7 +374,6 @@
      "whatever": {}
     },
     "description": "This is a sample response.",
-    "nullable": true,
     "x-foo": "bar"
    },
    "Openapi3TestUUID": {

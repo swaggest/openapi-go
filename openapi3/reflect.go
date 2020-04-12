@@ -12,6 +12,7 @@ import (
 	"github.com/swaggest/refl"
 )
 
+// Reflector builds OpenAPI Schema with reflected structures.
 type Reflector struct {
 	jsonschema.Reflector
 	Spec *Spec
@@ -34,6 +35,16 @@ func joinErrors(errs ...error) error {
 	return nil
 }
 
+// SpecEns ensures returned Spec is not nil.
+func (r *Reflector) SpecEns() *Spec {
+	if r.Spec == nil {
+		r.Spec = &Spec{Openapi: "3.0.2"}
+	}
+
+	return r.Spec
+}
+
+// SetRequest sets up operation parameters.
 func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
 	return joinErrors(
 		r.parseParametersIn(o, input, ParameterInQuery),
@@ -101,7 +112,6 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 			return false, nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -112,39 +122,26 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 		},
 	}
 
+	rootDefName := strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
+
 	for name, def := range schema.Definitions {
-		if r.Spec.Components == nil {
-			r.Spec.Components = &Components{}
-		}
-
-		if r.Spec.Components.Schemas == nil {
-			r.Spec.Components.Schemas = &ComponentsSchemas{}
-		}
-
 		s := SchemaOrRef{}
 
 		s.FromJSONSchema(def)
 
-		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
-	}
+		// Disable nullability of request bodies.
+		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
+			s.Schema.Nullable = nil
+		}
 
-	if o.RequestBody == nil {
-		o.RequestBody = &RequestBodyOrRef{}
-	}
-
-	if o.RequestBody.RequestBody == nil {
-		o.RequestBody.RequestBody = &RequestBody{}
-	}
-
-	if o.RequestBody.RequestBody.Content == nil {
-		o.RequestBody.RequestBody.Content = map[string]MediaType{}
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
 	}
 
 	if mime == mimeFormUrlencoded && hasFileUpload {
 		mime = mimeMultipart
 	}
 
-	o.RequestBody.RequestBody.Content[mime] = mt
+	o.RequestBodyEns().RequestBodyEns().WithContentItem(mime, mt)
 
 	return nil
 }
@@ -195,7 +192,6 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -207,7 +203,7 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	res := make(map[string]HeaderOrRef)
 
 	_, err := r.Reflect(output,
-		jsonschema.DefinitionsPrefix("#/components/headers/"),
+		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -235,7 +231,6 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -243,14 +238,11 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	return res, nil
 }
 
+// SetJSONResponse sets up operation JSON response.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
 	schema, err := r.Reflect(output, jsonschema.RootRef, jsonschema.DefinitionsPrefix("#/components/schemas/"))
 	if err != nil {
 		return err
-	}
-
-	if o.Responses.MapOfResponseOrRefValues == nil {
-		o.Responses.MapOfResponseOrRefValues = make(map[string]ResponseOrRef, 1)
 	}
 
 	oaiSchema := SchemaOrRef{}
@@ -268,29 +260,38 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		},
 	}
 
+	if schema.Description != nil {
+		resp.Description = *schema.Description
+	} else {
+		resp.Description = http.StatusText(httpStatus)
+	}
+
+	var rootDefName string
+
+	if oaiSchema.SchemaReference != nil {
+		rootDefName = strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
+	}
+
+	for name, def := range schema.Definitions {
+		s := SchemaOrRef{}
+		s.FromJSONSchema(def)
+
+		// Disable nullability of request bodies.
+		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
+			s.Schema.Nullable = nil
+		}
+
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
+	}
+
 	resp.Headers, err = r.parseResponseHeader(output)
 	if err != nil {
 		return err
 	}
 
-	for name, def := range schema.Definitions {
-		if r.Spec.Components == nil {
-			r.Spec.Components = &Components{}
-		}
-
-		if r.Spec.Components.Schemas == nil {
-			r.Spec.Components.Schemas = &ComponentsSchemas{}
-		}
-
-		s := SchemaOrRef{}
-		s.FromJSONSchema(def)
-
-		r.Spec.Components.Schemas.WithMapOfSchemaOrRefValuesItem(name, s)
-	}
-
-	o.Responses.MapOfResponseOrRefValues[strconv.Itoa(httpStatus)] = ResponseOrRef{
+	o.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(httpStatus), ResponseOrRef{
 		Response: &resp,
-	}
+	})
 
 	return nil
 }

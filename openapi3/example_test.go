@@ -118,7 +118,7 @@ func ExampleReflector_SetJSONResponse() {
 	//     ],
 	//     "responses": {
 	//      "200": {
-	//       "description": "",
+	//       "description": "OK",
 	//       "content": {
 	//        "application/json": {
 	//         "schema": {
@@ -160,7 +160,7 @@ func ExampleReflector_SetJSONResponse() {
 	//     },
 	//     "responses": {
 	//      "200": {
-	//       "description": "",
+	//       "description": "OK",
 	//       "content": {
 	//        "application/json": {
 	//         "schema": {
@@ -170,7 +170,7 @@ func ExampleReflector_SetJSONResponse() {
 	//       }
 	//      },
 	//      "409": {
-	//       "description": "",
+	//       "description": "Conflict",
 	//       "content": {
 	//        "application/json": {
 	//         "schema": {
@@ -214,8 +214,7 @@ func ExampleReflector_SetJSONResponse() {
 	//      "string": {
 	//       "type": "string"
 	//      }
-	//     },
-	//     "nullable": true
+	//     }
 	//    },
 	//    "Openapi3TestResp": {
 	//     "type": "object",
@@ -247,8 +246,7 @@ func ExampleReflector_SetJSONResponse() {
 	//       "type": "string",
 	//       "format": "date-time"
 	//      }
-	//     },
-	//     "nullable": true
+	//     }
 	//    }
 	//   }
 	//  }

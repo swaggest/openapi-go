@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	//swgui.Config{}
 	h := v3.NewHandler("Foo", "/openapi.json", "/")
 	hh := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/openapi.json" {

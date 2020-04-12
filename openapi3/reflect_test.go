@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -111,12 +112,10 @@ func TestGenerator_SetResponse(t *testing.T) {
 
 	reflector.AddTypeMapping(UUID{}, uuidDef)
 
-	s := openapi3.Spec{}
-	s.Openapi = "3.0.2"
+	s := reflector.SpecEns()
 	s.Info.Title = "SampleAPI"
 	s.Info.Version = "1.2.3"
 
-	reflector.Spec = &s
 	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
 
 	op := openapi3.Operation{}
@@ -135,6 +134,13 @@ func TestGenerator_SetResponse(t *testing.T) {
 		WithSummary("Path Summary").
 		WithDescription("Path Description")
 
+	js := op.RequestBody.RequestBody.Content["application/json"].Schema.ToJSONSchema(s)
+	jsb, err := json.MarshalIndent(js, "", " ")
+	require.NoError(t, err)
+	expected, err := ioutil.ReadFile("_testdata/req_schema.json")
+	require.NoError(t, err)
+	assertjson.Equal(t, expected, jsb, string(jsb))
+
 	pathItem.WithOperation(http.MethodPost, op)
 
 	op = openapi3.Operation{}
@@ -147,6 +153,25 @@ func TestGenerator_SetResponse(t *testing.T) {
 
 	pathItem.WithOperation(http.MethodGet, op)
 
+	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
+		Schema.ToJSONSchema(s)
+	jsb, err = json.MarshalIndent(js, "", " ")
+	require.NoError(t, err)
+	expected, err = ioutil.ReadFile("_testdata/resp_schema.json")
+	require.NoError(t, err)
+	assertjson.Equal(t, expected, jsb, string(jsb))
+
+	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Headers["X-Header-Field"].Header.
+		Schema.ToJSONSchema(s)
+	jsb, err = json.Marshal(js)
+	require.NoError(t, err)
+	assertjson.Equal(t, []byte(`{"type": "string", "description": "Sample header response."}`), jsb)
+
+	js = op.Parameters[0].Parameter.Schema.ToJSONSchema(s)
+	jsb, err = json.Marshal(js)
+	require.NoError(t, err)
+	assertjson.Equal(t, []byte(`{"type": "integer", "description": "Query parameter."}`), jsb)
+
 	s.Paths.WithMapOfPathItemValuesItem(
 		"/somewhere/{in_path}",
 		pathItem,
@@ -157,7 +182,7 @@ func TestGenerator_SetResponse(t *testing.T) {
 
 	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0640))
 
-	expected, err := ioutil.ReadFile("_testdata/openapi.json")
+	expected, err = ioutil.ReadFile("_testdata/openapi.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)

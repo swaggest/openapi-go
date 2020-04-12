@@ -118,7 +118,7 @@ fmt.Println(string(schema))
 //     ],
 //     "responses": {
 //      "200": {
-//       "description": "",
+//       "description": "OK",
 //       "content": {
 //        "application/json": {
 //         "schema": {
@@ -160,7 +160,7 @@ fmt.Println(string(schema))
 //     },
 //     "responses": {
 //      "200": {
-//       "description": "",
+//       "description": "OK",
 //       "content": {
 //        "application/json": {
 //         "schema": {
@@ -170,7 +170,7 @@ fmt.Println(string(schema))
 //       }
 //      },
 //      "409": {
-//       "description": "",
+//       "description": "Conflict",
 //       "content": {
 //        "application/json": {
 //         "schema": {
@@ -214,8 +214,7 @@ fmt.Println(string(schema))
 //      "string": {
 //       "type": "string"
 //      }
-//     },
-//     "nullable": true
+//     }
 //    },
 //    "Openapi3TestResp": {
 //     "type": "object",
@@ -247,8 +246,7 @@ fmt.Println(string(schema))
 //       "type": "string",
 //       "format": "date-time"
 //      }
-//     },
-//     "nullable": true
+//     }
 //    }
 //   }
 //  }
