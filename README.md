@@ -246,8 +246,7 @@ fmt.Println(string(schema))
 //       "type": "string",
 //       "format": "date-time"
 //      }
-//     },
-//     "nullable": true
+//     }
 //    }
 //   }
 //  }

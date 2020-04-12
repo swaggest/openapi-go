@@ -246,8 +246,7 @@ func ExampleReflector_SetJSONResponse() {
 	//       "type": "string",
 	//       "format": "date-time"
 	//      }
-	//     },
-	//     "nullable": true
+	//     }
 	//    }
 	//   }
 	//  }

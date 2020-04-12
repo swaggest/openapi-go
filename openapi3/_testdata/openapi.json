@@ -374,7 +374,6 @@
      "whatever": {}
     },
     "description": "This is a sample response.",
-    "nullable": true,
     "x-foo": "bar"
    },
    "Openapi3TestUUID": {

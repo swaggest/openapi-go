@@ -266,16 +266,27 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		resp.Description = http.StatusText(httpStatus)
 	}
 
-	resp.Headers, err = r.parseResponseHeader(output)
-	if err != nil {
-		return err
+	var rootDefName string
+
+	if oaiSchema.SchemaReference != nil {
+		rootDefName = strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
 	}
 
 	for name, def := range schema.Definitions {
 		s := SchemaOrRef{}
 		s.FromJSONSchema(def)
 
+		// Disable nullability of request bodies.
+		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
+			s.Schema.Nullable = nil
+		}
+
 		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
+	}
+
+	resp.Headers, err = r.parseResponseHeader(output)
+	if err != nil {
+		return err
 	}
 
 	o.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(httpStatus), ResponseOrRef{
