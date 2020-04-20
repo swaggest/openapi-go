@@ -177,8 +177,7 @@ fmt.Println(string(schema))
 //          "type": "array",
 //          "items": {
 //           "$ref": "#/components/schemas/Openapi3TestResp"
-//          },
-//          "nullable": true
+//          }
 //         }
 //        }
 //       }

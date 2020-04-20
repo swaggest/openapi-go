@@ -147,7 +147,7 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 }
 
 func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
-	_, err := r.Reflect(input,
+	schema, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.PropertyNameTag(string(in)),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
@@ -194,6 +194,19 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 	)
 	if err != nil {
 		return err
+	}
+
+	for name, def := range schema.Definitions {
+		s := SchemaOrRef{}
+
+		s.FromJSONSchema(def)
+
+		// Disable nullability of request bodies.
+		if s.Schema != nil && s.Schema.Nullable != nil {
+			s.Schema.Nullable = nil
+		}
+
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 	}
 
 	return nil
@@ -247,6 +260,10 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 
 	oaiSchema := SchemaOrRef{}
 	oaiSchema.FromJSONSchema(schema.ToSchemaOrBool())
+
+	if oaiSchema.Schema != nil {
+		oaiSchema.Schema.Nullable = nil
+	}
 
 	resp := Response{
 		Content: map[string]MediaType{
