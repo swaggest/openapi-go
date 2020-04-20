@@ -6,9 +6,7 @@
  },
  "paths": {
   "/somewhere/{in_path}": {
-   "summary": "Path Summary",
-   "description": "Path Description",
-   "post": {
+   "get": {
     "parameters": [
      {
       "name": "in_query1",

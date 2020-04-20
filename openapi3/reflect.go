@@ -51,8 +51,8 @@ func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod strin
 		r.parseParametersIn(o, input, ParameterInPath),
 		r.parseParametersIn(o, input, ParameterInCookie),
 		r.parseParametersIn(o, input, ParameterInHeader),
-		r.parseRequestBody(o, input, "json", mimeJSON, httpMethod),
-		r.parseRequestBody(o, input, "formData", mimeFormUrlencoded, httpMethod),
+		r.parseRequestBody(o, input, tagJSON, mimeJSON, httpMethod),
+		r.parseRequestBody(o, input, tagFormData, mimeFormUrlencoded, httpMethod),
 	)
 }
 
@@ -62,6 +62,8 @@ var (
 )
 
 const (
+	tagJSON            = "json"
+	tagFormData        = "formData"
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
@@ -70,14 +72,27 @@ const (
 func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
 	httpMethod = strings.ToUpper(httpMethod)
 
-	if httpMethod == http.MethodGet || httpMethod == http.MethodHead || !refl.HasTaggedFields(input, tag) {
+	// GET and HEAD requests should not have body.
+	if httpMethod == http.MethodGet || httpMethod == http.MethodHead {
+		return nil
+	}
+
+	hasTaggedFields := refl.HasTaggedFields(input, tag)
+
+	// Form data can not have map or array as body.
+	if !hasTaggedFields && tag != tagJSON {
+		return nil
+	}
+
+	// JSON can be a map or array without field tags.
+	if !hasTaggedFields && !refl.IsSliceOrMap(input) {
 		return nil
 	}
 
 	hasFileUpload := false
 	definitionPefix := ""
 
-	if tag != "json" {
+	if tag != tagJSON {
 		definitionPefix += strings.Title(tag)
 	}
 
@@ -116,13 +131,23 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 		return err
 	}
 
-	mt := MediaType{
-		Schema: &SchemaOrRef{
-			SchemaReference: &SchemaReference{Ref: *schema.Ref},
-		},
+	schemaOrRef := SchemaOrRef{}
+
+	schemaOrRef.FromJSONSchema(schema.ToSchemaOrBool())
+
+	// Remove nullability of request body.
+	if schemaOrRef.Schema != nil {
+		schemaOrRef.Schema.Nullable = nil
 	}
 
-	rootDefName := strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
+	mt := MediaType{
+		Schema: &schemaOrRef,
+	}
+
+	rootDefName := ""
+	if schema.Ref != nil {
+		rootDefName = strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
+	}
 
 	for name, def := range schema.Definitions {
 		s := SchemaOrRef{}
@@ -147,6 +172,10 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 }
 
 func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
+	if refl.IsSliceOrMap(input) {
+		return nil
+	}
+
 	schema, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.PropertyNameTag(string(in)),

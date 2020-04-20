@@ -92,12 +92,43 @@ type Req struct {
 }
 
 type GetReq struct {
-	InQuery1 int     `query:"in_query1" required:"true" description:"Query parameter."`
-	InQuery2 ISOWeek `query:"in_query2" required:"true" description:"Query parameter."`
-	InQuery3 int     `query:"in_query3" required:"true" description:"Query parameter."`
-	InPath   int     `path:"in_path"`
-	InCookie string  `cookie:"in_cookie" deprecated:"true"`
-	InHeader float64 `header:"in_header"`
+	InQuery1 int     `query:"in_query1" required:"true" description:"Query parameter." json:"q1"`
+	InQuery2 ISOWeek `query:"in_query2" required:"true" description:"Query parameter." json:"q2"`
+	InQuery3 int     `query:"in_query3" required:"true" description:"Query parameter." json:"q3"`
+	InPath   int     `path:"in_path" json:"p"`
+	InCookie string  `cookie:"in_cookie" deprecated:"true" json:"c"`
+	InHeader float64 `header:"in_header" json:"h"`
+}
+
+const (
+	apiName    = "SampleAPI"
+	apiVersion = "1.2.3"
+)
+
+func TestReflector_SetRequest_array(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new([]GetReq), http.MethodPost)
+	assert.NoError(t, err)
+
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+
+	b, err := json.MarshalIndent(s, "", " ")
+	assert.NoError(t, err)
+
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0640))
+
+	expected, err := ioutil.ReadFile("_testdata/openapi_req_array.json")
+	require.NoError(t, err)
+
+	assertjson.Equal(t, expected, b)
 }
 
 func TestReflector_SetRequest(t *testing.T) {
@@ -105,32 +136,22 @@ func TestReflector_SetRequest(t *testing.T) {
 	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 
 	s := reflector.SpecEns()
-	s.Info.Title = "SampleAPI"
-	s.Info.Version = "1.2.3"
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
 
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new(GetReq), http.MethodGet)
 	assert.NoError(t, err)
 
-	pathItem := s.Paths.MapOfPathItemValues["/somewhere/{in_path}"]
-	pathItem.
-		WithSummary("Path Summary").
-		WithDescription("Path Description")
-
-	pathItem.WithOperation(http.MethodPost, op)
-
-	s.Paths.WithMapOfPathItemValuesItem(
-		"/somewhere/{in_path}",
-		pathItem,
-	)
+	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_only_last_run.json", b, 0640))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0640))
 
-	expected, err := ioutil.ReadFile("_testdata/openapi_req_only.json")
+	expected, err := ioutil.ReadFile("_testdata/openapi_req.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
@@ -149,8 +170,8 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	reflector.AddTypeMapping(UUID{}, uuidDef)
 
 	s := reflector.SpecEns()
-	s.Info.Title = "SampleAPI"
-	s.Info.Version = "1.2.3"
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
 
 	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
 
@@ -165,10 +186,11 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
 	assert.NoError(t, err)
 
-	pathItem := s.Paths.MapOfPathItemValues["/somewhere/{in_path}"]
+	pathItem := openapi3.PathItem{}
 	pathItem.
 		WithSummary("Path Summary").
 		WithDescription("Path Description")
+	s.Paths.WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
 
 	js := op.RequestBody.RequestBody.Content["application/json"].Schema.ToJSONSchema(s)
 	jsb, err := json.MarshalIndent(js, "", " ")
@@ -177,7 +199,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	require.NoError(t, err)
 	assertjson.Equal(t, expected, jsb, string(jsb))
 
-	pathItem.WithOperation(http.MethodPost, op)
+	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{in_path}", op))
 
 	op = openapi3.Operation{}
 
@@ -187,7 +209,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	err = reflector.SetJSONResponse(&op, new(Resp), http.StatusOK)
 	assert.NoError(t, err)
 
-	pathItem.WithOperation(http.MethodGet, op)
+	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
 	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
 		Schema.ToJSONSchema(s)
@@ -207,11 +229,6 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	jsb, err = json.Marshal(js)
 	require.NoError(t, err)
 	assertjson.Equal(t, []byte(`{"type": "integer", "description": "Query parameter."}`), jsb)
-
-	s.Paths.WithMapOfPathItemValuesItem(
-		"/somewhere/{in_path}",
-		pathItem,
-	)
 
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)

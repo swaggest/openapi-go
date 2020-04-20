@@ -55,6 +55,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	var errs []string
 
 	paramIndex := make(map[string]bool, len(operation.Parameters))
+
 	for _, p := range operation.Parameters {
 		if p.Parameter == nil {
 			continue
