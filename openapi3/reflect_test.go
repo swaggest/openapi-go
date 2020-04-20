@@ -93,14 +93,50 @@ type Req struct {
 
 type GetReq struct {
 	InQuery1 int     `query:"in_query1" required:"true" description:"Query parameter."`
-	InQuery2 int     `query:"in_query2" required:"true" description:"Query parameter."`
+	InQuery2 ISOWeek `query:"in_query2" required:"true" description:"Query parameter."`
 	InQuery3 int     `query:"in_query3" required:"true" description:"Query parameter."`
 	InPath   int     `path:"in_path"`
 	InCookie string  `cookie:"in_cookie" deprecated:"true"`
 	InHeader float64 `header:"in_header"`
 }
 
-func TestGenerator_SetResponse(t *testing.T) {
+func TestReflector_SetRequest(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
+
+	s := reflector.SpecEns()
+	s.Info.Title = "SampleAPI"
+	s.Info.Version = "1.2.3"
+
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new(GetReq), http.MethodGet)
+	assert.NoError(t, err)
+
+	pathItem := s.Paths.MapOfPathItemValues["/somewhere/{in_path}"]
+	pathItem.
+		WithSummary("Path Summary").
+		WithDescription("Path Description")
+
+	pathItem.WithOperation(http.MethodPost, op)
+
+	s.Paths.WithMapOfPathItemValuesItem(
+		"/somewhere/{in_path}",
+		pathItem,
+	)
+
+	b, err := json.MarshalIndent(s, "", " ")
+	assert.NoError(t, err)
+
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_only_last_run.json", b, 0640))
+
+	expected, err := ioutil.ReadFile("_testdata/openapi_req_only.json")
+	require.NoError(t, err)
+
+	assertjson.Equal(t, expected, b)
+}
+
+func TestReflector_SetJSONResponse(t *testing.T) {
 	reflector := openapi3.Reflector{}
 	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 

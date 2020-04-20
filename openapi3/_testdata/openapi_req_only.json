@@ -1,0 +1,80 @@
+{
+ "openapi": "3.0.2",
+ "info": {
+  "title": "SampleAPI",
+  "version": "1.2.3"
+ },
+ "paths": {
+  "/somewhere/{in_path}": {
+   "summary": "Path Summary",
+   "description": "Path Description",
+   "post": {
+    "parameters": [
+     {
+      "name": "in_query1",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_query2",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Openapi3TestISOWeek"
+      }
+     },
+     {
+      "name": "in_query3",
+      "in": "query",
+      "description": "Query parameter.",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "description": "Query parameter."
+      }
+     },
+     {
+      "name": "in_path",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "in_cookie",
+      "in": "cookie",
+      "deprecated": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "in_header",
+      "in": "header",
+      "schema": {
+       "type": "number"
+      }
+     }
+    ],
+    "responses": {}
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Openapi3TestISOWeek": {
+    "pattern": "^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$",
+    "type": "string",
+    "description": "ISO Week",
+    "example": "2006-W43"
+   }
+  }
+ }
+}

@@ -177,8 +177,7 @@ func ExampleReflector_SetJSONResponse() {
 	//          "type": "array",
 	//          "items": {
 	//           "$ref": "#/components/schemas/Openapi3TestResp"
-	//          },
-	//          "nullable": true
+	//          }
 	//         }
 	//        }
 	//       }
