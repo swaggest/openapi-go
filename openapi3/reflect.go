@@ -135,29 +135,14 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 
 	schemaOrRef.FromJSONSchema(schema.ToSchemaOrBool())
 
-	// Remove nullability of request body.
-	if schemaOrRef.Schema != nil {
-		schemaOrRef.Schema.Nullable = nil
-	}
-
 	mt := MediaType{
 		Schema: &schemaOrRef,
-	}
-
-	rootDefName := ""
-	if schema.Ref != nil {
-		rootDefName = strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
 	}
 
 	for name, def := range schema.Definitions {
 		s := SchemaOrRef{}
 
 		s.FromJSONSchema(def)
-
-		// Disable nullability of request bodies.
-		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
-			s.Schema.Nullable = nil
-		}
 
 		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
 	}
@@ -176,8 +161,9 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 		return nil
 	}
 
-	schema, err := r.Reflect(input,
+	_, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
+		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameTag(string(in)),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -225,20 +211,14 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 		return err
 	}
 
-	for name, def := range schema.Definitions {
-		s := SchemaOrRef{}
-
-		s.FromJSONSchema(def)
-
-		// Disable nullability of request bodies.
-		if s.Schema != nil && s.Schema.Nullable != nil {
-			s.Schema.Nullable = nil
-		}
-
-		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
-	}
-
 	return nil
+}
+
+func (r *Reflector) collectDefinition(name string, schema jsonschema.Schema) {
+	s := SchemaOrRef{}
+	s.FromJSONSchema(schema.ToSchemaOrBool())
+
+	r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 }
 
 func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
@@ -246,6 +226,7 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 
 	_, err := r.Reflect(output,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
+		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -282,7 +263,11 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 
 // SetJSONResponse sets up operation JSON response.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
-	schema, err := r.Reflect(output, jsonschema.RootRef, jsonschema.DefinitionsPrefix("#/components/schemas/"))
+	schema, err := r.Reflect(output,
+		jsonschema.RootRef,
+		jsonschema.DefinitionsPrefix("#/components/schemas/"),
+		jsonschema.CollectDefinitions(r.collectDefinition),
+	)
 	if err != nil {
 		return err
 	}
@@ -310,24 +295,6 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		resp.Description = *schema.Description
 	} else {
 		resp.Description = http.StatusText(httpStatus)
-	}
-
-	var rootDefName string
-
-	if oaiSchema.SchemaReference != nil {
-		rootDefName = strings.TrimPrefix(*schema.Ref, "#/components/schemas/")
-	}
-
-	for name, def := range schema.Definitions {
-		s := SchemaOrRef{}
-		s.FromJSONSchema(def)
-
-		// Disable nullability of request bodies.
-		if s.Schema != nil && s.Schema.Nullable != nil && name == rootDefName {
-			s.Schema.Nullable = nil
-		}
-
-		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 	}
 
 	resp.Headers, err = r.parseResponseHeader(output)
