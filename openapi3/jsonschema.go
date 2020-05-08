@@ -219,18 +219,10 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 
 	if js.Type != nil {
 		if js.Type.SimpleTypes != nil {
-			if *js.Type.SimpleTypes == jsonschema.Null {
-				os.WithNullable(true)
-			} else {
-				os.WithType(SchemaType(*js.Type.SimpleTypes))
-			}
+			checkNullable(*js.Type.SimpleTypes, os)
 		} else if len(js.Type.SliceOfSimpleTypeValues) > 0 {
 			for _, t := range js.Type.SliceOfSimpleTypeValues {
-				if t == jsonschema.Null {
-					os.WithNullable(true)
-				} else {
-					os.WithType(SchemaType(t))
-				}
+				checkNullable(t, os)
 			}
 		}
 	}
@@ -316,6 +308,14 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 				os.MapOfAnything[name] = val
 			}
 		}
+	}
+}
+
+func checkNullable(t jsonschema.SimpleType, os *Schema) {
+	if t == jsonschema.Null {
+		os.WithNullable(true)
+	} else {
+		os.WithType(SchemaType(t))
 	}
 }
 

@@ -21,6 +21,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - goerr113
     - gomnd
     - gocyclo
     - gochecknoglobals
