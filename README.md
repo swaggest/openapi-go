@@ -1,6 +1,5 @@
 # OpenAPI structures for Go
 
-[![Build Status](https://travis-ci.org/swaggest/openapi-go.svg?branch=master)](https://travis-ci.org/swaggest/openapi-go)
 [![Build Status](https://github.com/swaggest/openapi-go/workflows/test/badge.svg)](https://github.com/swaggest/openapi-go/actions)
 [![Coverage Status](https://codecov.io/gh/swaggest/openapi-go/branch/master/graph/badge.svg)](https://codecov.io/gh/swaggest/openapi-go)
 [![GoDevDoc](https://img.shields.io/badge/dev-doc-00ADD8?logo=go)](https://pkg.go.dev/github.com/swaggest/openapi-go)
