@@ -13,8 +13,16 @@ This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Sc
 ## Features
 
 * Type safe mapping of OpenAPI 3 documents with Go structures generated from schema.
-* Reflection of Go structures to OpenAPI 3 schema
-* Schema control with field tags or .
+* Type-based reflection of Go structures to OpenAPI 3 schema using
+* Schema control with field tags
+    * `json` for request bodies and responses
+    * `query`, `path` for parameters in URL
+    * `header`, `cookie` for other parameters
+    * field tags named after JSON Schema/OpenAPI 3 Schema constraints
+* Schema control via interfaces
+    * [`jsonschema.Exposer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#Exposer)
+    * [`jsonschema.Preparer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#Preparer)
+    * [`jsonschema.RawExposer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#RawExposer)
 
 ## Example
 
