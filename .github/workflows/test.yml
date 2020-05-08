@@ -21,7 +21,15 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: checkout code
         uses: actions/checkout@v2
-      - name: test
-        run: go test -v -cover -race -coverprofile=coverage.txt -covermode=atomic ./...
-      - name: code coverage
+      - uses: actions/cache@v1
+        with:
+          path: vendor
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Populate dependencies
+        run: '(test -d vendor && echo vendor found) || go mod vendor'
+      - name: Test
+        run: go test -mod=vendor -v -cover -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Code coverage
         uses: codecov/codecov-action@v1
