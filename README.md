@@ -15,9 +15,9 @@ This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Sc
 * Type safe mapping of OpenAPI 3 documents with Go structures generated from schema.
 * Type-based reflection of Go structures to OpenAPI 3 schema using
 * Schema control with field tags
-    * `json` for request bodies and responses
+    * `json` for request bodies and responses in JSON
     * `query`, `path` for parameters in URL
-    * `header`, `cookie` for other parameters
+    * `header`, `cookie`, `formData`, `file` for other parameters
     * field tags named after JSON Schema/OpenAPI 3 Schema constraints
 * Schema control via interfaces
     * [`jsonschema.Exposer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#Exposer)
@@ -68,7 +68,7 @@ handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
 handleError(reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK))
 handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
 
-schema, err := json.MarshalIndent(reflector.Spec, "", " ")
+schema, err := reflector.Spec.MarshalYAML()
 if err != nil {
     log.Fatal(err)
 }
@@ -78,170 +78,107 @@ fmt.Println(string(schema))
 
 Output:
 
-```json
-{
- "openapi": "3.0.2",
- "info": {
-  "title": "Things API",
-  "description": "Put something here",
-  "version": "1.2.3"
- },
- "paths": {
-  "/things/{id}": {
-   "summary": "Path Summary",
-   "description": "Path Description",
-   "get": {
-    "parameters": [
-     {
-      "name": "locale",
-      "in": "query",
-      "schema": {
-       "pattern": "^[a-z]{2}-[A-Z]{2}$",
-       "type": "string"
-      }
-     },
-     {
-      "name": "id",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "example": "XXX-XXXXX"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Openapi3TestResp"
-        }
-       }
-      }
-     }
-    }
-   },
-   "put": {
-    "parameters": [
-     {
-      "name": "locale",
-      "in": "query",
-      "schema": {
-       "pattern": "^[a-z]{2}-[A-Z]{2}$",
-       "type": "string"
-      }
-     },
-     {
-      "name": "id",
-      "in": "path",
-      "required": true,
-      "schema": {
-       "type": "string",
-       "example": "XXX-XXXXX"
-      }
-     }
-    ],
-    "requestBody": {
-     "content": {
-      "application/json": {
-       "schema": {
-        "$ref": "#/components/schemas/Openapi3TestReq"
-       }
-      }
-     }
-    },
-    "responses": {
-     "200": {
-      "description": "OK",
-      "content": {
-       "application/json": {
-        "schema": {
-         "$ref": "#/components/schemas/Openapi3TestResp"
-        }
-       }
-      }
-     },
-     "409": {
-      "description": "Conflict",
-      "content": {
-       "application/json": {
-        "schema": {
-         "type": "array",
-         "items": {
-          "$ref": "#/components/schemas/Openapi3TestResp"
-         }
-        }
-       }
-      }
-     }
-    }
-   }
-  }
- },
- "components": {
-  "schemas": {
-   "Openapi3TestReq": {
-    "type": "object",
-    "properties": {
-     "amount": {
-      "minimum": 0,
-      "type": "integer"
-     },
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "properties": {
-        "count": {
-         "minimum": 0,
-         "type": "integer"
-        },
-        "name": {
-         "type": "string"
-        }
-       }
-      }
-     },
-     "string": {
-      "type": "string"
-     }
-    }
-   },
-   "Openapi3TestResp": {
-    "type": "object",
-    "properties": {
-     "amount": {
-      "minimum": 0,
-      "type": "integer"
-     },
-     "id": {
-      "type": "string",
-      "example": "XXX-XXXXX"
-     },
-     "items": {
-      "type": "array",
-      "items": {
-       "type": "object",
-       "properties": {
-        "count": {
-         "minimum": 0,
-         "type": "integer"
-        },
-        "name": {
-         "type": "string"
-        }
-       }
-      }
-     },
-     "updated_at": {
-      "type": "string",
-      "format": "date-time"
-     }
-    }
-   }
-  }
- }
-}
+```yaml
+openapi: 3.0.2
+info:
+  description: Put something here
+  title: Things API
+  version: 1.2.3
+paths:
+  /things/{id}:
+    get:
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          pattern: ^[a-z]{2}-[A-Z]{2}$
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          example: XXX-XXXXX
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Openapi3TestResp'
+          description: OK
+    put:
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          pattern: ^[a-z]{2}-[A-Z]{2}$
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          example: XXX-XXXXX
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Openapi3TestReq'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Openapi3TestResp'
+          description: OK
+        "409":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Openapi3TestResp'
+                type: array
+          description: Conflict
+components:
+  schemas:
+    Openapi3TestReq:
+      properties:
+        amount:
+          minimum: 0
+          type: integer
+        items:
+          items:
+            properties:
+              count:
+                minimum: 0
+                type: integer
+              name:
+                type: string
+            type: object
+          type: array
+        string:
+          type: string
+      type: object
+    Openapi3TestResp:
+      properties:
+        amount:
+          minimum: 0
+          type: integer
+        id:
+          example: XXX-XXXXX
+          type: string
+        items:
+          items:
+            properties:
+              count:
+                minimum: 0
+                type: integer
+              name:
+                type: string
+            type: object
+          type: array
+        updated_at:
+          format: date-time
+          type: string
+      type: object
 ```
