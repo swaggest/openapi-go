@@ -10,6 +10,12 @@ import (
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
+func handleError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func ExampleReflector_SetJSONResponse() {
 	reflector := openapi3.Reflector{}
 	reflector.Spec = &openapi3.Spec{Openapi: "3.0.2"}
@@ -41,41 +47,16 @@ func ExampleReflector_SetJSONResponse() {
 
 	putOp := openapi3.Operation{}
 
-	err := reflector.SetRequest(&putOp, new(req), http.MethodPut)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict)
-	if err != nil {
-		log.Fatal(err)
-	}
+	handleError(reflector.SetRequest(&putOp, new(req), http.MethodPut))
+	handleError(reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK))
+	handleError(reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict))
+	handleError(reflector.Spec.AddOperation(http.MethodPut, "/things/{id}", putOp))
 
 	getOp := openapi3.Operation{}
 
-	err = reflector.SetRequest(&getOp, new(req), http.MethodGet)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pathItem := reflector.Spec.Paths.MapOfPathItemValues["/things/{id}"]
-	pathItem.
-		WithSummary("Path Summary").
-		WithDescription("Path Description")
-
-	pathItem.WithOperation(http.MethodPut, putOp).WithOperation(http.MethodGet, getOp)
-
-	reflector.Spec.Paths.WithMapOfPathItemValuesItem("/things/{id}", pathItem)
+	handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
+	handleError(reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK))
+	handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
 
 	schema, err := json.MarshalIndent(reflector.Spec, "", " ")
 	if err != nil {
@@ -94,8 +75,6 @@ func ExampleReflector_SetJSONResponse() {
 	//  },
 	//  "paths": {
 	//   "/things/{id}": {
-	//    "summary": "Path Summary",
-	//    "description": "Path Description",
 	//    "get": {
 	//     "parameters": [
 	//      {

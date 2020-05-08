@@ -12,8 +12,9 @@ This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Sc
 
 ## Features
 
-* Type safe mapping of OpenAPI 3 documents with structures generated from schema.
-* Type and field tag based reflection of Go structures to OpenAPI 3 document.
+* Type safe mapping of OpenAPI 3 documents with Go structures generated from schema.
+* Reflection of Go structures to OpenAPI 3 schema
+* Schema control with field tags or .
 
 ## Example
 
@@ -48,41 +49,16 @@ type resp struct {
 
 putOp := openapi3.Operation{}
 
-err := reflector.SetRequest(&putOp, new(req), http.MethodPut)
-if err != nil {
-    log.Fatal(err)
-}
-
-err = reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK)
-if err != nil {
-    log.Fatal(err)
-}
-
-err = reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict)
-if err != nil {
-    log.Fatal(err)
-}
+handleError(reflector.SetRequest(&putOp, new(req), http.MethodPut))
+handleError(reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK))
+handleError(reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict))
+handleError(reflector.Spec.AddOperation(http.MethodPut, "/things/{id}", putOp))
 
 getOp := openapi3.Operation{}
 
-err = reflector.SetRequest(&getOp, new(req), http.MethodGet)
-if err != nil {
-    log.Fatal(err)
-}
-
-err = reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK)
-if err != nil {
-    log.Fatal(err)
-}
-
-pathItem := reflector.Spec.Paths.MapOfPathItemValues["/things/{id}"]
-pathItem.
-    WithSummary("Path Summary").
-    WithDescription("Path Description")
-
-pathItem.WithOperation(http.MethodPut, putOp).WithOperation(http.MethodGet, getOp)
-
-reflector.Spec.Paths.WithMapOfPathItemValuesItem("/things/{id}", pathItem)
+handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
+handleError(reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK))
+handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
 
 schema, err := json.MarshalIndent(reflector.Spec, "", " ")
 if err != nil {
@@ -90,171 +66,174 @@ if err != nil {
 }
 
 fmt.Println(string(schema))
+```
 
-// Output:
-// {
-//  "openapi": "3.0.2",
-//  "info": {
-//   "title": "Things API",
-//   "description": "Put something here",
-//   "version": "1.2.3"
-//  },
-//  "paths": {
-//   "/things/{id}": {
-//    "summary": "Path Summary",
-//    "description": "Path Description",
-//    "get": {
-//     "parameters": [
-//      {
-//       "name": "locale",
-//       "in": "query",
-//       "schema": {
-//        "pattern": "^[a-z]{2}-[A-Z]{2}$",
-//        "type": "string"
-//       }
-//      },
-//      {
-//       "name": "id",
-//       "in": "path",
-//       "required": true,
-//       "schema": {
-//        "type": "string",
-//        "example": "XXX-XXXXX"
-//       }
-//      }
-//     ],
-//     "responses": {
-//      "200": {
-//       "description": "OK",
-//       "content": {
-//        "application/json": {
-//         "schema": {
-//          "$ref": "#/components/schemas/Openapi3TestResp"
-//         }
-//        }
-//       }
-//      }
-//     }
-//    },
-//    "put": {
-//     "parameters": [
-//      {
-//       "name": "locale",
-//       "in": "query",
-//       "schema": {
-//        "pattern": "^[a-z]{2}-[A-Z]{2}$",
-//        "type": "string"
-//       }
-//      },
-//      {
-//       "name": "id",
-//       "in": "path",
-//       "required": true,
-//       "schema": {
-//        "type": "string",
-//        "example": "XXX-XXXXX"
-//       }
-//      }
-//     ],
-//     "requestBody": {
-//      "content": {
-//       "application/json": {
-//        "schema": {
-//         "$ref": "#/components/schemas/Openapi3TestReq"
-//        }
-//       }
-//      }
-//     },
-//     "responses": {
-//      "200": {
-//       "description": "OK",
-//       "content": {
-//        "application/json": {
-//         "schema": {
-//          "$ref": "#/components/schemas/Openapi3TestResp"
-//         }
-//        }
-//       }
-//      },
-//      "409": {
-//       "description": "Conflict",
-//       "content": {
-//        "application/json": {
-//         "schema": {
-//          "type": "array",
-//          "items": {
-//           "$ref": "#/components/schemas/Openapi3TestResp"
-//          }
-//         }
-//        }
-//       }
-//      }
-//     }
-//    }
-//   }
-//  },
-//  "components": {
-//   "schemas": {
-//    "Openapi3TestReq": {
-//     "type": "object",
-//     "properties": {
-//      "amount": {
-//       "minimum": 0,
-//       "type": "integer"
-//      },
-//      "items": {
-//       "type": "array",
-//       "items": {
-//        "type": "object",
-//        "properties": {
-//         "count": {
-//          "minimum": 0,
-//          "type": "integer"
-//         },
-//         "name": {
-//          "type": "string"
-//         }
-//        }
-//       }
-//      },
-//      "string": {
-//       "type": "string"
-//      }
-//     }
-//    },
-//    "Openapi3TestResp": {
-//     "type": "object",
-//     "properties": {
-//      "amount": {
-//       "minimum": 0,
-//       "type": "integer"
-//      },
-//      "id": {
-//       "type": "string",
-//       "example": "XXX-XXXXX"
-//      },
-//      "items": {
-//       "type": "array",
-//       "items": {
-//        "type": "object",
-//        "properties": {
-//         "count": {
-//          "minimum": 0,
-//          "type": "integer"
-//         },
-//         "name": {
-//          "type": "string"
-//         }
-//        }
-//       }
-//      },
-//      "updated_at": {
-//       "type": "string",
-//       "format": "date-time"
-//      }
-//     }
-//    }
-//   }
-//  }
-// }
+Output:
+
+```json
+{
+ "openapi": "3.0.2",
+ "info": {
+  "title": "Things API",
+  "description": "Put something here",
+  "version": "1.2.3"
+ },
+ "paths": {
+  "/things/{id}": {
+   "summary": "Path Summary",
+   "description": "Path Description",
+   "get": {
+    "parameters": [
+     {
+      "name": "locale",
+      "in": "query",
+      "schema": {
+       "pattern": "^[a-z]{2}-[A-Z]{2}$",
+       "type": "string"
+      }
+     },
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "XXX-XXXXX"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Openapi3TestResp"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "parameters": [
+     {
+      "name": "locale",
+      "in": "query",
+      "schema": {
+       "pattern": "^[a-z]{2}-[A-Z]{2}$",
+       "type": "string"
+      }
+     },
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "example": "XXX-XXXXX"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Openapi3TestReq"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Openapi3TestResp"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Conflict",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Openapi3TestResp"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "Openapi3TestReq": {
+    "type": "object",
+    "properties": {
+     "amount": {
+      "minimum": 0,
+      "type": "integer"
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "count": {
+         "minimum": 0,
+         "type": "integer"
+        },
+        "name": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "string": {
+      "type": "string"
+     }
+    }
+   },
+   "Openapi3TestResp": {
+    "type": "object",
+    "properties": {
+     "amount": {
+      "minimum": 0,
+      "type": "integer"
+     },
+     "id": {
+      "type": "string",
+      "example": "XXX-XXXXX"
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "count": {
+         "minimum": 0,
+         "type": "integer"
+        },
+        "name": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "updated_at": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   }
+  }
+ }
+}
 ```
