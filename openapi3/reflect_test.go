@@ -66,6 +66,8 @@ func (r *Resp) Title() string {
 	return "Sample Response"
 }
 
+var _ jsonschema.Preparer = &Resp{}
+
 func (r *Resp) PrepareJSONSchema(s *jsonschema.Schema) error {
 	s.WithExtraPropertiesItem("x-foo", "bar")
 	return nil

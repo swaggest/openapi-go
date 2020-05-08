@@ -96,7 +96,7 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 		definitionPefix += strings.Title(tag)
 	}
 
-	schema, _ := r.Reflect(input,
+	schema, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPefix),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameTag(tag),
@@ -127,6 +127,9 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 			return false, nil
 		}),
 	)
+	if err != nil {
+		return err
+	}
 
 	schemaOrRef := SchemaOrRef{}
 
