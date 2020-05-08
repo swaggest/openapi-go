@@ -2,13 +2,18 @@
 
 <img align="right" width="250px" src="/resources/logo.png">
 
+This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Schema](https://swagger.io/resources/open-api/) documents.
+
 [![Build Status](https://github.com/swaggest/openapi-go/workflows/test/badge.svg)](https://github.com/swaggest/openapi-go/actions?query=branch%3Amaster+workflow%3Atest)
 [![Coverage Status](https://codecov.io/gh/swaggest/openapi-go/branch/master/graph/badge.svg)](https://codecov.io/gh/swaggest/openapi-go)
 [![GoDevDoc](https://img.shields.io/badge/dev-doc-00ADD8?logo=go)](https://pkg.go.dev/github.com/swaggest/openapi-go)
 ![Code lines](https://sloc.xyz/github/swaggest/openapi-go/?category=code)
 ![Comments](https://sloc.xyz/github/swaggest/openapi-go/?category=comments)
 
-This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Schema](https://swagger.io/resources/open-api/) documents.
+## Features
+
+* Type safe mapping of OpenAPI 3 documents with structures generated from schema.
+* Type and field tag based reflection of Go structures to OpenAPI 3 document.
 
 ## Example
 
