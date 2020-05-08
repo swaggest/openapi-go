@@ -66,6 +66,8 @@ func (r *Resp) Title() string {
 	return "Sample Response"
 }
 
+var _ jsonschema.Preparer = &Resp{}
+
 func (r *Resp) PrepareJSONSchema(s *jsonschema.Schema) error {
 	s.WithExtraPropertiesItem("x-foo", "bar")
 	return nil
@@ -123,7 +125,7 @@ func TestReflector_SetRequest_array(t *testing.T) {
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0640))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0600))
 
 	expected, err := ioutil.ReadFile("_testdata/openapi_req_array.json")
 	require.NoError(t, err)
@@ -149,7 +151,7 @@ func TestReflector_SetRequest(t *testing.T) {
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0640))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0600))
 
 	expected, err := ioutil.ReadFile("_testdata/openapi_req.json")
 	require.NoError(t, err)
@@ -233,7 +235,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	b, err := json.MarshalIndent(s, "", " ")
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0640))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0600))
 
 	expected, err = ioutil.ReadFile("_testdata/openapi.json")
 	require.NoError(t, err)
