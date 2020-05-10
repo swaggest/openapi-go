@@ -23,8 +23,8 @@ func (p *PathItem) WithOperation(method string, operation Operation) *PathItem {
 
 var regexFindPathParameter = regexp.MustCompile(`{([^}:]+)(:[^/]+)?(?:})`)
 
-// AddOperation validates and sets operation by path and method.
-func (s *Spec) AddOperation(method, path string, operation Operation) error {
+// SetupOperation creates operation if it is not present and applies setup functions.
+func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation)) error {
 	method = strings.ToLower(method)
 	pathParametersSubmatches := regexFindPathParameter.FindAllStringSubmatch(path, -1)
 
@@ -36,10 +36,6 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	}
 
 	pathItem := s.Paths.MapOfPathItemValues[path]
-	if _, found := pathItem.MapOfOperationValues[method]; found {
-		return errors.New("operation with method and path already exists")
-	}
-
 	pathParams := map[string]bool{}
 
 	if len(pathParametersSubmatches) > 0 {
@@ -53,6 +49,12 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	}
 
 	var errs []string
+
+	operation := pathItem.MapOfOperationValues[method]
+
+	for _, f := range setup {
+		f(&operation)
+	}
 
 	paramIndex := make(map[string]bool, len(operation.Parameters))
 
@@ -89,4 +91,20 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	s.Paths.WithMapOfPathItemValuesItem(path, pathItem)
 
 	return nil
+}
+
+// AddOperation validates and sets operation by path and method.
+//
+// It will fail if operation with method and path already exists.
+func (s *Spec) AddOperation(method, path string, operation Operation) error {
+	method = strings.ToLower(method)
+	pathItem := s.Paths.MapOfPathItemValues[path]
+
+	if _, found := pathItem.MapOfOperationValues[method]; found {
+		return errors.New("operation with method and path already exists")
+	}
+
+	return s.SetupOperation(method, path, func(op *Operation) {
+		*op = operation
+	})
 }
