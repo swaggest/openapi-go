@@ -112,3 +112,51 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 		return nil
 	})
 }
+
+// WithHTTPBearerSecurity add HTTP Bearer security definition.
+func (s *Spec) WithHTTPBearerSecurity(name, bearerFormat, description string) *Spec {
+	hss := HTTPSecurityScheme{}
+
+	hss.WithScheme("bearer")
+
+	if bearerFormat != "" {
+		hss.WithBearerFormat(bearerFormat)
+	}
+
+	if description != "" {
+		hss.WithDescription(description)
+	}
+
+	s.ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
+		name,
+		SecuritySchemeOrRef{
+			SecurityScheme: &SecurityScheme{
+				HTTPSecurityScheme: &hss,
+			},
+		},
+	)
+
+	return s
+}
+
+// WithHTTPBearerSecurity add HTTP Basic Auth security definition.
+func (s *Spec) WithHTTPBasicSecurity(name, description string) *Spec {
+	hss := HTTPSecurityScheme{}
+
+	hss.WithScheme("basic")
+
+	if description != "" {
+		hss.WithDescription(description)
+	}
+
+	s.ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
+		name,
+		SecuritySchemeOrRef{
+			SecurityScheme: &SecurityScheme{
+				HTTPSecurityScheme: &hss,
+			},
+		},
+	)
+
+	return s
+}
