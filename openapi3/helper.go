@@ -24,7 +24,7 @@ func (p *PathItem) WithOperation(method string, operation Operation) *PathItem {
 var regexFindPathParameter = regexp.MustCompile(`{([^}:]+)(:[^/]+)?(?:})`)
 
 // SetupOperation creates operation if it is not present and applies setup functions.
-func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation)) error {
+func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) error) error {
 	method = strings.ToLower(method)
 	pathParametersSubmatches := regexFindPathParameter.FindAllStringSubmatch(path, -1)
 
@@ -53,7 +53,10 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation)) er
 	operation := pathItem.MapOfOperationValues[method]
 
 	for _, f := range setup {
-		f(&operation)
+		err := f(&operation)
+		if err != nil {
+			return err
+		}
 	}
 
 	paramIndex := make(map[string]bool, len(operation.Parameters))
@@ -104,7 +107,8 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 		return errors.New("operation with method and path already exists")
 	}
 
-	return s.SetupOperation(method, path, func(op *Operation) {
+	return s.SetupOperation(method, path, func(op *Operation) error {
 		*op = operation
+		return nil
 	})
 }
