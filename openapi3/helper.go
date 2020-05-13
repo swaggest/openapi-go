@@ -113,7 +113,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	})
 }
 
-// WithHTTPBearerSecurity add HTTP Bearer security definition.
+// WithHTTPBearerSecurity adds HTTP Bearer security definition.
 func (s *Spec) WithHTTPBearerSecurity(name, bearerFormat, description string) *Spec {
 	hss := HTTPSecurityScheme{}
 
@@ -139,7 +139,7 @@ func (s *Spec) WithHTTPBearerSecurity(name, bearerFormat, description string) *S
 	return s
 }
 
-// WithHTTPBearerSecurity add HTTP Basic Auth security definition.
+// WithHTTPBasicSecurity adds HTTP Basic Auth security definition.
 func (s *Spec) WithHTTPBasicSecurity(name, description string) *Spec {
 	hss := HTTPSecurityScheme{}
 
