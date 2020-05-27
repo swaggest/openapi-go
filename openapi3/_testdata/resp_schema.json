@@ -53,15 +53,13 @@
             "additionalProperties": {},
             "type": "object"
           },
-          "nullableWhatever": {
-            "type": "null"
-          },
+          "nullableWhatever": {},
           "parent": {
             "$ref": "#/components/schemas/Openapi3TestResp"
           },
           "recursiveArray": {
             "items": {
-              "$ref": "#/components/schemas/Openapi3TestWeirdResp"
+              "$ref": "#/components/schemas/Openapi3TestResp"
             },
             "type": "array"
           },
@@ -85,78 +83,6 @@
         ],
         "type": "string",
         "format": "uuid"
-      },
-      "Openapi3TestWeirdResp": {
-        "title": "Sample Response",
-        "description": "This is a sample response.",
-        "properties": {
-          "arrayOfAnything": {
-            "items": {},
-            "type": "array"
-          },
-          "customType": {
-            "$ref": "#/components/schemas/Openapi3TestISOWeek"
-          },
-          "field1": {
-            "type": "integer"
-          },
-          "field2": {
-            "type": "string"
-          },
-          "info": {
-            "required": [
-              "foo"
-            ],
-            "properties": {
-              "bar": {
-                "description": "This is Bar.",
-                "type": "number"
-              },
-              "foo": {
-                "pattern": "\\d+",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "map": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "type": "object"
-          },
-          "mapOfAnything": {
-            "additionalProperties": {},
-            "type": "object"
-          },
-          "nullableWhatever": {
-            "type": "null"
-          },
-          "parent": {
-            "$ref": "#/components/schemas/Openapi3TestResp"
-          },
-          "recursiveArray": {
-            "items": {
-              "$ref": "#/components/schemas/Openapi3TestWeirdResp"
-            },
-            "type": "array"
-          },
-          "recursiveStructArray": {
-            "items": {
-              "$ref": "#/components/schemas/Openapi3TestResp"
-            },
-            "type": "array"
-          },
-          "uuid": {
-            "$ref": "#/components/schemas/Openapi3TestUUID"
-          },
-          "whatever": {}
-        },
-        "type": [
-          "object",
-          "null"
-        ],
-        "x-foo": "bar"
       }
     }
   }

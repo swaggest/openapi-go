@@ -69,6 +69,8 @@ github.com/swaggest/swgen v0.6.20 h1:mGg20AJQu18lkx5NfqCJ9rRpAZjMc4QlXVOIS3JB1Ck
 github.com/swaggest/swgen v0.6.20/go.mod h1:ipkZNfwztgRfbOWUllLZawfmxXprT8flqNJO9XhoMwM=
 github.com/swaggest/swgen v0.6.22 h1:vSlCN58I2wLh8i9vcXB0mOkMy8dkVulkw4Rti6HI/9k=
 github.com/swaggest/swgen v0.6.22/go.mod h1:gj2yCLONy3kosKjwRtQeT5O9qqlhUvXAiDnbVwBUNFM=
+github.com/swaggest/swgen v0.6.23 h1:9COrDC1o34xJS0NeQ2js7qGfo/Rgs16xWT0pQRvGNyY=
+github.com/swaggest/swgen v0.6.23/go.mod h1:gj2yCLONy3kosKjwRtQeT5O9qqlhUvXAiDnbVwBUNFM=
 github.com/yudai/gojsondiff v1.0.0 h1:27cbfqXLVEJ1o8I6v3y9lg8Ydm53EKqHXAOMxEGlCOA=
 github.com/yudai/gojsondiff v1.0.0/go.mod h1:AY32+k2cwILAkW1fbgxQ5mUmMiZFgLIV+FBNExI05xg=
 github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 h1:BHyfKlQyqbsFN5p3IfnEUduWvb9is428/nNb5L3U01M=
