@@ -217,6 +217,9 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 		Schema.ToJSONSchema(s)
 	jsb, err = json.MarshalIndent(js, "", " ")
 	require.NoError(t, err)
+
+	require.NoError(t, ioutil.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0600))
+
 	expected, err = ioutil.ReadFile("_testdata/resp_schema.json")
 	require.NoError(t, err)
 	assertjson.Equal(t, expected, jsb, string(jsb))
