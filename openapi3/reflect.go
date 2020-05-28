@@ -225,8 +225,7 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 	res := make(map[string]HeaderOrRef)
 
 	_, err := r.Reflect(output,
-		jsonschema.DefinitionsPrefix("#/components/schemas/header"),
-		jsonschema.CollectDefinitions(r.collectDefinition),
+		jsonschema.InlineRefs,
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
