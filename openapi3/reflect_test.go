@@ -46,14 +46,14 @@ type Resp struct {
 		Foo string  `json:"foo" default:"baz" required:"true" pattern:"\\d+"`
 		Bar float64 `json:"bar" description:"This is Bar."`
 	} `json:"info"`
-	Parent               *Resp                  `json:"parent"`
-	Map                  map[string]int64       `json:"map"`
-	MapOfAnything        map[string]interface{} `json:"mapOfAnything"`
-	ArrayOfAnything      []interface{}          `json:"arrayOfAnything"`
+	Parent               *Resp                  `json:"parent,omitempty"`
+	Map                  map[string]int64       `json:"map,omitempty"`
+	MapOfAnything        map[string]interface{} `json:"mapOfAnything,omitempty"`
+	ArrayOfAnything      []interface{}          `json:"arrayOfAnything,omitempty"`
 	Whatever             interface{}            `json:"whatever"`
 	NullableWhatever     *interface{}           `json:"nullableWhatever,omitempty"`
-	RecursiveArray       []WeirdResp            `json:"recursiveArray"`
-	RecursiveStructArray []Resp                 `json:"recursiveStructArray"`
+	RecursiveArray       []WeirdResp            `json:"recursiveArray,omitempty"`
+	RecursiveStructArray []Resp                 `json:"recursiveStructArray,omitempty"`
 	CustomType           ISOWeek                `json:"customType"`
 	UUID                 UUID                   `json:"uuid"`
 }

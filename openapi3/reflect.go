@@ -169,6 +169,10 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 			s := SchemaOrRef{}
 			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
+			if s.Schema != nil && s.Schema.Nullable != nil {
+				s.Schema.Nullable = nil
+			}
+
 			p := Parameter{
 				Name:        name,
 				In:          in,
