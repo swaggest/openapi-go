@@ -14,7 +14,8 @@
         "type": "array",
         "items": {
          "$ref": "#/components/schemas/Openapi3TestGetReq"
-        }
+        },
+        "nullable": true
        }
       }
      }

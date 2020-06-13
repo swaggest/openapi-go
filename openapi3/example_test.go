@@ -31,7 +31,7 @@ func ExampleReflector_SetJSONResponse() {
 		Items  []struct {
 			Count uint   `json:"count"`
 			Name  string `json:"name"`
-		} `json:"items"`
+		} `json:"items,omitempty"`
 	}
 
 	type resp struct {
@@ -40,7 +40,7 @@ func ExampleReflector_SetJSONResponse() {
 		Items  []struct {
 			Count uint   `json:"count"`
 			Name  string `json:"name"`
-		} `json:"items"`
+		} `json:"items,omitempty"`
 		UpdatedAt time.Time `json:"updated_at"`
 	}
 
