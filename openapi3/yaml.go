@@ -30,7 +30,7 @@ func (s *Spec) UnmarshalYAML(data []byte) error {
 
 // MarshalYAML produces YAML bytes.
 func (s *Spec) MarshalYAML() ([]byte, error) {
-	//return ya.Marshal(s)
+	// return ya.Marshal(s)
 	jsonData, err := s.MarshalJSON()
 	if err != nil {
 		return nil, err

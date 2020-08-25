@@ -85,19 +85,19 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	}
 
 	// JSON can be a map or array without field tags.
-	if !hasTaggedFields && !refl.IsSliceOrMap(input) {
+	if !hasTaggedFields && !refl.IsSliceOrMap(input) && refl.FindEmbeddedSliceOrMap(input) == nil {
 		return nil
 	}
 
 	hasFileUpload := false
-	definitionPefix := ""
+	definitionPrefix := ""
 
 	if tag != tagJSON {
-		definitionPefix += strings.Title(tag)
+		definitionPrefix += strings.Title(tag)
 	}
 
 	schema, err := r.Reflect(input,
-		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPefix),
+		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPrefix),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameTag(tag),
 		jsonschema.InterceptType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
@@ -121,6 +121,7 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 				s.WithFormat("binary")
 
 				hasFileUpload = true
+
 				return true, nil
 			}
 
@@ -144,7 +145,7 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 
 		s.FromJSONSchema(def)
 
-		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(definitionPefix+name, s)
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(definitionPrefix+name, s)
 	}
 
 	if mime == mimeFormUrlencoded && hasFileUpload {
@@ -165,6 +166,7 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameTag(string(in)),
+		jsonschema.SkipEmbeddedMapsSlices,
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
 			s.FromJSONSchema(propertySchema.ToSchemaOrBool())

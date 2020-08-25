@@ -70,6 +70,7 @@ var _ jsonschema.Preparer = &Resp{}
 
 func (r *Resp) PrepareJSONSchema(s *jsonschema.Schema) error {
 	s.WithExtraPropertiesItem("x-foo", "bar")
+
 	return nil
 }
 
@@ -244,4 +245,78 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
+}
+
+type Identity struct {
+	ID string `path:"id"`
+}
+
+type Data []string
+
+type PathParamAndBody struct {
+	Identity
+	Data
+}
+
+func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new(PathParamAndBody), http.MethodPost)
+	assert.NoError(t, err)
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{id}", op))
+
+	b, err := json.MarshalIndent(s, "", " ")
+	assert.NoError(t, err)
+
+	expected := []byte(`{
+        	            	 "openapi": "3.0.2",
+        	            	 "info": {
+        	            	  "title": "SampleAPI",
+        	            	  "version": "1.2.3"
+        	            	 },
+        	            	 "paths": {
+        	            	  "/somewhere/{id}": {
+        	            	   "post": {
+        	            	    "parameters": [
+        	            	     {
+        	            	      "name": "id",
+        	            	      "in": "path",
+        	            	      "required": true,
+        	            	      "schema": {
+        	            	       "type": "string"
+        	            	      }
+        	            	     }
+        	            	    ],
+        	            	    "requestBody": {
+        	            	     "content": {
+        	            	      "application/json": {
+        	            	       "schema": {
+        	            	        "$ref": "#/components/schemas/Openapi3TestPathParamAndBody"
+        	            	       }
+        	            	      }
+        	            	     }
+        	            	    },
+        	            	    "responses": {}
+        	            	   }
+        	            	  }
+        	            	 },
+        	            	 "components": {
+        	            	  "schemas": {
+        	            	   "Openapi3TestPathParamAndBody": {
+        	            	    "type": "array",
+        	            	    "items": {
+        	            	     "type": "string"
+        	            	    },
+        	            	    "nullable": true
+        	            	   }
+        	            	  }
+        	            	 }
+        	            	}`)
+
+	assertjson.Equal(t, expected, b, string(b))
 }
