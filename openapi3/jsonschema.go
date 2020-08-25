@@ -179,12 +179,14 @@ func (s *SchemaOrRef) toJSONSchema(ctx toJSONSchemaContext) jsonschema.SchemaOrB
 func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	if schema.TypeBoolean != nil {
 		s.fromBool(*schema.TypeBoolean)
+
 		return
 	}
 
 	js := schema.TypeObject
 	if js.Ref != nil {
 		s.SchemaReference = &SchemaReference{Ref: *js.Ref}
+
 		return
 	}
 

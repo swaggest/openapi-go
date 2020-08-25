@@ -68,11 +68,13 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 
 		if found := paramIndex[p.Parameter.Name+string(p.Parameter.In)]; found {
 			errs = append(errs, "duplicate parameter in "+string(p.Parameter.In)+": "+p.Parameter.Name)
+
 			continue
 		}
 
 		if found := pathParams[p.Parameter.Name]; !found && p.Parameter.In == ParameterInPath {
 			errs = append(errs, "missing path parameter placeholder in url: "+p.Parameter.Name)
+
 			continue
 		}
 
@@ -109,6 +111,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 
 	return s.SetupOperation(method, path, func(op *Operation) error {
 		*op = operation
+
 		return nil
 	})
 }
