@@ -69,11 +69,19 @@ const (
 	mimeMultipart      = "multipart/form-data"
 )
 
+// RequestBodyEnforcer enables request body for GET and HEAD methods.
+//
+// Should be implemented on input structure, function body can be empty.
+type RequestBodyEnforcer interface {
+	ForceRequestBody()
+}
+
 func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
 	httpMethod = strings.ToUpper(httpMethod)
+	_, forceRequestBody := input.(RequestBodyEnforcer)
 
 	// GET and HEAD requests should not have body.
-	if httpMethod == http.MethodGet || httpMethod == http.MethodHead {
+	if (httpMethod == http.MethodGet || httpMethod == http.MethodHead) && !forceRequestBody {
 		return nil
 	}
 
