@@ -320,3 +320,70 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 
 	assertjson.Equal(t, expected, b, string(b))
 }
+
+type WithReqBody PathParamAndBody
+
+func (*WithReqBody) ForceRequestBody() {}
+
+func TestRequestBodyEnforcer(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new(WithReqBody), http.MethodGet)
+	assert.NoError(t, err)
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{id}", op))
+
+	b, err := json.MarshalIndent(s, "", " ")
+	assert.NoError(t, err)
+
+	expected := []byte(`{
+        	            	 "openapi": "3.0.2",
+        	            	 "info": {
+        	            	  "title": "SampleAPI",
+        	            	  "version": "1.2.3"
+        	            	 },
+        	            	 "paths": {
+        	            	  "/somewhere/{id}": {
+        	            	   "get": {
+        	            	    "parameters": [
+        	            	     {
+        	            	      "name": "id",
+        	            	      "in": "path",
+        	            	      "required": true,
+        	            	      "schema": {
+        	            	       "type": "string"
+        	            	      }
+        	            	     }
+        	            	    ],
+        	            	    "requestBody": {
+        	            	     "content": {
+        	            	      "application/json": {
+        	            	       "schema": {
+        	            	        "$ref": "#/components/schemas/Openapi3TestWithReqBody"
+        	            	       }
+        	            	      }
+        	            	     }
+        	            	    },
+        	            	    "responses": {}
+        	            	   }
+        	            	  }
+        	            	 },
+        	            	 "components": {
+        	            	  "schemas": {
+        	            	   "Openapi3TestWithReqBody": {
+        	            	    "type": "array",
+        	            	    "items": {
+        	            	     "type": "string"
+        	            	    },
+        	            	    "nullable": true
+        	            	   }
+        	            	  }
+        	            	 }
+        	            	}`)
+
+	assertjson.Equal(t, expected, b, string(b))
+}
