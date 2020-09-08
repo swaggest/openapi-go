@@ -34,4 +34,5 @@ issues:
     - linters:
         - gomnd
         - goconst
+        - dupl
       path: "_test.go"
