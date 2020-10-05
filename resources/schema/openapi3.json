@@ -271,6 +271,14 @@
       "additionalProperties": false
     },
     "SchemaOrRef": {
+      "examples": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/components/schemas/Foo"
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/Schema"
@@ -281,6 +289,11 @@
       ]
     },
     "SchemaReference": {
+      "examples": [
+        {
+          "$ref": "#/components/schemas/Foo"
+        }
+      ],
       "type": "object",
       "required": [
         "$ref"
@@ -518,6 +531,9 @@
       "additionalProperties": false
     },
     "ResponseReference": {
+      "examples": [
+        {"$ref": "#/components/responses/Foo"}
+      ],
       "type": "object",
       "required": [
         "$ref"
@@ -541,6 +557,19 @@
       }
     },
     "ResponseOrRef": {
+      "examples": [
+        {"$ref": "#/components/responses/Foo"},
+        {
+          "description": "This is a sample response.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Foo"
+              }
+            }
+          }
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/ResponseReference"
@@ -551,6 +580,18 @@
       ]
     },
     "Response": {
+      "examples": [
+        {
+          "description": "This is a sample response.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Foo"
+              }
+            }
+          }
+        }
+      ],
       "type": "object",
       "required": [
         "description"
@@ -585,6 +626,13 @@
       "additionalProperties": false
     },
     "MediaType": {
+      "examples": [
+        {
+          "schema": {
+            "$ref": "#/components/schemas/Foo"
+          }
+        }
+      ],
       "type": "object",
       "properties": {
         "schema": {
@@ -617,6 +665,16 @@
       ]
     },
     "ExampleOrRef": {
+      "examples": [
+        {
+          "summary": "An Example",
+          "description": "This is an example.",
+          "value": "foo"
+        },
+        {
+          "$ref": "#/components/examples/Foo"
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/ExampleReference"
@@ -627,6 +685,7 @@
       ]
     },
     "ExampleReference": {
+      "examples": [{"$ref": "#/components/examples/Foo"}],
       "type": "object",
       "required": [
         "$ref"
@@ -650,6 +709,13 @@
       }
     },
     "Example": {
+      "examples": [
+        {
+          "summary": "An Example",
+          "description": "This is an example.",
+          "value": "foo"
+        }
+      ],
       "type": "object",
       "properties": {
         "summary": {
@@ -672,6 +738,16 @@
       "additionalProperties": false
     },
     "HeaderOrRef": {
+      "examples": [
+        {"$ref": "#/components/headers/Foo"},
+        {
+          "style": "simple",
+          "schema": {
+            "type": "string",
+            "description": "Sample header response."
+          }
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/HeaderReference"
@@ -682,6 +758,7 @@
       ]
     },
     "HeaderReference": {
+      "examples": [{"$ref": "#/components/headers/Foo"}],
       "type": "object",
       "required": [
         "$ref"
@@ -705,6 +782,15 @@
       }
     },
     "Header": {
+      "examples": [
+        {
+          "style": "simple",
+          "schema": {
+            "type": "string",
+            "description": "Sample header response."
+          }
+        }
+      ],
       "type": "object",
       "properties": {
         "description": {
@@ -960,25 +1046,79 @@
       }
     },
     "SchemaXORContent": {
+      "examples": [
+        {
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Foo"
+              }
+            }
+          }
+        }
+      ],
       "description": "Schema and content are mutually exclusive, at least one is required",
       "not": {
+        "examples": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Foo"
+                }
+              }
+            }
+          }
+        ],
         "required": [
           "schema",
           "content"
-        ]
+        ],
+        "properties": {
+          "schema": {},
+          "content": {}
+        }
       },
       "oneOf": [
         {
+          "examples": [
+            {"schema": {"type": "string"}}
+          ],
           "title": "Has Schema",
           "required": [
             "schema"
-          ]
+          ],
+          "properties": {
+            "schema": {}
+          }
         },
         {
+          "examples": [
+            {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Foo"
+                  }
+                }
+              }
+            }
+          ],
           "title": "Has Content",
           "required": [
             "content"
           ],
+          "properties": {
+            "content": {}
+          },
           "description": "Some properties are not allowed if content is present",
           "allOf": [
             {
@@ -1021,6 +1161,19 @@
       ]
     },
     "ParameterOrRef": {
+      "examples": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/Foo"
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/ParameterReference"
@@ -1031,6 +1184,11 @@
       ]
     },
     "ParameterReference": {
+      "examples": [
+        {
+          "$ref": "#/components/parameters/Foo"
+        }
+      ],
       "type": "object",
       "required": [
         "$ref"
@@ -1054,6 +1212,16 @@
       }
     },
     "Parameter": {
+      "examples": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
       "type": "object",
       "properties": {
         "name": {
@@ -1061,7 +1229,12 @@
         },
         "in": {
           "type": "string",
-          "enum": ["path", "query", "header", "cookie"]
+          "enum": [
+            "path",
+            "query",
+            "header",
+            "cookie"
+          ]
         },
         "description": {
           "type": "string"
@@ -1216,6 +1389,18 @@
       ]
     },
     "RequestBodyOrRef": {
+      "examples": [
+        {"$ref": "#/components/requestBodies/Foo"},
+        {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Foo"
+              }
+            }
+          }
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/RequestBodyReference"
@@ -1226,6 +1411,7 @@
       ]
     },
     "RequestBodyReference": {
+      "examples": [{"$ref": "#/components/requestBodies/Foo"}],
       "type": "object",
       "required": [
         "$ref"
@@ -1249,6 +1435,17 @@
       }
     },
     "RequestBody": {
+      "examples": [
+        {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Foo"
+              }
+            }
+          }
+        }
+      ],
       "type": "object",
       "required": [
         "content"
@@ -1275,6 +1472,14 @@
       "additionalProperties": false
     },
     "SecuritySchemeOrRef": {
+      "examples": [
+        {"$ref": "#/components/securitySchemes/Foo"},
+        {
+          "type": "http",
+          "scheme": "basic",
+          "description": "Admin access"
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/SecuritySchemeReference"
@@ -1285,6 +1490,9 @@
       ]
     },
     "SecuritySchemeReference": {
+      "examples": [
+        {"$ref": "#/components/securitySchemes/Foo"}
+      ],
       "type": "object",
       "required": [
         "$ref"
@@ -1308,6 +1516,13 @@
       }
     },
     "SecurityScheme": {
+      "examples": [
+        {
+          "type": "http",
+          "scheme": "basic",
+          "description": "Admin access"
+        }
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/APIKeySecurityScheme"
@@ -1608,6 +1823,10 @@
       "additionalProperties": false
     },
     "LinkOrRef": {
+      "examples": [
+        {"$ref": "#/components/links/Foo"},
+        {"operationId": "foo"}
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/LinkReference"
@@ -1618,6 +1837,7 @@
       ]
     },
     "LinkReference": {
+      "examples": [{"$ref": "#/components/links/Foo"}],
       "type": "object",
       "required": [
         "$ref"
@@ -1641,6 +1861,7 @@
       }
     },
     "Link": {
+      "examples": [{"operationId": "foo"}],
       "type": "object",
       "properties": {
         "operationId": {
@@ -1670,14 +1891,25 @@
       },
       "additionalProperties": false,
       "not": {
+        "examples": [
+          {"operationId": "foo", "operationRef": "bar"}
+        ],
         "description": "Operation Id and Operation Ref are mutually exclusive",
         "required": [
           "operationId",
           "operationRef"
-        ]
+        ],
+        "properties": {
+          "operationId": {},
+          "operationRef": {}
+        }
       }
     },
     "CallbackOrRef": {
+      "examples": [
+        {"$ref": "#/components/callbacks/Foo"},
+        {"foo": {"$ref": "#/paths/~1foo"}}
+      ],
       "oneOf": [
         {
           "$ref": "#/definitions/CallbackReference"
@@ -1688,6 +1920,9 @@
       ]
     },
     "CallbackReference": {
+      "examples": [
+        {"$ref": "#/components/callbacks/Foo"}
+      ],
       "type": "object",
       "required": [
         "$ref"
