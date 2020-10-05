@@ -1,90 +1,90 @@
 {
- "$ref": "#/components/schemas/Openapi3TestResp",
- "components": {
-  "schemas": {
-   "Openapi3TestISOWeek": {
-    "description": "ISO Week",
-    "examples": [
-     "2006-W43"
-    ],
-    "pattern": "^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$",
-    "type": "string"
-   },
-   "Openapi3TestResp": {
-    "title": "Sample Response",
-    "description": "This is a sample response.",
-    "properties": {
-     "arrayOfAnything": {
-      "items": {},
-      "type": "array"
-     },
-     "customType": {
-      "$ref": "#/components/schemas/Openapi3TestISOWeek"
-     },
-     "field1": {
-      "type": "integer"
-     },
-     "field2": {
-      "type": "string"
-     },
-     "info": {
-      "required": [
-       "foo"
-      ],
-      "properties": {
-       "bar": {
-        "description": "This is Bar.",
-        "type": "number"
-       },
-       "foo": {
-        "default": "baz",
-        "pattern": "\\d+",
+  "$ref": "#/components/schemas/Openapi3TestResp",
+  "components": {
+    "schemas": {
+      "Openapi3TestISOWeek": {
+        "description": "ISO Week",
+        "examples": [
+          "2006-W43"
+        ],
+        "pattern": "^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$",
         "type": "string"
-       }
       },
-      "type": "object"
-     },
-     "map": {
-      "additionalProperties": {
-       "type": "integer"
+      "Openapi3TestResp": {
+        "title": "Sample Response",
+        "description": "This is a sample response.",
+        "properties": {
+          "arrayOfAnything": {
+            "items": {},
+            "type": "array"
+          },
+          "customType": {
+            "$ref": "#/components/schemas/Openapi3TestISOWeek"
+          },
+          "field1": {
+            "type": "integer"
+          },
+          "field2": {
+            "type": "string"
+          },
+          "info": {
+            "required": [
+              "foo"
+            ],
+            "properties": {
+              "bar": {
+                "description": "This is Bar.",
+                "type": "number"
+              },
+              "foo": {
+                "default": "baz",
+                "pattern": "\\d+",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "map": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "mapOfAnything": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "nullableWhatever": {},
+          "parent": {
+            "$ref": "#/components/schemas/Openapi3TestResp"
+          },
+          "recursiveArray": {
+            "items": {
+              "$ref": "#/components/schemas/Openapi3TestResp"
+            },
+            "type": "array"
+          },
+          "recursiveStructArray": {
+            "items": {
+              "$ref": "#/components/schemas/Openapi3TestResp"
+            },
+            "type": "array"
+          },
+          "uuid": {
+            "$ref": "#/components/schemas/Openapi3TestUUID"
+          },
+          "whatever": {}
+        },
+        "type": "object",
+        "x-foo": "bar"
       },
-      "type": "object"
-     },
-     "mapOfAnything": {
-      "additionalProperties": {},
-      "type": "object"
-     },
-     "nullableWhatever": {},
-     "parent": {
-      "$ref": "#/components/schemas/Openapi3TestResp"
-     },
-     "recursiveArray": {
-      "items": {
-       "$ref": "#/components/schemas/Openapi3TestResp"
-      },
-      "type": "array"
-     },
-     "recursiveStructArray": {
-      "items": {
-       "$ref": "#/components/schemas/Openapi3TestResp"
-      },
-      "type": "array"
-     },
-     "uuid": {
-      "$ref": "#/components/schemas/Openapi3TestUUID"
-     },
-     "whatever": {}
-    },
-    "type": "object",
-    "x-foo": "bar"
-   },
-   "Openapi3TestUUID": {
-    "examples": [
-     "248df4b7-aa70-47b8-a036-33ac447e668d"
-    ],
-    "type": "string",
-    "format": "uuid"
-   }
+      "Openapi3TestUUID": {
+        "examples": [
+          "248df4b7-aa70-47b8-a036-33ac447e668d"
+        ],
+        "type": "string",
+        "format": "uuid"
+      }
+    }
   }
- }
 }
