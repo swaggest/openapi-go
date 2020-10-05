@@ -65,7 +65,7 @@
     ],
     "responses": {
      "200": {
-      "description": "OK",
+      "description": "This is a sample response.",
       "headers": {
        "X-Header-Field": {
         "style": "simple",
@@ -212,7 +212,7 @@
     },
     "responses": {
      "200": {
-      "description": "OK",
+      "description": "This is a sample response.",
       "headers": {
        "X-Header-Field": {
         "style": "simple",
@@ -333,7 +333,8 @@
        },
        "foo": {
         "pattern": "\\d+",
-        "type": "string"
+        "type": "string",
+        "default": "baz"
        }
       }
      },

@@ -37,6 +37,7 @@
                 "type": "number"
               },
               "foo": {
+                "default": "baz",
                 "pattern": "\\d+",
                 "type": "string"
               }
