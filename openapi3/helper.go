@@ -3,7 +3,9 @@ package openapi3
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -107,6 +109,15 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 
 	if _, found := pathItem.MapOfOperationValues[method]; found {
 		return errors.New("operation with method and path already exists")
+	}
+
+	// Add "No Content" response if there are no responses configured.
+	if len(operation.Responses.MapOfResponseOrRefValues) == 0 {
+		operation.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(http.StatusNoContent), ResponseOrRef{
+			Response: &Response{
+				Description: http.StatusText(http.StatusNoContent),
+			},
+		})
 	}
 
 	return s.SetupOperation(method, path, func(op *Operation) error {

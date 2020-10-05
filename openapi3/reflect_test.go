@@ -270,53 +270,27 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 	s.Info.Version = apiVersion
 	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{id}", op))
 
-	b, err := json.MarshalIndent(s, "", " ")
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 100)
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-        	            	 "openapi": "3.0.2",
-        	            	 "info": {
-        	            	  "title": "SampleAPI",
-        	            	  "version": "1.2.3"
-        	            	 },
-        	            	 "paths": {
-        	            	  "/somewhere/{id}": {
-        	            	   "post": {
-        	            	    "parameters": [
-        	            	     {
-        	            	      "name": "id",
-        	            	      "in": "path",
-        	            	      "required": true,
-        	            	      "schema": {
-        	            	       "type": "string"
-        	            	      }
-        	            	     }
-        	            	    ],
-        	            	    "requestBody": {
-        	            	     "content": {
-        	            	      "application/json": {
-        	            	       "schema": {
-        	            	        "$ref": "#/components/schemas/Openapi3TestPathParamAndBody"
-        	            	       }
-        	            	      }
-        	            	     }
-        	            	    },
-        	            	    "responses": {}
-        	            	   }
-        	            	  }
-        	            	 },
-        	            	 "components": {
-        	            	  "schemas": {
-        	            	   "Openapi3TestPathParamAndBody": {
-        	            	    "type": "array",
-        	            	    "items": {
-        	            	     "type": "string"
-        	            	    },
-        	            	    "nullable": true
-        	            	   }
-        	            	  }
-        	            	 }
-        	            	}`)
+	 "openapi":"3.0.2",
+	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "paths":{
+	  "/somewhere/{id}":{
+	   "post":{
+		"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+		"requestBody":{
+		 "content":{"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestPathParamAndBody"}}}
+		},
+		"responses":{"204":{"description":"No Content"}}
+	   }
+	  }
+	 },
+	 "components":{
+	  "schemas":{"Openapi3TestPathParamAndBody":{"type":"array","items":{"type":"string"},"nullable":true}}
+	 }
+	}`)
 
 	assertjson.Equal(t, expected, b, string(b))
 }
@@ -337,53 +311,144 @@ func TestRequestBodyEnforcer(t *testing.T) {
 	s.Info.Version = apiVersion
 	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{id}", op))
 
-	b, err := json.MarshalIndent(s, "", " ")
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-        	            	 "openapi": "3.0.2",
-        	            	 "info": {
-        	            	  "title": "SampleAPI",
-        	            	  "version": "1.2.3"
-        	            	 },
-        	            	 "paths": {
-        	            	  "/somewhere/{id}": {
-        	            	   "get": {
-        	            	    "parameters": [
-        	            	     {
-        	            	      "name": "id",
-        	            	      "in": "path",
-        	            	      "required": true,
-        	            	      "schema": {
-        	            	       "type": "string"
-        	            	      }
-        	            	     }
-        	            	    ],
-        	            	    "requestBody": {
-        	            	     "content": {
-        	            	      "application/json": {
-        	            	       "schema": {
-        	            	        "$ref": "#/components/schemas/Openapi3TestWithReqBody"
-        	            	       }
-        	            	      }
-        	            	     }
-        	            	    },
-        	            	    "responses": {}
-        	            	   }
-        	            	  }
-        	            	 },
-        	            	 "components": {
-        	            	  "schemas": {
-        	            	   "Openapi3TestWithReqBody": {
-        	            	    "type": "array",
-        	            	    "items": {
-        	            	     "type": "string"
-        	            	    },
-        	            	    "nullable": true
-        	            	   }
-        	            	  }
-        	            	 }
-        	            	}`)
+	 "openapi":"3.0.2",
+	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "paths":{
+	  "/somewhere/{id}":{
+	   "get":{
+		"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+		"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestWithReqBody"}}}},
+		"responses":{"204":{"description":"No Content"}}
+	   }
+	  }
+	 },
+	 "components":{"schemas":{"Openapi3TestWithReqBody":{"type":"array","items":{"type":"string"},"nullable":true}}}
+	}`)
+
+	assertjson.Equal(t, expected, b, string(b))
+}
+
+func TestReflector_SetupResponse(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	op := openapi3.Operation{}
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+
+	require.NoError(t, reflector.SetupResponse(openapi3.OperationContext{
+		Operation:  &op,
+		HTTPStatus: http.StatusNoContent,
+		Output: new(struct {
+			Val1 int
+			Val2 string
+		}),
+		RespHeaderMapping: map[string]string{
+			"Val1": "X-Value-1",
+			"Val2": "X-Value-2",
+		},
+	}))
+	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere", op))
+
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
+	assert.NoError(t, err)
+
+	expected := []byte(`{
+	 "openapi":"3.0.2",
+	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "paths":{
+	  "/somewhere":{
+	   "get":{
+		"responses":{
+		 "204":{
+		  "description":"No Content",
+		  "headers":{
+		   "X-Value-1":{"style":"simple","schema":{"type":"integer"}},
+		   "X-Value-2":{"style":"simple","schema":{"type":"string"}}
+		  }
+		 }
+		}
+	   }
+	  }
+	 }
+	}`)
+
+	assertjson.Equal(t, expected, b, string(b))
+}
+
+func TestReflector_SetupRequest(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	op := openapi3.Operation{}
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+
+	require.NoError(t, reflector.SetupRequest(openapi3.OperationContext{
+		Operation:  &op,
+		HTTPMethod: http.MethodPost,
+		Input: new(struct {
+			Val1 int
+			Val2 string
+			Val3 float64
+			Val4 bool
+			Val5 string
+			Val6 multipart.File
+		}),
+		ReqHeaderMapping: map[string]string{
+			"Val1": "X-Value-1",
+		},
+		ReqQueryMapping: map[string]string{
+			"Val2": "value_2",
+		},
+		ReqFormDataMapping: map[string]string{
+			"Val3": "value3",
+			"Val6": "upload6",
+		},
+		ReqPathMapping: map[string]string{
+			"Val4": "value-4",
+		},
+		ReqCookieMapping: map[string]string{
+			"Val5": "value_5",
+		},
+	}))
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{value-4}", op))
+
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
+	assert.NoError(t, err)
+
+	expected := []byte(`{
+	 "openapi":"3.0.2",
+	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "paths":{
+	  "/somewhere/{value-4}":{
+	   "post":{
+		"parameters":[
+		 {"name":"value_2","in":"query","schema":{"type":"string"}},
+		 {"name":"value-4","in":"path","required":true,"schema":{"type":"boolean"}},
+		 {"name":"value_5","in":"cookie","schema":{"type":"string"}},
+		 {"name":"X-Value-1","in":"header","schema":{"type":"integer"}}
+		],
+		"requestBody":{
+		 "content":{
+		  "multipart/form-data":{
+		   "schema":{
+			"type":"object",
+			"properties":{"upload6":{"$ref":"#/components/schemas/FormDataMultipartFile"},"value3":{"type":"number"}}
+		   }
+		  }
+		 }
+		},
+		"responses":{"204":{"description":"No Content"}}
+	   }
+	  }
+	 },
+	 "components":{"schemas":{"FormDataMultipartFile":{"type":"string","format":"binary","nullable":true}}}
+	}`)
 
 	assertjson.Equal(t, expected, b, string(b))
 }

@@ -44,16 +44,42 @@ func (r *Reflector) SpecEns() *Spec {
 	return r.Spec
 }
 
+// OperationContext describes operation.
+type OperationContext struct {
+	Operation  *Operation
+	Input      interface{}
+	HTTPMethod string
+
+	ReqQueryMapping    map[string]string
+	ReqPathMapping     map[string]string
+	ReqCookieMapping   map[string]string
+	ReqHeaderMapping   map[string]string
+	ReqFormDataMapping map[string]string
+
+	Output            interface{}
+	HTTPStatus        int
+	RespHeaderMapping map[string]string
+}
+
+// SetupRequest sets up operation parameters.
+func (r *Reflector) SetupRequest(oc OperationContext) error {
+	return joinErrors(
+		r.parseParametersIn(oc.Operation, oc.Input, ParameterInQuery, oc.ReqQueryMapping),
+		r.parseParametersIn(oc.Operation, oc.Input, ParameterInPath, oc.ReqPathMapping),
+		r.parseParametersIn(oc.Operation, oc.Input, ParameterInCookie, oc.ReqCookieMapping),
+		r.parseParametersIn(oc.Operation, oc.Input, ParameterInHeader, oc.ReqHeaderMapping),
+		r.parseRequestBody(oc.Operation, oc.Input, tagJSON, mimeJSON, oc.HTTPMethod, nil),
+		r.parseRequestBody(oc.Operation, oc.Input, tagFormData, mimeFormUrlencoded, oc.HTTPMethod, oc.ReqFormDataMapping),
+	)
+}
+
 // SetRequest sets up operation parameters.
 func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
-	return joinErrors(
-		r.parseParametersIn(o, input, ParameterInQuery),
-		r.parseParametersIn(o, input, ParameterInPath),
-		r.parseParametersIn(o, input, ParameterInCookie),
-		r.parseParametersIn(o, input, ParameterInHeader),
-		r.parseRequestBody(o, input, tagJSON, mimeJSON, httpMethod),
-		r.parseRequestBody(o, input, tagFormData, mimeFormUrlencoded, httpMethod),
-	)
+	return r.SetupRequest(OperationContext{
+		Operation:  o,
+		Input:      input,
+		HTTPMethod: httpMethod,
+	})
 }
 
 var (
@@ -77,7 +103,9 @@ type RequestBodyEnforcer interface {
 	ForceRequestBody()
 }
 
-func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime string, httpMethod string) error {
+func (r *Reflector) parseRequestBody(
+	o *Operation, input interface{}, tag, mime string, httpMethod string, mapping map[string]string,
+) error {
 	httpMethod = strings.ToUpper(httpMethod)
 	_, forceRequestBody := input.(RequestBodyEnforcer)
 
@@ -89,12 +117,12 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	hasTaggedFields := refl.HasTaggedFields(input, tag)
 
 	// Form data can not have map or array as body.
-	if !hasTaggedFields && tag != tagJSON {
+	if !hasTaggedFields && len(mapping) == 0 && tag != tagJSON {
 		return nil
 	}
 
 	// JSON can be a map or array without field tags.
-	if !hasTaggedFields && !refl.IsSliceOrMap(input) && refl.FindEmbeddedSliceOrMap(input) == nil {
+	if !hasTaggedFields && len(mapping) == 0 && !refl.IsSliceOrMap(input) && refl.FindEmbeddedSliceOrMap(input) == nil {
 		return nil
 	}
 
@@ -108,6 +136,7 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	schema, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPrefix),
 		jsonschema.RootRef,
+		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tag),
 		jsonschema.InterceptType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
 			vv := v.Interface()
@@ -166,7 +195,9 @@ func (r *Reflector) parseRequestBody(o *Operation, input interface{}, tag, mime 
 	return nil
 }
 
-func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in ParameterIn) error {
+func (r *Reflector) parseParametersIn(
+	o *Operation, input interface{}, in ParameterIn, propertyMapping map[string]string,
+) error {
 	if refl.IsSliceOrMap(input) {
 		return nil
 	}
@@ -174,6 +205,7 @@ func (r *Reflector) parseParametersIn(o *Operation, input interface{}, in Parame
 	_, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition),
+		jsonschema.PropertyNameMapping(propertyMapping),
 		jsonschema.PropertyNameTag(string(in)),
 		jsonschema.SkipEmbeddedMapsSlices,
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
@@ -236,11 +268,12 @@ func (r *Reflector) collectDefinition(name string, schema jsonschema.Schema) {
 	r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 }
 
-func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOrRef, error) {
+func (r *Reflector) parseResponseHeader(resp *Response, output interface{}, mapping map[string]string) error {
 	res := make(map[string]HeaderOrRef)
 
-	_, err := r.Reflect(output,
+	schema, err := r.Reflect(output,
 		jsonschema.InlineRefs,
+		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag("header"),
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -269,14 +302,77 @@ func (r *Reflector) parseResponseHeader(output interface{}) (map[string]HeaderOr
 		}),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return res, nil
+	resp.Headers = res
+
+	if schema.Description != nil && resp.Description == "" {
+		resp.Description = *schema.Description
+	}
+
+	return nil
 }
 
 // SetJSONResponse sets up operation JSON response.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
+	return r.SetupResponse(OperationContext{
+		Operation:  o,
+		Output:     output,
+		HTTPStatus: httpStatus,
+	})
+}
+
+func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
+	schema, err := r.Reflect(output)
+	if err != nil {
+		return false, err
+	}
+
+	if schema.Type == nil {
+		return false, nil
+	}
+
+	if schema.HasType(jsonschema.Object) && schema.AdditionalProperties == nil && len(schema.Properties) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// SetupResponse sets up operation response.
+func (r *Reflector) SetupResponse(oc OperationContext) error {
+	resp := Response{}
+
+	if oc.Output != nil {
+		err := r.parseJSONResponse(&resp, oc.Output)
+		if err != nil {
+			return err
+		}
+
+		err = r.parseResponseHeader(&resp, oc.Output, oc.RespHeaderMapping)
+		if err != nil {
+			return err
+		}
+	}
+
+	if resp.Description == "" {
+		resp.Description = http.StatusText(oc.HTTPStatus)
+	}
+
+	oc.Operation.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(oc.HTTPStatus), ResponseOrRef{
+		Response: &resp,
+	})
+
+	return nil
+}
+
+func (r *Reflector) parseJSONResponse(resp *Response, output interface{}) error {
+	// Check if output structure exposes meaningful schema.
+	if hasJSONBody, err := r.hasJSONBody(output); err == nil && !hasJSONBody {
+		return nil
+	}
+
 	schema, err := r.Reflect(output,
 		jsonschema.RootRef,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
@@ -293,32 +389,21 @@ func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus
 		oaiSchema.Schema.Nullable = nil
 	}
 
-	resp := Response{
-		Content: map[string]MediaType{
-			"application/json": {
-				Schema:        &oaiSchema,
-				Example:       nil,
-				Examples:      nil,
-				Encoding:      nil,
-				MapOfAnything: nil,
-			},
-		},
+	if resp.Content == nil {
+		resp.Content = map[string]MediaType{}
 	}
 
-	if schema.Description != nil {
+	resp.Content[mimeJSON] = MediaType{
+		Schema:        &oaiSchema,
+		Example:       nil,
+		Examples:      nil,
+		Encoding:      nil,
+		MapOfAnything: nil,
+	}
+
+	if schema.Description != nil && resp.Description == "" {
 		resp.Description = *schema.Description
-	} else {
-		resp.Description = http.StatusText(httpStatus)
 	}
-
-	resp.Headers, err = r.parseResponseHeader(output)
-	if err != nil {
-		return err
-	}
-
-	o.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(httpStatus), ResponseOrRef{
-		Response: &resp,
-	})
 
 	return nil
 }
