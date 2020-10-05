@@ -1,5 +1,5 @@
 GOLANGCI_LINT_VERSION := "v1.31.0"
-JSON_CLI_VERSION := "v1.7.7"
+JSON_CLI_VERSION := "v1.8.0"
 
 # The head of Makefile determines location of dev-go to include standard targets.
 GO ?= go
@@ -39,5 +39,5 @@ test: test-unit
 ## Generate entities from schema
 gen:
 	@test -s $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) || (curl -sSfL https://github.com/swaggest/json-cli/releases/download/$(JSON_CLI_VERSION)/json-cli -o $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) && chmod +x $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION))
-	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) gen-go openapi3.json --output ../../openapi3/entities.go --package-name openapi3 --with-zero-values --fluent-setters --root-name Spec
-	@gofmt -w ./openapi3/entities.go
+	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) gen-go openapi3.json --output ../../openapi3/entities.go --package-name openapi3 --with-tests --with-zero-values --validate-required --fluent-setters --root-name Spec
+	@gofmt -w ./openapi3/entities.go ./openapi3/entities_test.go
