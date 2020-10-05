@@ -123,7 +123,7 @@ func TestReflector_SetRequest_array(t *testing.T) {
 
 	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
 
-	b, err := json.MarshalIndent(s, "", " ")
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
 	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0600))
@@ -149,7 +149,7 @@ func TestReflector_SetRequest(t *testing.T) {
 
 	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
-	b, err := json.MarshalIndent(s, "", " ")
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
 	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0600))
@@ -196,7 +196,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	s.Paths.WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
 
 	js := op.RequestBody.RequestBody.Content["application/json"].Schema.ToJSONSchema(s)
-	jsb, err := json.MarshalIndent(js, "", " ")
+	jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
 	require.NoError(t, err)
 	expected, err := ioutil.ReadFile("_testdata/req_schema.json")
 	require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
 		Schema.ToJSONSchema(s)
-	jsb, err = json.MarshalIndent(js, "", " ")
+	jsb, err = assertjson.MarshalIndentCompact(js, "", " ", 120)
 	require.NoError(t, err)
 
 	require.NoError(t, ioutil.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0600))
@@ -236,7 +236,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	require.NoError(t, err)
 	assertjson.Equal(t, []byte(`{"type": "integer", "description": "Query parameter."}`), jsb)
 
-	b, err := json.MarshalIndent(s, "", " ")
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
 	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0600))
@@ -274,8 +274,7 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2",
-	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
 	   "post":{
@@ -315,8 +314,7 @@ func TestRequestBodyEnforcer(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2",
-	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
 	   "get":{
@@ -358,8 +356,7 @@ func TestReflector_SetupResponse(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2",
-	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
 	   "get":{
@@ -422,8 +419,7 @@ func TestReflector_SetupRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2",
-	 "info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{value-4}":{
 	   "post":{

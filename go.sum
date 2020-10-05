@@ -61,6 +61,8 @@ github.com/swaggest/assertjson v1.0.0 h1:Dyc+uF7h9nkS6+jHHIERRakQe9V7KyufKHmkUl6
 github.com/swaggest/assertjson v1.0.0/go.mod h1:mE5ltBbrB+Ya8Xar5OMITxya76vwLZMoPG8aXF7sVQc=
 github.com/swaggest/assertjson v1.2.0 h1:5o3xwits8nn2xw3bDpH80CN4YHJUMuVVNh4HO1azuls=
 github.com/swaggest/assertjson v1.2.0/go.mod h1:VR1/jzZHtROewu/SBEdFrBOBuNm1FO9LDjvP9fLf6+I=
+github.com/swaggest/assertjson v1.3.0 h1:751J+Plmg68cDGeMwMIq5nEvBw8g+ErG4UMcv9kpHmk=
+github.com/swaggest/assertjson v1.3.0/go.mod h1:VR1/jzZHtROewu/SBEdFrBOBuNm1FO9LDjvP9fLf6+I=
 github.com/swaggest/jsonschema-go v0.2.1 h1:SVg+zXQ46w6ewR7jZDRVbpKKC+V7Y6Xn/teC2pRS2bM=
 github.com/swaggest/jsonschema-go v0.2.1/go.mod h1:QFauBdPTrU1UltwocM5FzOWnVjVVtcWkJWG3NlK9sV0=
 github.com/swaggest/jsonschema-go v0.2.4/go.mod h1:m4VV88Gbi7lCrt9ckJzigK1rMlEeFjdZUkJr1o5MnDE=

@@ -1,71 +1,28 @@
 {
- "openapi": "3.0.2",
- "info": {
-  "title": "SampleAPI",
-  "version": "1.2.3"
- },
- "paths": {
-  "/somewhere": {
-   "post": {
-    "requestBody": {
-     "content": {
-      "application/json": {
-       "schema": {
-        "type": "array",
-        "items": {
-         "$ref": "#/components/schemas/Openapi3TestGetReq"
-        },
-        "nullable": true
-       }
-      }
+ "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+ "paths":{
+  "/somewhere":{
+   "post":{
+    "requestBody":{
+     "content":{
+      "application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Openapi3TestGetReq"},"nullable":true}}
      }
     },
-    "responses": {
-     "204": {
-      "description": "No Content"
-     }
-    }
+    "responses":{"204":{"description":"No Content"}}
    }
   }
  },
- "components": {
-  "schemas": {
-   "Openapi3TestGetReq": {
-    "required": [
-     "q1",
-     "q2",
-     "q3"
-    ],
-    "type": "object",
-    "properties": {
-     "c": {
-      "type": "string"
-     },
-     "h": {
-      "type": "number"
-     },
-     "p": {
-      "type": "integer"
-     },
-     "q1": {
-      "type": "integer",
-      "description": "Query parameter."
-     },
-     "q2": {
-      "$ref": "#/components/schemas/Openapi3TestISOWeek"
-     },
-     "q3": {
-      "type": "integer",
-      "description": "Query parameter."
-     }
+ "components":{
+  "schemas":{
+   "Openapi3TestGetReq":{
+    "required":["q1","q2","q3"],"type":"object",
+    "properties":{
+     "c":{"type":"string"},"h":{"type":"number"},"p":{"type":"integer"},
+     "q1":{"type":"integer","description":"Query parameter."},"q2":{"$ref":"#/components/schemas/Openapi3TestISOWeek"},
+     "q3":{"type":"integer","description":"Query parameter."}
     }
    },
-   "Openapi3TestISOWeek": {
-    "pattern": "^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$",
-    "type": "string",
-    "description": "ISO Week",
-    "example": "2006-W43"
-   }
+   "Openapi3TestISOWeek":{"pattern":"^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$","type":"string","description":"ISO Week","example":"2006-W43"}
   }
  }
 }
