@@ -339,8 +339,9 @@ func TestReflector_SetupResponse(t *testing.T) {
 	s.Info.Version = apiVersion
 
 	require.NoError(t, reflector.SetupResponse(openapi3.OperationContext{
-		Operation:  &op,
-		HTTPStatus: http.StatusNoContent,
+		Operation:       &op,
+		RespContentType: "text/csv; charset=utf-8",
+		HTTPStatus:      http.StatusNoContent,
 		Output: new(struct {
 			Val1 int
 			Val2 string
@@ -366,7 +367,8 @@ func TestReflector_SetupResponse(t *testing.T) {
 		  "headers":{
 		   "X-Value-1":{"style":"simple","schema":{"type":"integer"}},
 		   "X-Value-2":{"style":"simple","schema":{"type":"string"}}
-		  }
+		  },
+		  "content":{"text/csv":{"schema":{}}}
 		 }
 		}
 	   }

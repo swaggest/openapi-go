@@ -3257,10 +3257,8 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constHeader is unconditionally added to JSON.
-	constHeader = json.RawMessage(`{"style":"simple"}`)
-)
+// constHeader is unconditionally added to JSON.
+var constHeader = json.RawMessage(`{"style":"simple"}`)
 
 // MarshalJSON encodes JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
@@ -3560,10 +3558,8 @@ func (p *PathParameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constPathParameter is unconditionally added to JSON.
-	constPathParameter = json.RawMessage(`{"in":"path","required":true}`)
-)
+// constPathParameter is unconditionally added to JSON.
+var constPathParameter = json.RawMessage(`{"in":"path","required":true}`)
 
 // MarshalJSON encodes JSON.
 func (p PathParameter) MarshalJSON() ([]byte, error) {
@@ -3616,10 +3612,8 @@ func (q *QueryParameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constQueryParameter is unconditionally added to JSON.
-	constQueryParameter = json.RawMessage(`{"in":"query"}`)
-)
+// constQueryParameter is unconditionally added to JSON.
+var constQueryParameter = json.RawMessage(`{"in":"query"}`)
 
 // MarshalJSON encodes JSON.
 func (q QueryParameter) MarshalJSON() ([]byte, error) {
@@ -3660,10 +3654,8 @@ func (h *HeaderParameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constHeaderParameter is unconditionally added to JSON.
-	constHeaderParameter = json.RawMessage(`{"in":"header","style":"simple"}`)
-)
+// constHeaderParameter is unconditionally added to JSON.
+var constHeaderParameter = json.RawMessage(`{"in":"header","style":"simple"}`)
 
 // MarshalJSON encodes JSON.
 func (h HeaderParameter) MarshalJSON() ([]byte, error) {
@@ -3704,10 +3696,8 @@ func (c *CookieParameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constCookieParameter is unconditionally added to JSON.
-	constCookieParameter = json.RawMessage(`{"in":"cookie","style":"form"}`)
-)
+// constCookieParameter is unconditionally added to JSON.
+var constCookieParameter = json.RawMessage(`{"in":"cookie","style":"form"}`)
 
 // MarshalJSON encodes JSON.
 func (c CookieParameter) MarshalJSON() ([]byte, error) {
@@ -6556,10 +6546,8 @@ func (a *APIKeySecurityScheme) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constAPIKeySecurityScheme is unconditionally added to JSON.
-	constAPIKeySecurityScheme = json.RawMessage(`{"type":"apiKey"}`)
-)
+// constAPIKeySecurityScheme is unconditionally added to JSON.
+var constAPIKeySecurityScheme = json.RawMessage(`{"type":"apiKey"}`)
 
 // MarshalJSON encodes JSON.
 func (a APIKeySecurityScheme) MarshalJSON() ([]byte, error) {
@@ -6752,10 +6740,8 @@ func (h *HTTPSecurityScheme) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constHTTPSecurityScheme is unconditionally added to JSON.
-	constHTTPSecurityScheme = json.RawMessage(`{"type":"http"}`)
-)
+// constHTTPSecurityScheme is unconditionally added to JSON.
+var constHTTPSecurityScheme = json.RawMessage(`{"type":"http"}`)
 
 // MarshalJSON encodes JSON.
 func (h HTTPSecurityScheme) MarshalJSON() ([]byte, error) {
@@ -6790,10 +6776,8 @@ func (b *Bearer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constBearer is unconditionally added to JSON.
-	constBearer = json.RawMessage(`{"scheme":"bearer"}`)
-)
+// constBearer is unconditionally added to JSON.
+var constBearer = json.RawMessage(`{"scheme":"bearer"}`)
 
 // MarshalJSON encodes JSON.
 func (b Bearer) MarshalJSON() ([]byte, error) {
@@ -6938,10 +6922,8 @@ func (o *OAuth2SecurityScheme) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constOAuth2SecurityScheme is unconditionally added to JSON.
-	constOAuth2SecurityScheme = json.RawMessage(`{"type":"oauth2"}`)
-)
+// constOAuth2SecurityScheme is unconditionally added to JSON.
+var constOAuth2SecurityScheme = json.RawMessage(`{"type":"oauth2"}`)
 
 // MarshalJSON encodes JSON.
 func (o OAuth2SecurityScheme) MarshalJSON() ([]byte, error) {
@@ -7811,10 +7793,8 @@ func (o *OpenIDConnectSecurityScheme) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constOpenIDConnectSecurityScheme is unconditionally added to JSON.
-	constOpenIDConnectSecurityScheme = json.RawMessage(`{"type":"openIdConnect"}`)
-)
+// constOpenIDConnectSecurityScheme is unconditionally added to JSON.
+var constOpenIDConnectSecurityScheme = json.RawMessage(`{"type":"openIdConnect"}`)
 
 // MarshalJSON encodes JSON.
 func (o OpenIDConnectSecurityScheme) MarshalJSON() ([]byte, error) {
