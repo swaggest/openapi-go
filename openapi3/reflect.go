@@ -58,6 +58,7 @@ type OperationContext struct {
 
 	Output            interface{}
 	HTTPStatus        int
+	RespContentType   string
 	RespHeaderMapping map[string]string
 }
 
@@ -345,7 +346,9 @@ func (r *Reflector) SetupResponse(oc OperationContext) error {
 	resp := Response{}
 
 	if oc.Output != nil {
-		err := r.parseJSONResponse(&resp, oc.Output)
+		oc.RespContentType = strings.Split(oc.RespContentType, ";")[0]
+
+		err := r.parseJSONResponse(&resp, oc.Output, oc.RespContentType)
 		if err != nil {
 			return err
 		}
@@ -353,6 +356,10 @@ func (r *Reflector) SetupResponse(oc OperationContext) error {
 		err = r.parseResponseHeader(&resp, oc.Output, oc.RespHeaderMapping)
 		if err != nil {
 			return err
+		}
+
+		if oc.RespContentType != "" {
+			r.ensureResponseContentType(&resp, oc.RespContentType)
 		}
 	}
 
@@ -367,7 +374,19 @@ func (r *Reflector) SetupResponse(oc OperationContext) error {
 	return nil
 }
 
-func (r *Reflector) parseJSONResponse(resp *Response, output interface{}) error {
+func (r *Reflector) ensureResponseContentType(resp *Response, contentType string) {
+	if _, ok := resp.Content[contentType]; !ok {
+		if resp.Content == nil {
+			resp.Content = map[string]MediaType{}
+		}
+
+		resp.Content[contentType] = MediaType{
+			Schema: &SchemaOrRef{Schema: &Schema{}},
+		}
+	}
+}
+
+func (r *Reflector) parseJSONResponse(resp *Response, output interface{}, contentType string) error {
 	// Check if output structure exposes meaningful schema.
 	if hasJSONBody, err := r.hasJSONBody(output); err == nil && !hasJSONBody {
 		return nil
@@ -393,7 +412,11 @@ func (r *Reflector) parseJSONResponse(resp *Response, output interface{}) error 
 		resp.Content = map[string]MediaType{}
 	}
 
-	resp.Content[mimeJSON] = MediaType{
+	if contentType == "" {
+		contentType = mimeJSON
+	}
+
+	resp.Content[contentType] = MediaType{
 		Schema:        &oaiSchema,
 		Example:       nil,
 		Examples:      nil,
