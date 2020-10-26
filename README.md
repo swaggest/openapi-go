@@ -7,6 +7,7 @@ This library provides Go structures to marshal/unmarshal and reflect [OpenAPI Sc
 [![Build Status](https://github.com/swaggest/openapi-go/workflows/test/badge.svg)](https://github.com/swaggest/openapi-go/actions?query=branch%3Amaster+workflow%3Atest)
 [![Coverage Status](https://codecov.io/gh/swaggest/openapi-go/branch/master/graph/badge.svg)](https://codecov.io/gh/swaggest/openapi-go)
 [![GoDevDoc](https://img.shields.io/badge/dev-doc-00ADD8?logo=go)](https://pkg.go.dev/github.com/swaggest/openapi-go)
+[![time tracker](https://wakatime.com/badge/github/swaggest/openapi-go.svg)](https://wakatime.com/badge/github/swaggest/openapi-go)
 ![Code lines](https://sloc.xyz/github/swaggest/openapi-go/?category=code)
 ![Comments](https://sloc.xyz/github/swaggest/openapi-go/?category=comments)
 

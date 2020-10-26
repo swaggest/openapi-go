@@ -241,8 +241,14 @@ func (r *Reflector) parseParametersIn(
 				p.WithStyle(string(QueryParameterStyleForm)).WithExplode(true)
 			}
 
+			// Check if query parameter is an object.
 			if in == ParameterInQuery {
-				if propertySchema.HasType(jsonschema.Object) {
+				ps, err := r.Reflect(reflect.New(field.Type).Interface(), jsonschema.InlineRefs)
+				if err != nil {
+					return err
+				}
+
+				if ps.HasType(jsonschema.Object) {
 					p.WithStyle(string(QueryParameterStyleDeepObject)).WithExplode(true)
 				}
 			}
