@@ -450,3 +450,43 @@ func TestReflector_SetupRequest(t *testing.T) {
 
 	assertjson.Equal(t, expected, b, string(b))
 }
+
+func TestReflector_SetupRequest_queryObject(t *testing.T) {
+	reflector := openapi3.Reflector{}
+	op := openapi3.Operation{}
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+
+	require.NoError(t, reflector.SetupRequest(openapi3.OperationContext{
+		Operation:  &op,
+		HTTPMethod: http.MethodGet,
+		Input: new(struct {
+			InQuery map[int]float64 `query:"in_query"`
+		}),
+	}))
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+
+	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
+	assert.NoError(t, err)
+
+	expected := []byte(`{
+	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "paths":{
+	  "/somewhere":{
+	   "post":{
+		"parameters":[
+		 {
+		  "name":"in_query","in":"query","style":"deepObject","explode":true,
+		  "schema":{"type":"object","additionalProperties":{"type":"number"}}
+		 }
+		],
+		"responses":{"204":{"description":"No Content"}}
+	   }
+	  }
+	 }
+	}`)
+
+	assertjson.Equal(t, expected, b, string(b))
+}
