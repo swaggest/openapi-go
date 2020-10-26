@@ -232,13 +232,19 @@ func (r *Reflector) parseParametersIn(
 			refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
 			switch swg2CollectionFormat {
 			case "csv":
-				p.WithStyle("form").WithExplode(false)
+				p.WithStyle(string(QueryParameterStyleForm)).WithExplode(false)
 			case "ssv":
-				p.WithStyle("spaceDelimited").WithExplode(false)
+				p.WithStyle(string(QueryParameterStyleSpaceDelimited)).WithExplode(false)
 			case "pipes":
-				p.WithStyle("pipeDelimited").WithExplode(false)
+				p.WithStyle(string(QueryParameterStylePipeDelimited)).WithExplode(false)
 			case "multi":
-				p.WithStyle("form").WithExplode(true)
+				p.WithStyle(string(QueryParameterStyleForm)).WithExplode(true)
+			}
+
+			if in == ParameterInQuery {
+				if propertySchema.HasType(jsonschema.Object) {
+					p.WithStyle(string(QueryParameterStyleDeepObject)).WithExplode(true)
+				}
 			}
 
 			err := refl.PopulateFieldsFromTags(&p, field.Tag)
