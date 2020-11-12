@@ -3,10 +3,10 @@ module github.com/swaggest/openapi-go
 go 1.13
 
 require (
-	github.com/bool64/dev v0.1.5
+	github.com/bool64/dev v0.1.6
 	github.com/stretchr/testify v1.6.1
-	github.com/swaggest/assertjson v1.3.0
-	github.com/swaggest/jsonschema-go v0.3.11
+	github.com/swaggest/assertjson v1.4.0
+	github.com/swaggest/jsonschema-go v0.3.12
 	github.com/swaggest/refl v0.1.5
 	github.com/swaggest/swgen v0.6.23
 	gopkg.in/yaml.v2 v2.3.0

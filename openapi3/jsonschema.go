@@ -71,6 +71,7 @@ func (s *SchemaOrRef) toJSONSchema(ctx toJSONSchemaContext) jsonschema.SchemaOrB
 
 	ss := s.Schema
 
+	jso.ReflectType = ss.ReflectType
 	jso.Description = ss.Description
 	jso.Title = ss.Title
 
@@ -194,6 +195,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 		s.Schema = &Schema{}
 	}
 
+	s.Schema.ReflectType = js.ReflectType
 	os := s.Schema
 
 	if js.Not != nil {

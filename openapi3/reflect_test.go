@@ -536,4 +536,8 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 	}`)
 
 	assertjson.Equal(t, expected, b, string(b))
+
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
+	assert.True(t, found)
+	assertjson.EqualMarshal(t, []byte(`{"type":["object","null"],"additionalProperties":{"type":"number"}}`), js)
 }
