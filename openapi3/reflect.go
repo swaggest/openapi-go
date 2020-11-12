@@ -18,6 +18,23 @@ type Reflector struct {
 	Spec *Spec
 }
 
+// ResolveJSONSchemaRef builds JSON Schema from OpenAPI Component Schema reference.
+func (r Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
+	if r.Spec == nil || r.Spec.Components == nil || r.Spec.Components.Schemas == nil ||
+		!strings.HasPrefix(ref, "#/components/schemas/") {
+		return s, false
+	}
+
+	ref = strings.TrimPrefix(ref, "#/components/schemas/")
+	os, found := r.Spec.Components.Schemas.MapOfSchemaOrRefValues[ref]
+
+	if found {
+		s = os.ToJSONSchema(r.Spec)
+	}
+
+	return s, found
+}
+
 // joinErrors joins non-nil errors.
 func joinErrors(errs ...error) error {
 	join := ""

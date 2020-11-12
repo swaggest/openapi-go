@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 )
 
@@ -1700,6 +1701,7 @@ type Schema struct {
 	Deprecated           *bool                       `json:"deprecated,omitempty"`
 	XML                  *XML                        `json:"xml,omitempty"`
 	MapOfAnything        map[string]interface{}      `json:"-"` // Key must match pattern: `^x-`.
+	ReflectType          reflect.Type                `json:"-"`
 }
 
 // WithTitle sets Title value.
