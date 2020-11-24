@@ -274,7 +274,7 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
 	   "post":{
@@ -314,7 +314,7 @@ func TestRequestBodyEnforcer(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
 	   "get":{
@@ -357,7 +357,7 @@ func TestReflector_SetupResponse(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
 	   "get":{
@@ -421,7 +421,7 @@ func TestReflector_SetupRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{value-4}":{
 	   "post":{
@@ -472,7 +472,7 @@ func TestReflector_SetupRequest_queryObject(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
 	   "post":{
@@ -516,7 +516,7 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := []byte(`{
-	 "openapi":"3.0.2","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
 	   "post":{
@@ -540,4 +540,68 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
 	assert.True(t, found)
 	assertjson.EqualMarshal(t, []byte(`{"type":["object","null"],"additionalProperties":{"type":"number"}}`), js)
+}
+
+func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
+	type filter struct {
+		Labels []string `json:"labels,omitempty"`
+		Type   string   `json:"type"`
+	}
+
+	type req struct {
+		One   filter         `query:"one"`
+		Two   filter         `query:"two"`
+		Three map[string]int `query:"three"`
+	}
+
+	r := openapi3.Reflector{}
+	oc := openapi3.OperationContext{
+		Operation: &openapi3.Operation{},
+		Input:     new(req),
+	}
+
+	require.NoError(t, r.SetupRequest(oc))
+	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/", *oc.Operation))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/":{
+		  "get":{
+			"parameters":[
+			  {
+				"name":"one","in":"query",
+				"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"},
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				}
+			  },
+			  {
+				"name":"two","in":"query",
+				"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"},
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				}
+			  },
+			  {
+				"name":"three","in":"query","style":"deepObject","explode":true,
+				"schema":{"type":"object","additionalProperties":{"type":"integer"}}
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi3TestFilter":{
+			"type":"object",
+			"properties":{
+			  "labels":{"type":"array","items":{"type":"string"}},
+			  "type":{"type":"string"}
+			}
+		  }
+		}
+	  }
+	}`), r.SpecEns())
 }

@@ -12,7 +12,7 @@
     "openapi": {
       "type": "string",
       "pattern": "^3\\.0\\.\\d(-.+)?$",
-      "default": "3.0.2"
+      "default": "3.0.3"
     },
     "info": {
       "$ref": "#/definitions/Info"
