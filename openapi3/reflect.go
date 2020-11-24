@@ -19,6 +19,8 @@ type Reflector struct {
 }
 
 // ResolveJSONSchemaRef builds JSON Schema from OpenAPI Component Schema reference.
+//
+// Can be used in jsonschema.Schema IsTrivial().
 func (r Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
 	if r.Spec == nil || r.Spec.Components == nil || r.Spec.Components.Schemas == nil ||
 		!strings.HasPrefix(ref, "#/components/schemas/") {
@@ -55,7 +57,7 @@ func joinErrors(errs ...error) error {
 // SpecEns ensures returned Spec is not nil.
 func (r *Reflector) SpecEns() *Spec {
 	if r.Spec == nil {
-		r.Spec = &Spec{Openapi: "3.0.2"}
+		r.Spec = &Spec{Openapi: "3.0.3"}
 	}
 
 	return r.Spec
@@ -240,9 +242,6 @@ func (r *Reflector) parseParametersIn(
 				Description: propertySchema.Description,
 				Schema:      &s,
 				Content:     nil,
-				Example:     nil,
-				Examples:    nil,
-				Location:    nil,
 			}
 
 			swg2CollectionFormat := ""
@@ -258,8 +257,22 @@ func (r *Reflector) parseParametersIn(
 				p.WithStyle(string(QueryParameterStyleForm)).WithExplode(true)
 			}
 
-			// Check if query parameter is an object.
-			if in == ParameterInQuery {
+			// Check if parameter is an JSON encoded object.
+			property := reflect.New(field.Type).Interface()
+			if refl.HasTaggedFields(property, tagJSON) {
+				propertySchema, err := r.Reflect(property,
+					jsonschema.DefinitionsPrefix("#/components/schemas/"),
+					jsonschema.CollectDefinitions(r.collectDefinition),
+					jsonschema.RootRef,
+				)
+				if err != nil {
+					return err
+				}
+
+				openapiSchema := SchemaOrRef{}
+				openapiSchema.FromJSONSchema(propertySchema.ToSchemaOrBool())
+				p.WithContentItem("application/json", MediaType{Schema: &openapiSchema})
+			} else {
 				ps, err := r.Reflect(reflect.New(field.Type).Interface(), jsonschema.InlineRefs)
 				if err != nil {
 					return err
@@ -292,6 +305,10 @@ func (r *Reflector) parseParametersIn(
 }
 
 func (r *Reflector) collectDefinition(name string, schema jsonschema.Schema) {
+	if _, exists := r.SpecEns().ComponentsEns().SchemasEns().MapOfSchemaOrRefValues[name]; exists {
+		return
+	}
+
 	s := SchemaOrRef{}
 	s.FromJSONSchema(schema.ToSchemaOrBool())
 

@@ -17,7 +17,7 @@ func handleError(err error) {
 
 func ExampleReflector_SetJSONResponse() {
 	reflector := openapi3.Reflector{}
-	reflector.Spec = &openapi3.Spec{Openapi: "3.0.2"}
+	reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}
 	reflector.Spec.Info.
 		WithTitle("Things API").
 		WithVersion("1.2.3").
@@ -65,7 +65,7 @@ func ExampleReflector_SetJSONResponse() {
 	fmt.Println(string(schema))
 
 	// Output:
-	// openapi: 3.0.2
+	// openapi: 3.0.3
 	// info:
 	//   description: Put something here
 	//   title: Things API
