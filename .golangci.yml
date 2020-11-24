@@ -27,6 +27,8 @@ linters:
     - gochecknoglobals
     - funlen
     - gocognit
+    - wrapcheck
+    - exhaustivestruct
 
 issues:
   exclude-use-default: false
