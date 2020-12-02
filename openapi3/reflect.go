@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"reflect"
@@ -129,9 +130,12 @@ func (r *Reflector) parseRequestBody(
 	httpMethod = strings.ToUpper(httpMethod)
 	_, forceRequestBody := input.(RequestBodyEnforcer)
 
-	// GET and HEAD requests should not have body.
-	if (httpMethod == http.MethodGet || httpMethod == http.MethodHead) && !forceRequestBody {
-		return nil
+	// GET, HEAD, DELETE and TRACE requests should not have body.
+	switch httpMethod {
+	case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodTrace:
+		if !forceRequestBody {
+			return nil
+		}
 	}
 
 	hasTaggedFields := refl.HasTaggedFields(input, tag)
@@ -290,6 +294,19 @@ func (r *Reflector) parseParametersIn(
 
 			if in == ParameterInPath {
 				p.WithRequired(true)
+			}
+
+			alreadyExists := false
+			for _, ep := range o.Parameters {
+				if ep.Parameter != nil && ep.Parameter.In == p.In && ep.Parameter.Name == p.Name {
+					alreadyExists = true
+
+					break
+				}
+			}
+
+			if alreadyExists {
+				return fmt.Errorf("parameter %s in %s is already defined", p.Name, p.In)
 			}
 
 			o.Parameters = append(o.Parameters, ParameterOrRef{Parameter: &p})

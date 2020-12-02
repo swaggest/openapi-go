@@ -22,13 +22,13 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Checkout code
         uses: actions/checkout@v2
-      - uses: actions/cache@v1
+      - name: Restore vendor
+        uses: actions/cache@v1
         with:
           path: vendor
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          key: ${{ runner.os }}-go-vendor-${{ hashFiles('**/go.mod') }}
       - name: Populate dependencies
+        if: matrix.go-version == '1.15.x' # Use latest Go to populate vendor.
         run: '(test -d vendor && echo vendor found) || go mod vendor'
       - name: Test
         run: make test-unit

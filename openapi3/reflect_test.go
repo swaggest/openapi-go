@@ -126,7 +126,7 @@ func TestReflector_SetRequest_array(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0600))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0o600))
 
 	expected, err := ioutil.ReadFile("_testdata/openapi_req_array.json")
 	require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestReflector_SetRequest(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0600))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0o600))
 
 	expected, err := ioutil.ReadFile("_testdata/openapi_req.json")
 	require.NoError(t, err)
@@ -219,7 +219,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	jsb, err = assertjson.MarshalIndentCompact(js, "", " ", 120)
 	require.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0600))
+	require.NoError(t, ioutil.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0o600))
 
 	expected, err = ioutil.ReadFile("_testdata/resp_schema.json")
 	require.NoError(t, err)
@@ -239,7 +239,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0600))
+	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0o600))
 
 	expected, err = ioutil.ReadFile("_testdata/openapi.json")
 	require.NoError(t, err)
@@ -604,4 +604,45 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 		}
 	  }
 	}`), r.SpecEns())
+}
+
+func TestReflector_SetupRequest_noBody(t *testing.T) {
+	type req struct {
+		ID int `json:"id" path:"id"`
+	}
+
+	r := openapi3.Reflector{}
+
+	for _, method := range []string{http.MethodHead, http.MethodGet, http.MethodDelete, http.MethodTrace} {
+		oc := openapi3.OperationContext{
+			Operation:  &openapi3.Operation{},
+			HTTPMethod: method,
+			Input:      new(req),
+		}
+
+		require.NoError(t, r.SetupRequest(oc))
+		assertjson.EqualMarshal(t, []byte(`{
+		  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
+		  "responses":{}
+		}`), oc.Operation)
+	}
+
+	for _, method := range []string{http.MethodPost, http.MethodPatch, http.MethodPut} {
+		oc := openapi3.OperationContext{
+			Operation:  &openapi3.Operation{},
+			HTTPMethod: method,
+			Input:      new(req),
+		}
+
+		require.NoError(t, r.SetupRequest(oc))
+		assertjson.EqualMarshal(t, []byte(`{
+		  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
+		  "requestBody":{
+			"content":{
+			  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReq"}}
+			}
+		  },
+		  "responses":{}
+		}`), oc.Operation)
+	}
 }
