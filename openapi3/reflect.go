@@ -275,6 +275,7 @@ func (r *Reflector) parseParametersIn(
 
 				openapiSchema := SchemaOrRef{}
 				openapiSchema.FromJSONSchema(propertySchema.ToSchemaOrBool())
+				p.Schema = nil
 				p.WithContentItem("application/json", MediaType{Schema: &openapiSchema})
 			} else {
 				ps, err := r.Reflect(reflect.New(field.Type).Interface(), jsonschema.InlineRefs)

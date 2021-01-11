@@ -571,14 +571,12 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 			"parameters":[
 			  {
 				"name":"one","in":"query",
-				"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"},
 				"content":{
 				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
 				}
 			  },
 			  {
 				"name":"two","in":"query",
-				"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"},
 				"content":{
 				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
 				}
