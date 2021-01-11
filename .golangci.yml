@@ -29,6 +29,7 @@ linters:
     - gocognit
     - wrapcheck
     - exhaustivestruct
+    - forbidigo
 
 issues:
   exclude-use-default: false
@@ -37,4 +38,5 @@ issues:
         - gomnd
         - goconst
         - dupl
+        - paralleltest
       path: "_test.go"

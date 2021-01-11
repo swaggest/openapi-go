@@ -1,4 +1,3 @@
-GOLANGCI_LINT_VERSION := "v1.32.2"
 JSON_CLI_VERSION := "v1.8.0"
 
 # The head of Makefile determines location of dev-go to include standard targets.
