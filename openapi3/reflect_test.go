@@ -13,24 +13,7 @@ import (
 	"github.com/swaggest/assertjson"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go/openapi3"
-	"github.com/swaggest/swgen"
-	"github.com/swaggest/swgen/swjschema"
 )
-
-// ISOWeek is a week identifier.
-type ISOWeek string
-
-// SwaggerDef returns swagger definition.
-func (ISOWeek) SwaggerDef() swgen.SwaggerData {
-	s := swgen.SwaggerData{}
-
-	s.Description = "ISO Week"
-	s.Example = "2006-W43"
-	s.Type = "string"
-	s.Pattern = `^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$`
-
-	return s
-}
 
 type WeirdResp interface {
 	Boo()
@@ -54,7 +37,6 @@ type Resp struct {
 	NullableWhatever     *interface{}           `json:"nullableWhatever,omitempty"`
 	RecursiveArray       []WeirdResp            `json:"recursiveArray,omitempty"`
 	RecursiveStructArray []Resp                 `json:"recursiveStructArray,omitempty"`
-	CustomType           ISOWeek                `json:"customType"`
 	UUID                 UUID                   `json:"uuid"`
 }
 
@@ -96,7 +78,6 @@ type Req struct {
 
 type GetReq struct {
 	InQuery1 int     `query:"in_query1" required:"true" description:"Query parameter." json:"q1"`
-	InQuery2 ISOWeek `query:"in_query2" required:"true" description:"Query parameter." json:"q2"`
 	InQuery3 int     `query:"in_query3" required:"true" description:"Query parameter." json:"q3"`
 	InPath   int     `path:"in_path" json:"p"`
 	InCookie string  `cookie:"in_cookie" deprecated:"true" json:"c"`
@@ -110,7 +91,6 @@ const (
 
 func TestReflector_SetRequest_array(t *testing.T) {
 	reflector := openapi3.Reflector{}
-	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
@@ -136,7 +116,6 @@ func TestReflector_SetRequest_array(t *testing.T) {
 
 func TestReflector_SetRequest(t *testing.T) {
 	reflector := openapi3.Reflector{}
-	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
@@ -162,15 +141,6 @@ func TestReflector_SetRequest(t *testing.T) {
 
 func TestReflector_SetJSONResponse(t *testing.T) {
 	reflector := openapi3.Reflector{}
-	reflector.DefaultOptions = append(reflector.DefaultOptions, jsonschema.InterceptType(swjschema.InterceptType))
-
-	// Add custom type mappings
-	uuidDef := swgen.SwaggerData{}
-	uuidDef.Type = "string"
-	uuidDef.Format = "uuid"
-	uuidDef.Example = "248df4b7-aa70-47b8-a036-33ac447e668d"
-
-	reflector.AddTypeMapping(UUID{}, uuidDef)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName

@@ -10,10 +10,6 @@
       "schema":{"type":"integer","description":"Query parameter."}
      },
      {
-      "name":"in_query2","in":"query","description":"Query parameter.","required":true,
-      "schema":{"$ref":"#/components/schemas/Openapi3TestISOWeek"}
-     },
-     {
       "name":"in_query3","in":"query","description":"Query parameter.","required":true,
       "schema":{"type":"integer","description":"Query parameter."}
      },
@@ -109,13 +105,11 @@
      "upload2":{"$ref":"#/components/schemas/FormDataMultipartFileHeader"}
     }
    },
-   "Openapi3TestISOWeek":{"pattern":"^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$","type":"string","description":"ISO Week","example":"2006-W43"},
    "Openapi3TestReq":{"type":"object","properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}}},
    "Openapi3TestResp":{
     "title":"Sample Response","type":"object",
     "properties":{
-     "arrayOfAnything":{"type":"array","items":{}},"customType":{"$ref":"#/components/schemas/Openapi3TestISOWeek"},
-     "field1":{"type":"integer"},"field2":{"type":"string"},
+     "arrayOfAnything":{"type":"array","items":{}},"field1":{"type":"integer"},"field2":{"type":"string"},
      "info":{
       "required":["foo"],"type":"object",
       "properties":{"bar":{"type":"number","description":"This is Bar."},"foo":{"pattern":"\\d+","type":"string","default":"baz"}}
@@ -129,7 +123,7 @@
     },
     "description":"This is a sample response.","x-foo":"bar"
    },
-   "Openapi3TestUUID":{"type":"string","format":"uuid","example":"248df4b7-aa70-47b8-a036-33ac447e668d"}
+   "Openapi3TestUUID":{"type":"array","items":{"minimum":0,"type":"integer"},"nullable":true}
   }
  }
 }
