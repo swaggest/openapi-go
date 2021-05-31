@@ -1,4 +1,5 @@
 JSON_CLI_VERSION := "v1.8.0"
+#GOLANGCI_LINT_VERSION := "v1.39.0" # Optional configuration to pinpoint golangci-lint version.
 
 # The head of Makefile determines location of dev-go to include standard targets.
 GO ?= go
@@ -9,7 +10,7 @@ ifneq "$(GOFLAGS)" ""
 endif
 
 ifneq "$(wildcard ./vendor )" ""
-  $(info >> using vendor)
+  $(info Using vendor)
   modVendor =  -mod=vendor
   ifeq (,$(findstring -mod,$(GOFLAGS)))
       export GOFLAGS := ${GOFLAGS} ${modVendor}
@@ -28,9 +29,11 @@ ifeq ($(DEVGO_PATH),)
 endif
 
 -include $(DEVGO_PATH)/makefiles/main.mk
--include $(DEVGO_PATH)/makefiles/test-unit.mk
 -include $(DEVGO_PATH)/makefiles/lint.mk
--include $(DEVGO_PATH)/makefiles/github-actions.mk
+-include $(DEVGO_PATH)/makefiles/test-unit.mk
+-include $(DEVGO_PATH)/makefiles/reset-ci.mk
+
+# Add your custom targets here.
 
 ## Run tests
 test: test-unit

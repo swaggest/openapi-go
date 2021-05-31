@@ -1,3 +1,5 @@
 /.idea
-*_last_run.json
-/unit.coverprofile
+/*.coverprofile
+/.vscode
+/bench-*.txt
+/vendor
