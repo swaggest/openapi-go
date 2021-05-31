@@ -9,10 +9,6 @@
       "schema":{"type":"integer","description":"Query parameter."}
      },
      {
-      "name":"in_query2","in":"query","description":"Query parameter.","required":true,
-      "schema":{"$ref":"#/components/schemas/Openapi3TestISOWeek"}
-     },
-     {
       "name":"in_query3","in":"query","description":"Query parameter.","required":true,
       "schema":{"type":"integer","description":"Query parameter."}
      },
@@ -22,11 +18,6 @@
     ],
     "responses":{"204":{"description":"No Content"}}
    }
-  }
- },
- "components":{
-  "schemas":{
-   "Openapi3TestISOWeek":{"pattern":"^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-2])$","type":"string","description":"ISO Week","example":"2006-W43"}
   }
  }
 }

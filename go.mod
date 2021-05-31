@@ -8,6 +8,5 @@ require (
 	github.com/swaggest/assertjson v1.6.4
 	github.com/swaggest/jsonschema-go v0.3.19
 	github.com/swaggest/refl v0.1.7
-	github.com/swaggest/swgen v0.6.27
 	gopkg.in/yaml.v2 v2.4.0
 )
