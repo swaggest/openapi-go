@@ -1,5 +1,5 @@
 JSON_CLI_VERSION := "v1.8.6"
-#GOLANGCI_LINT_VERSION := "v1.39.0" # Optional configuration to pinpoint golangci-lint version.
+#GOLANGCI_LINT_VERSION := "v1.41.1" # Optional configuration to pinpoint golangci-lint version.
 
 # The head of Makefile determines location of dev-go to include standard targets.
 GO ?= go
