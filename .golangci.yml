@@ -20,6 +20,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - tagliatelle
     - goerr113
     - funlen
     - gocyclo
@@ -37,6 +38,7 @@ linters:
     - forcetypeassert
     - scopelint # deprecated
     - ifshort # too many false positives
+    - golint # deprecated
 
 issues:
   exclude-use-default: false
