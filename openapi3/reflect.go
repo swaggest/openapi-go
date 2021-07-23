@@ -19,10 +19,14 @@ type Reflector struct {
 	Spec *Spec
 }
 
-// ResolveJSONSchemaRef builds JSON Schema from OpenAPI Component Schema reference.
+func New() {
+
+}
+
+// ResolveJSONSchemaRefRenamed builds JSON Schema from OpenAPI Component Schema reference.
 //
 // Can be used in jsonschema.Schema IsTrivial().
-func (r Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
+func (r Reflector) ResolveJSONSchemaRefRenamed(ref string) (s jsonschema.SchemaOrBool, found bool) {
 	if r.Spec == nil || r.Spec.Components == nil || r.Spec.Components.Schemas == nil ||
 		!strings.HasPrefix(ref, "#/components/schemas/") {
 		return s, false
