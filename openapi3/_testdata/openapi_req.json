@@ -13,7 +13,7 @@
       "schema":{"type":"integer","description":"Query parameter."}
      },
      {"name":"in_path","in":"path","required":true,"schema":{"type":"integer"}},
-     {"name":"in_cookie","in":"cookie","deprecated":true,"schema":{"type":"string"}},
+     {"name":"in_cookie","in":"cookie","deprecated":true,"schema":{"type":"string","deprecated":true}},
      {"name":"in_header","in":"header","schema":{"type":"number"}}
     ],
     "responses":{"204":{"description":"No Content"}}

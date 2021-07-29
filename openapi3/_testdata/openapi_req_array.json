@@ -17,7 +17,7 @@
    "Openapi3TestGetReq":{
     "required":["q1","q3"],"type":"object",
     "properties":{
-     "c":{"type":"string"},"h":{"type":"number"},"p":{"type":"integer"},
+     "c":{"type":"string","deprecated":true},"h":{"type":"number"},"p":{"type":"integer"},
      "q1":{"type":"integer","description":"Query parameter."},"q3":{"type":"integer","description":"Query parameter."}
     }
    }
