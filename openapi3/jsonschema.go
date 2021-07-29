@@ -186,6 +186,19 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 
 	js := schema.TypeObject
 	if js.Ref != nil {
+		if deprecated, ok := js.ExtraProperties["deprecated"].(bool); ok && deprecated {
+			s.Schema = (&Schema{}).WithAllOf(
+				SchemaOrRef{
+					Schema: (&Schema{}).WithDeprecated(true),
+				},
+				SchemaOrRef{
+					SchemaReference: &SchemaReference{Ref: *js.Ref},
+				},
+			)
+
+			return
+		}
+
 		s.SchemaReference = &SchemaReference{Ref: *js.Ref}
 
 		return

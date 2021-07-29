@@ -27,13 +27,12 @@ jobs:
         id: gorelease
         run: |
           test -e ~/go/bin/gorelease || go install golang.org/x/exp/cmd/gorelease@latest
-          gorelease
-          OUTPUT=$(gorelease)
+          OUTPUT=$(gorelease || exit 0)
           OUTPUT="${OUTPUT//'%'/'%25'}"
           OUTPUT="${OUTPUT//$'\n'/'%0A'}"
           OUTPUT="${OUTPUT//$'\r'/'%0D'}"
           echo "::set-output name=report::$OUTPUT"
-      - name: Comment Gorelase Report
+      - name: Comment Report
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,6 +40,6 @@ jobs:
           message: |
             ### Exported API Changes Report
 
-            ```
+            <pre>
             ${{ steps.gorelease.outputs.report }}
-            ```
+            </pre>
