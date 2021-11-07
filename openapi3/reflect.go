@@ -103,11 +103,6 @@ func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod strin
 	})
 }
 
-var (
-	typeOfMultipartFile       = reflect.TypeOf((*multipart.File)(nil)).Elem()
-	typeOfMultipartFileHeader = reflect.TypeOf((*multipart.FileHeader)(nil)).Elem()
-)
-
 const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
@@ -171,10 +166,6 @@ func (r *Reflector) parseRequestBody(
 			}
 
 			if _, ok := vv.(*multipart.FileHeader); ok {
-				found = true
-			}
-
-			if v.Type().Implements(typeOfMultipartFile) || v.Type() == typeOfMultipartFileHeader {
 				found = true
 			}
 
