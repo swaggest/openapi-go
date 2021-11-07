@@ -114,6 +114,46 @@ func TestReflector_SetRequest_array(t *testing.T) {
 	assertjson.Equal(t, expected, b)
 }
 
+func TestReflector_SetRequest_uploadInterface(t *testing.T) {
+	type req struct {
+		File1 multipart.File `formData:"upload1"`
+	}
+
+	reflector := openapi3.Reflector{}
+	s := reflector.SpecEns()
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new(req), http.MethodPost)
+	assert.NoError(t, err)
+
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/somewhere":{
+		  "post":{
+			"requestBody":{
+			  "content":{
+				"multipart/form-data":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "FormDataMultipartFile":{"type":"string","format":"binary","nullable":true},
+		  "FormDataOpenapi3TestReq":{
+			"type":"object",
+			"properties":{"upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"}}
+		  }
+		}
+	  }
+	}`), s)
+}
+
 func TestReflector_SetRequest(t *testing.T) {
 	reflector := openapi3.Reflector{}
 

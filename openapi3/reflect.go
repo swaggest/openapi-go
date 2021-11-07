@@ -103,11 +103,6 @@ func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod strin
 	})
 }
 
-var (
-	typeOfMultipartFile       = reflect.TypeOf((*multipart.File)(nil)).Elem()
-	typeOfMultipartFileHeader = reflect.TypeOf((*multipart.FileHeader)(nil)).Elem()
-)
-
 const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
@@ -174,9 +169,9 @@ func (r *Reflector) parseRequestBody(
 				found = true
 			}
 
-			if v.Type().Implements(typeOfMultipartFile) || v.Type() == typeOfMultipartFileHeader {
-				found = true
-			}
+			//if v.Type().Implements(typeOfMultipartFile) || v.Type() == typeOfMultipartFileHeader {
+			//	found = true
+			//}
 
 			if found {
 				s.AddType(jsonschema.String)
