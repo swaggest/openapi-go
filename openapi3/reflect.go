@@ -169,10 +169,6 @@ func (r *Reflector) parseRequestBody(
 				found = true
 			}
 
-			//if v.Type().Implements(typeOfMultipartFile) || v.Type() == typeOfMultipartFileHeader {
-			//	found = true
-			//}
-
 			if found {
 				s.AddType(jsonschema.String)
 				s.WithFormat("binary")
