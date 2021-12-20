@@ -29,6 +29,8 @@ For automated HTTP REST service framework built with this library please check [
 
 ## Example
 
+[Other examples](https://pkg.go.dev/github.com/swaggest/openapi-go/openapi3#pkg-examples).
+
 ```go
 reflector := openapi3.Reflector{}
 reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}

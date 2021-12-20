@@ -20,7 +20,6 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - tagliatelle
     - goerr113
     - funlen
     - gocyclo
@@ -39,6 +38,10 @@ linters:
     - scopelint # deprecated
     - ifshort # too many false positives
     - golint # deprecated
+    - varnamelen
+    - tagliatelle
+    - errname
+    - ireturn
 
 issues:
   exclude-use-default: false
@@ -51,4 +54,7 @@ issues:
         - funlen
         - dupl
       path: "_test.go"
+    - linters:
+        - errcheck
+      path: "example_"
 
