@@ -614,6 +614,48 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 	}`), r.SpecEns())
 }
 
+func TestReflector_SetupRequest_forbidParams(t *testing.T) {
+	type req struct {
+		Query  string `query:"query"`
+		Header string `header:"header"`
+		Cookie string `cookie:"cookie"`
+		Path   string `path:"path"`
+
+		_ struct{} `query:"_" cookie:"_" additionalProperties:"false"`
+	}
+
+	r := openapi3.Reflector{}
+	oc := openapi3.OperationContext{
+		Operation: &openapi3.Operation{},
+		Input:     new(req),
+	}
+
+	require.NoError(t, r.SetupRequest(oc))
+	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/{path}", *oc.Operation))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/{path}":{
+		  "get":{
+			"parameters":[
+			  {"name":"query","in":"query","schema":{"type":"string"}},
+			  {
+				"name":"path","in":"path","required":true,
+				"schema":{"type":"string"}
+			  },
+			  {"name":"cookie","in":"cookie","schema":{"type":"string"}},
+			  {"name":"header","in":"header","schema":{"type":"string"}}
+			],
+			"responses":{"204":{"description":"No Content"}},
+			"x-forbid-unknown-cookie":true,"x-forbid-unknown-path":true,
+			"x-forbid-unknown-query":true
+		  }
+		}
+	  }
+	}`), r.SpecEns())
+}
+
 func TestReflector_SetupRequest_noBody(t *testing.T) {
 	type req struct {
 		ID int `json:"id" path:"id"`

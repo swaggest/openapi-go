@@ -210,6 +210,12 @@ func (r *Reflector) parseRequestBody(
 	return nil
 }
 
+const (
+	// xForbidUnknown is a prefix of a vendor extension to indicate forbidden unknown parameters.
+	// It should be used together with ParameterIn as a suffix.
+	xForbidUnknown = "x-forbid-unknown-"
+)
+
 func (r *Reflector) parseParametersIn(
 	o *Operation, input interface{}, in ParameterIn, propertyMapping map[string]string,
 ) error {
@@ -217,7 +223,7 @@ func (r *Reflector) parseParametersIn(
 		return nil
 	}
 
-	_, err := r.Reflect(input,
+	s, err := r.Reflect(input,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameMapping(propertyMapping),
@@ -308,6 +314,13 @@ func (r *Reflector) parseParametersIn(
 	)
 	if err != nil {
 		return err
+	}
+
+	if in != ParameterInHeader && // Unknown headers are too common to be forbidden together with other params.
+		s.AdditionalProperties != nil &&
+		s.AdditionalProperties.TypeBoolean != nil &&
+		!*s.AdditionalProperties.TypeBoolean {
+		o.WithMapOfAnythingItem(xForbidUnknown+string(in), true)
 	}
 
 	return nil
