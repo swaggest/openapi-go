@@ -653,6 +653,11 @@ func TestReflector_SetupRequest_forbidParams(t *testing.T) {
 		}
 	  }
 	}`), r.SpecEns())
+
+	assert.True(t, oc.Operation.UnknownParamIsForbidden(openapi3.ParameterInCookie))
+	assert.False(t, oc.Operation.UnknownParamIsForbidden(openapi3.ParameterInHeader))
+	assert.True(t, oc.Operation.UnknownParamIsForbidden(openapi3.ParameterInQuery))
+	assert.False(t, oc.Operation.UnknownParamIsForbidden(openapi3.ParameterInPath))
 }
 
 func TestReflector_SetupRequest_noBody(t *testing.T) {
