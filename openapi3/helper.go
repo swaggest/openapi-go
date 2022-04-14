@@ -126,3 +126,10 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 		return nil
 	})
 }
+
+// UnknownParamIsForbidden indicates forbidden unknown parameters.
+func (o Operation) UnknownParamIsForbidden(in ParameterIn) bool {
+	f, ok := o.MapOfAnything[xForbidUnknown+string(in)].(bool)
+
+	return f && ok
+}
