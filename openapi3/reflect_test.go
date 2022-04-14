@@ -648,8 +648,7 @@ func TestReflector_SetupRequest_forbidParams(t *testing.T) {
 			  {"name":"header","in":"header","schema":{"type":"string"}}
 			],
 			"responses":{"204":{"description":"No Content"}},
-			"x-forbid-unknown-cookie":true,"x-forbid-unknown-path":true,
-			"x-forbid-unknown-query":true
+			"x-forbid-unknown-cookie":true,"x-forbid-unknown-query":true
 		  }
 		}
 	  }

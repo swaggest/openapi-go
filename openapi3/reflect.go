@@ -228,6 +228,9 @@ func (r *Reflector) parseParametersIn(
 		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameMapping(propertyMapping),
 		jsonschema.PropertyNameTag(string(in)),
+		func(rc *jsonschema.ReflectContext) {
+			rc.UnnamedFieldWithTag = true
+		},
 		jsonschema.SkipEmbeddedMapsSlices,
 		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
 			s := SchemaOrRef{}
@@ -316,8 +319,7 @@ func (r *Reflector) parseParametersIn(
 		return err
 	}
 
-	if in != ParameterInHeader && // Unknown headers are too common to be forbidden together with other params.
-		s.AdditionalProperties != nil &&
+	if s.AdditionalProperties != nil &&
 		s.AdditionalProperties.TypeBoolean != nil &&
 		!*s.AdditionalProperties.TypeBoolean {
 		o.WithMapOfAnythingItem(xForbidUnknown+string(in), true)
