@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"reflect"
 	"strconv"
 	"testing"
 
@@ -699,4 +700,56 @@ func TestReflector_SetupRequest_noBody(t *testing.T) {
 		  "responses":{}
 		}`), oc.Operation)
 	}
+}
+
+func TestOperationCtx(t *testing.T) {
+	type req struct {
+		Query  string `query:"query"`
+		Header string `header:"header"`
+		Cookie string `cookie:"cookie"`
+		Path   string `path:"path"`
+		Body   string `json:"body"`
+	}
+
+	type resp struct {
+		Header string `header:"header"`
+		Body   string `json:"body"`
+	}
+
+	r := openapi3.Reflector{}
+	oc := openapi3.OperationContext{
+		Operation: &openapi3.Operation{},
+		Input:     new(req),
+		Output:    new(resp),
+	}
+
+	visited := map[string]bool{}
+
+	r.DefaultOptions = append(r.DefaultOptions, func(rc *jsonschema.ReflectContext) {
+		it := rc.InterceptType
+		rc.InterceptType = func(value reflect.Value, schema *jsonschema.Schema) (bool, error) {
+			if occ, ok := openapi3.OperationCtx(rc); ok {
+				if occ.ProcessingResponse {
+					visited["resp:"+occ.ProcessingIn] = true
+				} else {
+					visited["req:"+occ.ProcessingIn] = true
+				}
+			}
+
+			return it(value, schema)
+		}
+	})
+
+	require.NoError(t, r.SetupRequest(oc))
+	require.NoError(t, r.SetupResponse(oc))
+
+	assert.Equal(t, map[string]bool{
+		"req:body":    true,
+		"req:cookie":  true,
+		"req:header":  true,
+		"req:path":    true,
+		"req:query":   true,
+		"resp:body":   true,
+		"resp:header": true,
+	}, visited)
 }

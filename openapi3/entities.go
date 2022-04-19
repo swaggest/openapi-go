@@ -3627,8 +3627,7 @@ func (q QueryParameter) MarshalJSON() ([]byte, error) {
 // Header Parameter.
 //
 // Parameter in header.
-type HeaderParameter struct {
-}
+type HeaderParameter struct{}
 
 // UnmarshalJSON decodes JSON.
 func (h *HeaderParameter) UnmarshalJSON(data []byte) error {
@@ -3669,8 +3668,7 @@ func (h HeaderParameter) MarshalJSON() ([]byte, error) {
 // Cookie Parameter.
 //
 // Parameter in cookie.
-type CookieParameter struct {
-}
+type CookieParameter struct{}
 
 // UnmarshalJSON decodes JSON.
 func (c *CookieParameter) UnmarshalJSON(data []byte) error {
@@ -6755,8 +6753,7 @@ func (h HTTPSecurityScheme) MarshalJSON() ([]byte, error) {
 // Bearer.
 //
 // Bearer.
-type Bearer struct {
-}
+type Bearer struct{}
 
 // UnmarshalJSON decodes JSON.
 func (b *Bearer) UnmarshalJSON(data []byte) error {
