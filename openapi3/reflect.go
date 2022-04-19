@@ -1,6 +1,7 @@
 package openapi3
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -80,17 +81,20 @@ type OperationContext struct {
 	HTTPStatus        int
 	RespContentType   string
 	RespHeaderMapping map[string]string
+
+	ProcessingResponse bool
+	ProcessingIn       string
 }
 
 // SetupRequest sets up operation parameters.
 func (r *Reflector) SetupRequest(oc OperationContext) error {
 	return joinErrors(
-		r.parseParametersIn(oc.Operation, oc.Input, ParameterInQuery, oc.ReqQueryMapping),
-		r.parseParametersIn(oc.Operation, oc.Input, ParameterInPath, oc.ReqPathMapping),
-		r.parseParametersIn(oc.Operation, oc.Input, ParameterInCookie, oc.ReqCookieMapping),
-		r.parseParametersIn(oc.Operation, oc.Input, ParameterInHeader, oc.ReqHeaderMapping),
-		r.parseRequestBody(oc.Operation, oc.Input, tagJSON, mimeJSON, oc.HTTPMethod, nil),
-		r.parseRequestBody(oc.Operation, oc.Input, tagFormData, mimeFormUrlencoded, oc.HTTPMethod, oc.ReqFormDataMapping),
+		r.parseParametersIn(oc, ParameterInQuery, oc.ReqQueryMapping),
+		r.parseParametersIn(oc, ParameterInPath, oc.ReqPathMapping),
+		r.parseParametersIn(oc, ParameterInCookie, oc.ReqCookieMapping),
+		r.parseParametersIn(oc, ParameterInHeader, oc.ReqHeaderMapping),
+		r.parseRequestBody(oc, tagJSON, mimeJSON, oc.HTTPMethod, nil),
+		r.parseRequestBody(oc, tagFormData, mimeFormUrlencoded, oc.HTTPMethod, oc.ReqFormDataMapping),
 	)
 }
 
@@ -120,8 +124,11 @@ type RequestBodyEnforcer interface {
 }
 
 func (r *Reflector) parseRequestBody(
-	o *Operation, input interface{}, tag, mime string, httpMethod string, mapping map[string]string,
+	oc OperationContext, tag, mime string, httpMethod string, mapping map[string]string,
 ) error {
+	o := oc.Operation
+	input := oc.Input
+
 	httpMethod = strings.ToUpper(httpMethod)
 	_, forceRequestBody := input.(RequestBodyEnforcer)
 
@@ -153,6 +160,7 @@ func (r *Reflector) parseRequestBody(
 	}
 
 	schema, err := r.Reflect(input,
+		r.withOperation(oc, false, "body"),
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPrefix),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameMapping(mapping),
@@ -217,13 +225,17 @@ const (
 )
 
 func (r *Reflector) parseParametersIn(
-	o *Operation, input interface{}, in ParameterIn, propertyMapping map[string]string,
+	oc OperationContext, in ParameterIn, propertyMapping map[string]string,
 ) error {
+	o := oc.Operation
+	input := oc.Input
+
 	if refl.IsSliceOrMap(input) {
 		return nil
 	}
 
 	s, err := r.Reflect(input,
+		r.withOperation(oc, false, string(in)),
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition),
 		jsonschema.PropertyNameMapping(propertyMapping),
@@ -265,6 +277,7 @@ func (r *Reflector) parseParametersIn(
 			property := reflect.New(field.Type).Interface()
 			if refl.HasTaggedFields(property, tagJSON) {
 				propertySchema, err := r.Reflect(property,
+					r.withOperation(oc, false, string(in)),
 					jsonschema.DefinitionsPrefix("#/components/schemas/"),
 					jsonschema.CollectDefinitions(r.collectDefinition),
 					jsonschema.RootRef,
@@ -278,7 +291,9 @@ func (r *Reflector) parseParametersIn(
 				p.Schema = nil
 				p.WithContentItem("application/json", MediaType{Schema: &openapiSchema})
 			} else {
-				ps, err := r.Reflect(reflect.New(field.Type).Interface(), jsonschema.InlineRefs)
+				ps, err := r.Reflect(reflect.New(field.Type).Interface(),
+					r.withOperation(oc, false, string(in)),
+					jsonschema.InlineRefs)
 				if err != nil {
 					return err
 				}
@@ -339,10 +354,14 @@ func (r *Reflector) collectDefinition(name string, schema jsonschema.Schema) {
 	r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 }
 
-func (r *Reflector) parseResponseHeader(resp *Response, output interface{}, mapping map[string]string) error {
+func (r *Reflector) parseResponseHeader(resp *Response, oc OperationContext) error {
+	output := oc.Output
+	mapping := oc.RespHeaderMapping
+
 	res := make(map[string]HeaderOrRef)
 
 	schema, err := r.Reflect(output,
+		r.withOperation(oc, true, "header"),
 		jsonschema.InlineRefs,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag("header"),
@@ -418,12 +437,12 @@ func (r *Reflector) SetupResponse(oc OperationContext) error {
 	if oc.Output != nil {
 		oc.RespContentType = strings.Split(oc.RespContentType, ";")[0]
 
-		err := r.parseJSONResponse(&resp, oc.Output, oc.RespContentType)
+		err := r.parseJSONResponse(&resp, oc)
 		if err != nil {
 			return err
 		}
 
-		err = r.parseResponseHeader(&resp, oc.Output, oc.RespHeaderMapping)
+		err = r.parseResponseHeader(&resp, oc)
 		if err != nil {
 			return err
 		}
@@ -456,13 +475,17 @@ func (r *Reflector) ensureResponseContentType(resp *Response, contentType string
 	}
 }
 
-func (r *Reflector) parseJSONResponse(resp *Response, output interface{}, contentType string) error {
+func (r *Reflector) parseJSONResponse(resp *Response, oc OperationContext) error {
+	output := oc.Output
+	contentType := oc.RespContentType
+
 	// Check if output structure exposes meaningful schema.
 	if hasJSONBody, err := r.hasJSONBody(output); err == nil && !hasJSONBody {
 		return nil
 	}
 
 	schema, err := r.Reflect(output,
+		r.withOperation(oc, true, "body"),
 		jsonschema.RootRef,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition),
@@ -499,4 +522,24 @@ func (r *Reflector) parseJSONResponse(resp *Response, output interface{}, conten
 	}
 
 	return nil
+}
+
+type ocCtxKey struct{}
+
+func (r *Reflector) withOperation(oc OperationContext, processingResponse bool, in string) func(rc *jsonschema.ReflectContext) {
+	return func(rc *jsonschema.ReflectContext) {
+		oc.ProcessingResponse = processingResponse
+		oc.ProcessingIn = in
+
+		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc)
+	}
+}
+
+// OperationCtx retrieves operation context from reflect context.
+func OperationCtx(rc *jsonschema.ReflectContext) (OperationContext, bool) {
+	if oc, ok := rc.Value(ocCtxKey{}).(OperationContext); ok {
+		return oc, true
+	}
+
+	return OperationContext{}, false
 }
