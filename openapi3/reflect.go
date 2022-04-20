@@ -1,7 +1,9 @@
 package openapi3
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mime/multipart"
@@ -419,15 +421,24 @@ func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
 		return false, err
 	}
 
-	if schema.Type == nil {
-		return false, nil
+	// Remove non-constraining fields to prepare for marshaling.
+	schema.Title = nil
+	schema.Description = nil
+	schema.Comment = nil
+	schema.ExtraProperties = nil
+	schema.ID = nil
+	schema.Examples = nil
+
+	j, err := json.Marshal(schema)
+	if err != nil {
+		return false, err
 	}
 
-	if schema.HasType(jsonschema.Object) && schema.AdditionalProperties == nil && len(schema.Properties) == 0 {
-		return false, nil
+	if !bytes.Equal([]byte("{}"), j) && !bytes.Equal([]byte(`{"type":"object"}`), j) {
+		return true, nil
 	}
 
-	return true, nil
+	return false, nil
 }
 
 // SetupResponse sets up operation response.
