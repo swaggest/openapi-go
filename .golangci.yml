@@ -42,6 +42,8 @@ linters:
     - tagliatelle
     - errname
     - ireturn
+    - exhaustruct
+    - nonamedreturns
 
 issues:
   exclude-use-default: false
@@ -59,5 +61,5 @@ issues:
       path: "example_"
     - linters:
         - staticcheck
-      text: "SA1019: strings.Title is deprecated"
+      text: "SA1019: strings.Title .+ deprecated"
 
