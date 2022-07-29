@@ -87,7 +87,10 @@
         "schema":{"type":"string","description":"Sample header response."}
        }
       },
-      "content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Openapi3TestResp"}}}}
+      "content":{
+       "application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Openapi3TestResp"}}},
+       "text/html":{"schema":{"type":"string"}}
+      }
      }
     }
    }

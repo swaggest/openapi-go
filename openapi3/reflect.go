@@ -406,6 +406,15 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc OperationContext) err
 	return nil
 }
 
+// SetStringResponse sets unstructured response.
+func (r *Reflector) SetStringResponse(o *Operation, httpStatus int, contentType string) error {
+	return r.SetupResponse(OperationContext{
+		Operation:       o,
+		HTTPStatus:      httpStatus,
+		RespContentType: contentType,
+	})
+}
+
 // SetJSONResponse sets up operation JSON response.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
 	return r.SetupResponse(OperationContext{
@@ -443,32 +452,37 @@ func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
 
 // SetupResponse sets up operation response.
 func (r *Reflector) SetupResponse(oc OperationContext) error {
-	resp := Response{}
+	httpStatus := strconv.Itoa(oc.HTTPStatus)
+	resp := oc.Operation.Responses.MapOfResponseOrRefValues[httpStatus].Response
+
+	if resp == nil {
+		resp = &Response{}
+	}
 
 	if oc.Output != nil {
 		oc.RespContentType = strings.Split(oc.RespContentType, ";")[0]
 
-		err := r.parseJSONResponse(&resp, oc)
+		err := r.parseJSONResponse(resp, oc)
 		if err != nil {
 			return err
 		}
 
-		err = r.parseResponseHeader(&resp, oc)
+		err = r.parseResponseHeader(resp, oc)
 		if err != nil {
 			return err
 		}
+	}
 
-		if oc.RespContentType != "" {
-			r.ensureResponseContentType(&resp, oc.RespContentType)
-		}
+	if oc.RespContentType != "" {
+		r.ensureResponseContentType(resp, oc.RespContentType)
 	}
 
 	if resp.Description == "" {
 		resp.Description = http.StatusText(oc.HTTPStatus)
 	}
 
-	oc.Operation.Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(oc.HTTPStatus), ResponseOrRef{
-		Response: &resp,
+	oc.Operation.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{
+		Response: resp,
 	})
 
 	return nil
@@ -480,8 +494,9 @@ func (r *Reflector) ensureResponseContentType(resp *Response, contentType string
 			resp.Content = map[string]MediaType{}
 		}
 
+		typeString := SchemaTypeString
 		resp.Content[contentType] = MediaType{
-			Schema: &SchemaOrRef{Schema: &Schema{}},
+			Schema: &SchemaOrRef{Schema: &Schema{Type: &typeString}},
 		}
 	}
 }
