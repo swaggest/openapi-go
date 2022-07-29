@@ -191,14 +191,10 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	op := openapi3.Operation{}
 
-	err := reflector.SetRequest(&op, new(Req), http.MethodPost)
-	assert.NoError(t, err)
-
-	err = reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK)
-	assert.NoError(t, err)
-
-	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
-	assert.NoError(t, err)
+	assert.NoError(t, reflector.SetRequest(&op, new(Req), http.MethodPost))
+	assert.NoError(t, reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK))
+	assert.NoError(t, reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict))
+	assert.NoError(t, reflector.SetStringResponse(&op, http.StatusConflict, "text/html"))
 
 	pathItem := openapi3.PathItem{}
 	pathItem.
@@ -217,12 +213,8 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	op = openapi3.Operation{}
 
-	err = reflector.SetRequest(&op, new(GetReq), http.MethodGet)
-	assert.NoError(t, err)
-
-	err = reflector.SetJSONResponse(&op, new(Resp), http.StatusOK)
-	assert.NoError(t, err)
-
+	assert.NoError(t, reflector.SetRequest(&op, new(GetReq), http.MethodGet))
+	assert.NoError(t, reflector.SetJSONResponse(&op, new(Resp), http.StatusOK))
 	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
 	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
@@ -255,7 +247,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	expected, err = ioutil.ReadFile("_testdata/openapi.json")
 	require.NoError(t, err)
 
-	assertjson.Equal(t, expected, b)
+	assertjson.EqualMarshal(t, expected, s)
 }
 
 type Identity struct {
@@ -752,4 +744,25 @@ func TestOperationCtx(t *testing.T) {
 		"resp:body":   true,
 		"resp:header": true,
 	}, visited)
+}
+
+func TestReflector_SetStringResponse(t *testing.T) {
+	reflector := openapi3.Reflector{}
+
+	s := reflector.SpecEns()
+	s.Info.Title = apiName
+	s.Info.Version = apiVersion
+
+	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
+
+	op := openapi3.Operation{}
+
+	err := reflector.SetRequest(&op, new(Req), http.MethodPost)
+	assert.NoError(t, err)
+
+	err = reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK)
+	assert.NoError(t, err)
+
+	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
+	assert.NoError(t, err)
 }
