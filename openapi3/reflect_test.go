@@ -379,7 +379,7 @@ func TestReflector_SetupResponse(t *testing.T) {
 		   "X-Value-1":{"style":"simple","schema":{"type":"integer"}},
 		   "X-Value-2":{"style":"simple","schema":{"type":"string"}}
 		  },
-		  "content":{"text/csv":{"schema":{}}}
+		  "content":{"text/csv":{"schema":{"type":"string"}}}
 		 }
 		}
 	   }
