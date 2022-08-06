@@ -46,6 +46,8 @@ linters:
     - nonamedreturns
 
 issues:
+  exclude:
+    - "\"io/ioutil\" has been deprecated"
   exclude-use-default: false
   exclude-rules:
     - linters:
