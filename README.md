@@ -21,11 +21,8 @@ For automated HTTP REST service framework built with this library please check [
     * `json` for request bodies and responses in JSON
     * `query`, `path` for parameters in URL
     * `header`, `cookie`, `formData`, `file` for other parameters
-    * field tags named after JSON Schema/OpenAPI 3 Schema constraints
-* Schema control via interfaces
-    * [`jsonschema.Exposer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#Exposer)
-    * [`jsonschema.Preparer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#Preparer)
-    * [`jsonschema.RawExposer`](https://pkg.go.dev/github.com/swaggest/jsonschema-go?tab=doc#RawExposer)
+    * [field tags](https://github.com/swaggest/jsonschema-go#field-tags) named after JSON Schema/OpenAPI 3 Schema constraints
+* Flexible schema control with [`jsonschema-go`](https://github.com/swaggest/jsonschema-go#implementing-interfaces-on-a-type)
 
 ## Example
 

@@ -46,6 +46,8 @@ linters:
     - nonamedreturns
 
 issues:
+  exclude:
+    - "\"io/ioutil\" has been deprecated"
   exclude-use-default: false
   exclude-rules:
     - linters:
@@ -55,9 +57,13 @@ issues:
         - noctx
         - funlen
         - dupl
+        - structcheck
+        - unused
+        - unparam
+        - nosnakecase
       path: "_test.go"
     - linters:
-        - errcheck
+        - errcheck # Error checking omitted for brevity.
       path: "example_"
     - linters:
         - staticcheck
