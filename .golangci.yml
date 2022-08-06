@@ -55,9 +55,13 @@ issues:
         - noctx
         - funlen
         - dupl
+        - structcheck
+        - unused
+        - unparam
+        - nosnakecase
       path: "_test.go"
     - linters:
-        - errcheck
+        - errcheck # Error checking omitted for brevity.
       path: "example_"
     - linters:
         - staticcheck
