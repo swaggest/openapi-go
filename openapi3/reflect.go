@@ -250,7 +250,7 @@ func (r *Reflector) parseParametersIn(
 			s := SchemaOrRef{}
 			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
-			if s.Schema != nil && s.Schema.Nullable != nil {
+			if s.Schema != nil && s.Schema.Nullable != nil && field.Type.Kind() != reflect.Ptr {
 				s.Schema.Nullable = nil
 			}
 
