@@ -23,7 +23,7 @@ func (p *PathItem) WithOperation(method string, operation Operation) *PathItem {
 	return p.WithMapOfOperationValuesItem(strings.ToLower(method), operation)
 }
 
-var regexFindPathParameter = regexp.MustCompile(`{([^}:]+)(:[^/]+)?(?:})`)
+var regexFindPathParameter = regexp.MustCompile(`{([^}:]+)(:[^}]+)?(?:})`)
 
 // SetupOperation creates operation if it is not present and applies setup functions.
 func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) error) error {
