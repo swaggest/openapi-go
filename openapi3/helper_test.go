@@ -40,3 +40,40 @@ func TestSpec_SetOperation(t *testing.T) {
 	assert.EqualError(t, s.AddOperation(http.MethodGet, "/another/{foo}", op),
 		"duplicate parameter in path: foo, duplicate parameter in query: bar")
 }
+
+func TestSpec_SetupOperation_pathRegex(t *testing.T) {
+	s := openapi3.Spec{}
+
+	for _, tc := range []struct {
+		path   string
+		params []string
+	}{
+		{`/{month}-{day}-{year}`, []string{"month", "day", "year"}},
+		{`/{month}/{day}/{year}`, []string{"month", "day", "year"}},
+		{`/{month:[\d]+}-{day:[\d]+}-{year:[\d]+}`, []string{"month", "day", "year"}},
+		{`/{articleSlug:[a-z-]+}`, []string{"articleSlug"}},
+		{"/articles/{rid:^[0-9]{5,6}}", []string{"rid"}},
+		{"/articles/{rid:^[0-9]{5,6}}/{zid:^[0-9]{5,6}}", []string{"rid", "zid"}},
+		{"/articles/{zid:^0[0-9]+}", []string{"zid"}},
+		{"/articles/{name:^@[a-z]+}/posts", []string{"name"}},
+		{"/articles/{op:^[0-9]+}/run", []string{"op"}},
+		{"/users/{userID:[^/]+}", []string{"userID"}},
+		{"/users/{userID:[^/]+}/books/{bookID:.+}", []string{"userID", "bookID"}},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			assert.NoError(t, s.SetupOperation(http.MethodGet, tc.path,
+				func(operation *openapi3.Operation) error {
+					var pp []openapi3.ParameterOrRef
+
+					for _, p := range tc.params {
+						pp = append(pp, openapi3.Parameter{In: openapi3.ParameterInPath, Name: p}.ToParameterOrRef())
+					}
+
+					operation.WithParameters(pp...)
+
+					return nil
+				},
+			))
+		})
+	}
+}
