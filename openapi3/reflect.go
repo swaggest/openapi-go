@@ -125,6 +125,13 @@ type RequestBodyEnforcer interface {
 	ForceRequestBody()
 }
 
+// RequestJSONBodyEnforcer enables JSON request body for structures with `formData` tags.
+//
+// Should be implemented on input structure, function body can be empty.
+type RequestJSONBodyEnforcer interface {
+	ForceJSONRequestBody()
+}
+
 func (r *Reflector) parseRequestBody(
 	oc OperationContext, tag, mime string, httpMethod string, mapping map[string]string,
 ) error {
@@ -133,6 +140,7 @@ func (r *Reflector) parseRequestBody(
 
 	httpMethod = strings.ToUpper(httpMethod)
 	_, forceRequestBody := input.(RequestBodyEnforcer)
+	_, forceJSONRequestBody := input.(RequestJSONBodyEnforcer)
 
 	// GET, HEAD, DELETE and TRACE requests should not have body.
 	switch httpMethod {
@@ -146,6 +154,11 @@ func (r *Reflector) parseRequestBody(
 
 	// Form data can not have map or array as body.
 	if !hasTaggedFields && len(mapping) == 0 && tag != tagJSON {
+		return nil
+	}
+
+	// If `formData` is defined on a request body `json` is ignored.
+	if tag == tagJSON && refl.HasTaggedFields(input, tagFormData) && !forceJSONRequestBody {
 		return nil
 	}
 
