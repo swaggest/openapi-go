@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"testing"
@@ -76,6 +77,8 @@ type Req struct {
 	ArraySwg2SSV   []string              `query:"array_swg2_ssv" collectionFormat:"ssv"`
 	ArraySwg2Pipes []string              `query:"array_swg2_pipes" collectionFormat:"pipes"`
 }
+
+func (r Req) ForceJSONRequestBody() {}
 
 type GetReq struct {
 	InQuery1 int     `query:"in_query1" required:"true" description:"Query parameter." json:"q1"`
@@ -202,12 +205,10 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 		WithDescription("Path Description")
 	s.Paths.WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
 
-	js := op.RequestBody.RequestBody.Content["application/json"].Schema.ToJSONSchema(s)
-	jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
+	js := op.RequestBody.RequestBody.Content["multipart/form-data"].Schema.ToJSONSchema(s)
+	expected, err := os.ReadFile("_testdata/req_schema.json")
 	require.NoError(t, err)
-	expected, err := ioutil.ReadFile("_testdata/req_schema.json")
-	require.NoError(t, err)
-	assertjson.Equal(t, expected, jsb, string(jsb))
+	assertjson.EqualMarshal(t, expected, js)
 
 	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{in_path}", op))
 
@@ -219,7 +220,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
 		Schema.ToJSONSchema(s)
-	jsb, err = assertjson.MarshalIndentCompact(js, "", " ", 120)
+	jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
 	require.NoError(t, err)
 
 	require.NoError(t, ioutil.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0o600))
@@ -765,4 +766,41 @@ func TestReflector_SetStringResponse(t *testing.T) {
 
 	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
 	assert.NoError(t, err)
+}
+
+func TestReflector_SetRequest_formData_with_json(t *testing.T) {
+	// In presence of `formData` tags, `json` tags would be ignored as request body.
+	type req struct {
+		Foo int `formData:"foo" json:"foo"`
+	}
+
+	r := openapi3.Reflector{}
+	oc := openapi3.OperationContext{
+		Operation: &openapi3.Operation{},
+		Input:     new(req),
+	}
+
+	require.NoError(t, r.SetupRequest(oc))
+	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/foo", *oc.Operation))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "get":{
+			"requestBody":{
+			  "content":{
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "FormDataOpenapi3TestReq":{"type":"object","properties":{"foo":{"type":"integer"}}}
+		}
+	  }
+	}`), r.SpecEns())
 }
