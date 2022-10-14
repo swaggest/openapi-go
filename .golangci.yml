@@ -48,6 +48,8 @@ linters:
     - structcheck
     - varcheck
     - deadcode
+    - testableexamples
+    - dupword
 
 issues:
   exclude:
@@ -68,6 +70,7 @@ issues:
       path: "_test.go"
     - linters:
         - errcheck # Error checking omitted for brevity.
+        - gosec
       path: "example_"
     - linters:
         - staticcheck
