@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/bool64/dev v0.2.22
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/swaggest/assertjson v1.7.0
 	github.com/swaggest/jsonschema-go v0.3.40
 	github.com/swaggest/refl v1.1.0

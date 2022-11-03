@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/swaggest/assertjson"
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
@@ -76,4 +77,26 @@ func TestSpec_SetupOperation_pathRegex(t *testing.T) {
 			))
 		})
 	}
+}
+
+func TestSpec_SetupOperation_uncleanPath(t *testing.T) {
+	s := openapi3.Spec{}
+	f := func(operation *openapi3.Operation) error {
+		operation.WithParameters(openapi3.Parameter{In: openapi3.ParameterInPath, Name: "userID"}.ToParameterOrRef())
+
+		return nil
+	}
+
+	assert.NoError(t, s.SetupOperation(http.MethodGet, "/users/{userID:[^/]+}", f))
+	assert.NoError(t, s.SetupOperation(http.MethodPost, "/users/{userID:[^/]+}", f))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"","info":{"title":"","version":""},
+	  "paths":{
+		"/users/{userID}":{
+		  "get":{"parameters":[{"name":"userID","in":"path"}],"responses":{}},
+		  "post":{"parameters":[{"name":"userID","in":"path"}],"responses":{}}
+		}
+	  }
+	}`), s)
 }

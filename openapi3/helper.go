@@ -37,7 +37,6 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 		return fmt.Errorf("unexpected http method: %s", method)
 	}
 
-	pathItem := s.Paths.MapOfPathItemValues[path]
 	pathParams := map[string]bool{}
 
 	if len(pathParametersSubmatches) > 0 {
@@ -52,6 +51,7 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 
 	var errs []string
 
+	pathItem := s.Paths.MapOfPathItemValues[path]
 	operation := pathItem.MapOfOperationValues[method]
 
 	for _, f := range setup {
