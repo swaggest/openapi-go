@@ -6792,6 +6792,26 @@ type NonBearer struct {
 	Scheme *interface{} `json:"scheme,omitempty"`
 }
 
+// UnmarshalJSON decodes JSON.
+func (b *NonBearer) UnmarshalJSON(data []byte) error {
+	var err error
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	if v, exists := rawMap["scheme"]; exists && string(v) == `"bearer"` {
+		return fmt.Errorf(`bad const value for "scheme" (not "bearer" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "scheme")
+
+	return nil
+}
+
 // WithScheme sets Scheme value.
 func (n *NonBearer) WithScheme(val interface{}) *NonBearer {
 	n.Scheme = &val
