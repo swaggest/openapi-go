@@ -6807,6 +6807,10 @@ func (b *NonBearer) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf(`bad const value for "scheme" (not "bearer" expected, %s received)`, v)
 	}
 
+	if _, exists := rawMap["bearerFormat"]; exists {
+		return errors.New(`property "bearerFormat" should not exist`)
+	}
+
 	delete(rawMap, "scheme")
 
 	return nil

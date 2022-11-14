@@ -852,7 +852,7 @@ func TestAPIKeySecurityScheme_MarshalJSON_roundtrip(t *testing.T) {
 
 func TestHTTPSecurityScheme_MarshalJSON_roundtrip(t *testing.T) {
 	var (
-		jsonValue = []byte(`{"scheme":"bee","bearerFormat":"cffaee","description":"dcddce","type":"http"}`)
+		jsonValue = []byte(`{"scheme":"bearer","bearerFormat":"cffaee","description":"dcddce","type":"http"}`)
 		v         HTTPSecurityScheme
 	)
 
