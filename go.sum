@@ -64,8 +64,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/swaggest/assertjson v1.7.0 h1:SKw5Rn0LQs6UvmGrIdaKQbMR1R3ncXm5KNon+QJ7jtw=
 github.com/swaggest/assertjson v1.7.0/go.mod h1:vxMJMehbSVJd+dDWFCKv3QRZKNTpy/ktZKTz9LOEDng=
-github.com/swaggest/jsonschema-go v0.3.41 h1:YsrBk5TW+S7/jTudvo1jWUJTECAIBdfk4iM7O9kzbnU=
-github.com/swaggest/jsonschema-go v0.3.41/go.mod h1:yt5lcjdqywYtNnzkFgYnyfvMwlH2XHEDitKw749AV1w=
+github.com/swaggest/jsonschema-go v0.3.42 h1:Eepch6hlDtEuSVgfBH4NsP9F2Yf/KGj+7MwgBk618ac=
+github.com/swaggest/jsonschema-go v0.3.42/go.mod h1:yt5lcjdqywYtNnzkFgYnyfvMwlH2XHEDitKw749AV1w=
 github.com/swaggest/refl v1.1.0 h1:a+9a75Kv6ciMozPjVbOfcVTEQe81t2R3emvaD9oGQGc=
 github.com/swaggest/refl v1.1.0/go.mod h1:g3Qa6ki0A/L2yxiuUpT+cuBURuRaltF5SDQpg1kMZSY=
 github.com/yosuke-furukawa/json5 v0.1.2-0.20201207051438-cf7bb3f354ff/go.mod h1:sw49aWDqNdRJ6DYUtIQiaA3xyj2IL9tjeNYmX2ixwcU=
