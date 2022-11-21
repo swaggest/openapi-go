@@ -535,7 +535,7 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 	  }
 	 },
 	 "components":{
-	  "schemas":{"Openapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"},"nullable":true}}
+	  "schemas":{"Openapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}}
 	 }
 	}`)
 
@@ -543,7 +543,7 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 
 	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
 	assert.True(t, found)
-	assertjson.EqualMarshal(t, []byte(`{"type":["object","null"],"additionalProperties":{"type":"number"}}`), js)
+	assertjson.EqualMarshal(t, []byte(`{"type":"object","additionalProperties":{"type":"number"}}`), js)
 }
 
 func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
