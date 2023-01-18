@@ -804,3 +804,54 @@ func TestReflector_SetRequest_formData_with_json(t *testing.T) {
 	  }
 	}`), r.SpecEns())
 }
+
+func TestReflector_SetupRequest_form(t *testing.T) {
+	// Fields with `form` will be present as both `query` parameter and `formData` property.
+	type req struct {
+		Foo  int    `formData:"foo"`
+		Bar  int    `form:"bar"`
+		Baz  string `query:"baz"`
+		Quux string `query:"quux" form:"ignored"`
+	}
+
+	r := openapi3.Reflector{}
+	oc := openapi3.OperationContext{
+		Operation: &openapi3.Operation{},
+		Input:     req{},
+	}
+
+	require.NoError(t, r.SetupRequest(oc))
+	require.NoError(t, r.SpecEns().AddOperation(http.MethodPost, "/foo", *oc.Operation))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"parameters":[
+			  {"name":"bar","in":"query","schema":{"type":"integer"}},
+			  {"name":"baz","in":"query","schema":{"type":"string"}},
+			  {"name":"quux","in":"query","schema":{"type":"string"}}
+			],
+			"requestBody":{
+			  "content":{
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "FormDataOpenapi3TestReq":{
+			"type":"object",
+			"properties":{
+			  "bar":{"type":"integer"},"foo":{"type":"integer"},
+			  "ignored":{"type":"string"}
+			}
+		  }
+		}
+	  }
+	}`), r.SpecEns())
+}
