@@ -152,6 +152,13 @@ func (r *Reflector) parseRequestBody(
 	}
 
 	hasTaggedFields := refl.HasTaggedFields(input, tag)
+	for _, t := range additionalTags {
+		if hasTaggedFields {
+			break
+		}
+
+		hasTaggedFields = refl.HasTaggedFields(input, t)
+	}
 
 	// Form data can not have map or array as body.
 	if !hasTaggedFields && len(mapping) == 0 && tag != tagJSON {
