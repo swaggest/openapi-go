@@ -25,6 +25,7 @@ linters:
     - gocyclo
     - cyclop
     - gocognit
+    - musttag
     - lll
     - maligned
     - gochecknoglobals
