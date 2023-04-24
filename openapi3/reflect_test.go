@@ -6,7 +6,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -718,10 +717,14 @@ func TestOperationCtx(t *testing.T) {
 
 	visited := map[string]bool{}
 
-	r.DefaultOptions = append(r.DefaultOptions, func(rc *jsonschema.ReflectContext) {
-		it := rc.InterceptType
-		rc.InterceptType = func(value reflect.Value, schema *jsonschema.Schema) (bool, error) {
-			if occ, ok := openapi3.OperationCtx(rc); ok {
+	var currentRC *jsonschema.ReflectContext
+
+	r.DefaultOptions = append(r.DefaultOptions,
+		func(rc *jsonschema.ReflectContext) {
+			currentRC = rc
+		},
+		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
+			if occ, ok := openapi3.OperationCtx(currentRC); ok {
 				if occ.ProcessingResponse {
 					visited["resp:"+occ.ProcessingIn] = true
 				} else {
@@ -729,9 +732,9 @@ func TestOperationCtx(t *testing.T) {
 				}
 			}
 
-			return it(value, schema)
-		}
-	})
+			return false, nil
+		}),
+	)
 
 	require.NoError(t, r.SetupRequest(oc))
 	require.NoError(t, r.SetupResponse(oc))

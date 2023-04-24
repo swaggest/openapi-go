@@ -188,8 +188,8 @@ func (r *Reflector) parseRequestBody(
 		jsonschema.RootRef,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tag, additionalTags...),
-		jsonschema.InterceptType(func(v reflect.Value, s *jsonschema.Schema) (bool, error) {
-			vv := v.Interface()
+		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
+			vv := params.Value.Interface()
 
 			found := false
 			if _, ok := vv.(*multipart.File); ok {
@@ -201,8 +201,8 @@ func (r *Reflector) parseRequestBody(
 			}
 
 			if found {
-				s.AddType(jsonschema.String)
-				s.WithFormat("binary")
+				params.Schema.AddType(jsonschema.String)
+				params.Schema.WithFormat("binary")
 
 				hasFileUpload = true
 
@@ -267,7 +267,15 @@ func (r *Reflector) parseParametersIn(
 			rc.UnnamedFieldWithTag = true
 		},
 		jsonschema.SkipEmbeddedMapsSlices,
-		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
+			if !params.Processed {
+				return nil
+			}
+
+			name := params.Name
+			propertySchema := params.PropertySchema
+			field := params.Field
+
 			s := SchemaOrRef{}
 			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
@@ -388,7 +396,15 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc OperationContext) err
 		jsonschema.InlineRefs,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag("header"),
-		jsonschema.InterceptProperty(func(name string, field reflect.StructField, propertySchema *jsonschema.Schema) error {
+		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
+			if !params.Processed {
+				return nil
+			}
+
+			propertySchema := params.PropertySchema
+			field := params.Field
+			name := params.Name
+
 			s := SchemaOrRef{}
 			s.FromJSONSchema(propertySchema.ToSchemaOrBool())
 
