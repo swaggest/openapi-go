@@ -108,7 +108,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	pathItem := s.Paths.MapOfPathItemValues[path]
 
 	if _, found := pathItem.MapOfOperationValues[method]; found {
-		return errors.New("operation with method and path already exists")
+		return fmt.Errorf("operation already exists: %s %s", method, path)
 	}
 
 	// Add "No Content" response if there are no responses configured.

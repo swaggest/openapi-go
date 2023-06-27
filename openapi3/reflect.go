@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/swaggest/jsonschema-go"
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/refl"
 )
 
@@ -88,16 +88,114 @@ type OperationContext struct {
 	ProcessingIn       string
 }
 
-// SetupRequest sets up operation parameters.
-func (r *Reflector) SetupRequest(oc OperationContext) error {
-	return joinErrors(
-		r.parseParametersIn(oc, oc.ReqQueryMapping, ParameterInQuery, tagForm),
-		r.parseParametersIn(oc, oc.ReqPathMapping, ParameterInPath),
-		r.parseParametersIn(oc, oc.ReqCookieMapping, ParameterInCookie),
-		r.parseParametersIn(oc, oc.ReqHeaderMapping, ParameterInHeader),
-		r.parseRequestBody(oc, mimeJSON, oc.HTTPMethod, nil, tagJSON),
-		r.parseRequestBody(oc, mimeFormUrlencoded, oc.HTTPMethod, oc.ReqFormDataMapping, tagFormData, tagForm),
+type opCtx struct {
+	*openapi.OpCtx
+
+	o *Operation
+}
+
+func (c opCtx) Operation() *Operation {
+	return c.o
+}
+
+func toOpCtx(c OperationContext) opCtx {
+	oc := openapi.NewOperationContext(c.HTTPMethod, "")
+
+	oc.AddReqStructure(c.Input,
+		openapi.FieldMapping(openapi.InHeader, c.ReqHeaderMapping),
+		openapi.FieldMapping(openapi.InQuery, c.ReqQueryMapping),
+		openapi.FieldMapping(openapi.InCookie, c.ReqCookieMapping),
+		openapi.FieldMapping(openapi.InPath, c.ReqPathMapping),
+		openapi.FieldMapping(openapi.InFormData, c.ReqFormDataMapping),
 	)
+
+	oc.AddRespStructure(c.Output,
+		openapi.FieldMapping(openapi.InHeader, c.RespHeaderMapping),
+		func(cu *openapi.ContentUnit) {
+			cu.ContentType = c.RespContentType
+			cu.HTTPStatus = c.HTTPStatus
+		},
+	)
+
+	oc.SetProcessingIn(openapi.In(c.ProcessingIn))
+	oc.SetIsProcessingResponse(c.ProcessingResponse)
+
+	return opCtx{
+		OpCtx: oc,
+		o:     c.Operation,
+	}
+}
+
+func fromOpCtx(oc openapi.OperationContext) OperationContext {
+	c := OperationContext{}
+
+	c.HTTPMethod = oc.Method()
+
+	if req := oc.Request(); len(req) > 0 {
+		cu := req[0]
+
+		c.Input = cu.Structure
+		c.ReqQueryMapping = cu.FieldMapping(openapi.InQuery)
+		c.ReqPathMapping = cu.FieldMapping(openapi.InPath)
+		c.ReqHeaderMapping = cu.FieldMapping(openapi.InHeader)
+		c.ReqFormDataMapping = cu.FieldMapping(openapi.InFormData)
+		c.ReqCookieMapping = cu.FieldMapping(openapi.InCookie)
+	}
+
+	if resp := oc.Response(); len(resp) > 0 {
+		cu := resp[0]
+
+		c.Output = cu.Structure
+		c.RespHeaderMapping = cu.FieldMapping(openapi.InHeader)
+		c.RespContentType = cu.ContentType
+		c.HTTPStatus = cu.HTTPStatus
+	}
+
+	c.ProcessingResponse = oc.IsProcessingResponse()
+	c.ProcessingIn = string(oc.ProcessingIn())
+
+	return c
+}
+
+// SetupOperation configures operation request and response schema.
+func (r *Reflector) SetupOperation(o *Operation, oc openapi.OperationContext) error {
+	if err := r.setupRequest(o, oc); err != nil {
+		return err
+	}
+
+	return r.setupResponse(o, oc)
+}
+
+func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) error {
+	for _, cu := range oc.Request() {
+		switch cu.ContentType {
+		case "":
+			return joinErrors(
+				r.parseParameters(o, oc, cu),
+				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
+				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
+			)
+		case mimeJSON:
+			return joinErrors(
+				r.parseParameters(o, oc, cu),
+				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
+			)
+		case mimeFormUrlencoded, mimeMultipart:
+			return joinErrors(
+				r.parseParameters(o, oc, cu),
+				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
+			)
+		default:
+			r.stringRequestBody(o, cu.ContentType, cu.Format)
+		}
+	}
+
+	return nil
+}
+
+// SetupRequest sets up operation parameters.
+func (r *Reflector) SetupRequest(c OperationContext) error {
+	return r.setupRequest(c.Operation, toOpCtx(c))
 }
 
 // SetRequest sets up operation parameters.
@@ -113,6 +211,7 @@ const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
 	tagForm            = "form"
+	tagHeader          = "header"
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
@@ -133,15 +232,46 @@ type RequestJSONBodyEnforcer interface {
 	ForceJSONRequestBody()
 }
 
+func mediaType(format string) MediaType {
+	schema := jsonschema.String.ToSchemaOrBool()
+	if format != "" {
+		schema.TypeObject.WithFormat(format)
+	}
+
+	schemaOrRef := SchemaOrRef{}
+
+	schemaOrRef.FromJSONSchema(schema)
+
+	mt := MediaType{
+		Schema: &schemaOrRef,
+	}
+
+	return mt
+}
+
+func (r *Reflector) stringRequestBody(
+	o *Operation,
+	mime string,
+	format string,
+) {
+	o.RequestBodyEns().RequestBodyEns().WithContentItem(mime, mediaType(format))
+}
+
 func (r *Reflector) parseRequestBody(
-	oc OperationContext, mime string, httpMethod string, mapping map[string]string, tag string, additionalTags ...string,
+	o *Operation,
+	oc openapi.OperationContext,
+	cu openapi.ContentUnit,
+	mime string,
+	httpMethod string,
+	mapping map[string]string,
+	tag string,
+	additionalTags ...string,
 ) error {
-	o := oc.Operation
-	input := oc.Input
+	input := cu.Structure
 
 	httpMethod = strings.ToUpper(httpMethod)
-	_, forceRequestBody := input.(RequestBodyEnforcer)
-	_, forceJSONRequestBody := input.(RequestJSONBodyEnforcer)
+	_, forceRequestBody := input.(openapi.RequestBodyEnforcer)
+	_, forceJSONRequestBody := input.(openapi.RequestJSONBodyEnforcer)
 
 	// GET, HEAD, DELETE and TRACE requests should not have body.
 	switch httpMethod {
@@ -183,7 +313,7 @@ func (r *Reflector) parseRequestBody(
 	}
 
 	schema, err := r.Reflect(input,
-		r.withOperation(oc, false, "body"),
+		openapi.WithOperationCtx(oc, false, "body"),
 		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPrefix),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameMapping(mapping),
@@ -247,11 +377,23 @@ const (
 	xForbidUnknown = "x-forbid-unknown-"
 )
 
+func (r *Reflector) parseParameters(o *Operation, oc openapi.OperationContext, cu openapi.ContentUnit) error {
+	return joinErrors(r.parseParametersIn(o, oc, cu, openapi.InQuery, tagForm),
+		r.parseParametersIn(o, oc, cu, openapi.InPath),
+		r.parseParametersIn(o, oc, cu, openapi.InCookie),
+		r.parseParametersIn(o, oc, cu, openapi.InHeader),
+	)
+}
+
 func (r *Reflector) parseParametersIn(
-	oc OperationContext, propertyMapping map[string]string, in ParameterIn, additionalTags ...string,
+	o *Operation,
+	oc openapi.OperationContext,
+	c openapi.ContentUnit,
+	in openapi.In,
+	additionalTags ...string,
 ) error {
-	o := oc.Operation
-	input := oc.Input
+	input := c.Structure
+	propertyMapping := c.FieldMapping(in)
 
 	if refl.IsSliceOrMap(input) {
 		return nil
@@ -261,7 +403,7 @@ func (r *Reflector) parseParametersIn(
 	definitionsPrefix := "#/components/schemas/" + defNamePrefix
 
 	s, err := r.Reflect(input,
-		r.withOperation(oc, false, string(in)),
+		openapi.WithOperationCtx(oc, false, in),
 		jsonschema.DefinitionsPrefix(definitionsPrefix),
 		jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
 		jsonschema.PropertyNameMapping(propertyMapping),
@@ -288,7 +430,7 @@ func (r *Reflector) parseParametersIn(
 
 			p := Parameter{
 				Name:        name,
-				In:          in,
+				In:          ParameterIn(in),
 				Description: propertySchema.Description,
 				Schema:      &s,
 				Content:     nil,
@@ -311,7 +453,7 @@ func (r *Reflector) parseParametersIn(
 			property := reflect.New(field.Type).Interface()
 			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) {
 				propertySchema, err := r.Reflect(property,
-					r.withOperation(oc, false, string(in)),
+					openapi.WithOperationCtx(oc, false, in),
 					jsonschema.DefinitionsPrefix(definitionsPrefix),
 					jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
 					jsonschema.RootRef,
@@ -326,7 +468,7 @@ func (r *Reflector) parseParametersIn(
 				p.WithContentItem("application/json", MediaType{Schema: &openapiSchema})
 			} else {
 				ps, err := r.Reflect(reflect.New(field.Type).Interface(),
-					r.withOperation(oc, false, string(in)),
+					openapi.WithOperationCtx(oc, false, in),
 					jsonschema.InlineRefs)
 				if err != nil {
 					return err
@@ -342,7 +484,7 @@ func (r *Reflector) parseParametersIn(
 				return err
 			}
 
-			if in == ParameterInPath {
+			if in == openapi.InPath {
 				p.WithRequired(true)
 			}
 
@@ -392,17 +534,21 @@ func (r *Reflector) collectDefinition(namePrefix string) func(name string, schem
 	}
 }
 
-func (r *Reflector) parseResponseHeader(resp *Response, oc OperationContext) error {
-	output := oc.Output
-	mapping := oc.RespHeaderMapping
+func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
+	output := cu.Structure
+	mapping := cu.FieldMapping(openapi.InHeader)
+
+	if output == nil {
+		return nil
+	}
 
 	res := make(map[string]HeaderOrRef)
 
 	schema, err := r.Reflect(output,
-		r.withOperation(oc, true, "header"),
+		openapi.WithOperationCtx(oc, true, openapi.InHeader),
 		jsonschema.InlineRefs,
 		jsonschema.PropertyNameMapping(mapping),
-		jsonschema.PropertyNameTag("header"),
+		jsonschema.PropertyNameTag(tagHeader),
 		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
 			if !params.Processed {
 				return nil
@@ -494,64 +640,66 @@ func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
 	return false, nil
 }
 
-// SetupResponse sets up operation response.
-func (r *Reflector) SetupResponse(oc OperationContext) error {
-	if oc.HTTPStatus == 0 {
-		oc.HTTPStatus = 200
-	}
+func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) error {
+	for _, cu := range oc.Response() {
+		if cu.HTTPStatus == 0 {
+			cu.HTTPStatus = 200
+		}
 
-	httpStatus := strconv.Itoa(oc.HTTPStatus)
-	resp := oc.Operation.Responses.MapOfResponseOrRefValues[httpStatus].Response
+		cu.ContentType = strings.Split(cu.ContentType, ";")[0]
 
-	if resp == nil {
-		resp = &Response{}
-	}
+		httpStatus := strconv.Itoa(cu.HTTPStatus)
+		resp := o.Responses.MapOfResponseOrRefValues[httpStatus].Response
 
-	if oc.Output != nil {
-		oc.RespContentType = strings.Split(oc.RespContentType, ";")[0]
+		if resp == nil {
+			resp = &Response{}
+		}
 
-		err := r.parseJSONResponse(resp, oc)
-		if err != nil {
+		if err := joinErrors(
+			r.parseJSONResponse(resp, oc, cu),
+			r.parseResponseHeader(resp, oc, cu),
+		); err != nil {
 			return err
 		}
 
-		err = r.parseResponseHeader(resp, oc)
-		if err != nil {
-			return err
+		if cu.ContentType != "" {
+			r.ensureResponseContentType(resp, cu.ContentType, cu.Format)
 		}
-	}
 
-	if oc.RespContentType != "" {
-		r.ensureResponseContentType(resp, oc.RespContentType)
-	}
+		if resp.Description == "" {
+			resp.Description = http.StatusText(cu.HTTPStatus)
+		}
 
-	if resp.Description == "" {
-		resp.Description = http.StatusText(oc.HTTPStatus)
+		o.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{
+			Response: resp,
+		})
 	}
-
-	oc.Operation.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{
-		Response: resp,
-	})
 
 	return nil
 }
 
-func (r *Reflector) ensureResponseContentType(resp *Response, contentType string) {
+// SetupResponse sets up operation response.
+func (r *Reflector) SetupResponse(oc OperationContext) error {
+	return r.setupResponse(oc.Operation, toOpCtx(oc))
+}
+
+func (r *Reflector) ensureResponseContentType(resp *Response, contentType string, format string) {
 	if _, ok := resp.Content[contentType]; !ok {
 		if resp.Content == nil {
 			resp.Content = map[string]MediaType{}
 		}
 
-		typeString := SchemaTypeString
-		resp.Content[contentType] = MediaType{
-			Schema: &SchemaOrRef{Schema: &Schema{Type: &typeString}},
-		}
+		resp.Content[contentType] = mediaType(format)
 	}
 }
 
-func (r *Reflector) parseJSONResponse(resp *Response, oc OperationContext) error {
-	output := oc.Output
-	contentType := oc.RespContentType
+func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
+	output := cu.Structure
+	contentType := cu.ContentType
+
+	if output == nil {
+		return nil
+	}
 
 	// Check if output structure exposes meaningful schema.
 	if hasJSONBody, err := r.hasJSONBody(output); err == nil && !hasJSONBody {
@@ -559,7 +707,7 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc OperationContext) error
 	}
 
 	schema, err := r.Reflect(output,
-		r.withOperation(oc, true, "body"),
+		openapi.WithOperationCtx(oc, true, openapi.InBody),
 		jsonschema.RootRef,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
 		jsonschema.CollectDefinitions(r.collectDefinition("")),
@@ -598,21 +746,10 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc OperationContext) error
 	return nil
 }
 
-type ocCtxKey struct{}
-
-func (r *Reflector) withOperation(oc OperationContext, processingResponse bool, in string) func(rc *jsonschema.ReflectContext) {
-	return func(rc *jsonschema.ReflectContext) {
-		oc.ProcessingResponse = processingResponse
-		oc.ProcessingIn = in
-
-		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc)
-	}
-}
-
 // OperationCtx retrieves operation context from reflect context.
 func OperationCtx(rc *jsonschema.ReflectContext) (OperationContext, bool) {
-	if oc, ok := rc.Value(ocCtxKey{}).(OperationContext); ok {
-		return oc, true
+	if oc, ok := openapi.OperationCtx(rc); ok {
+		return fromOpCtx(oc), true
 	}
 
 	return OperationContext{}, false

@@ -29,7 +29,7 @@ func TestSpec_SetOperation(t *testing.T) {
 	assert.NoError(t, s.AddOperation(http.MethodGet, "/{foo}", op))
 
 	assert.EqualError(t, s.AddOperation(http.MethodGet, "/{foo}", op),
-		"operation with method and path already exists")
+		"operation already exists: get /{foo}")
 
 	op.WithParameters(
 		openapi3.Parameter{In: openapi3.ParameterInPath, Name: "foo"}.ToParameterOrRef(),
