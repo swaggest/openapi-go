@@ -13,6 +13,7 @@ import (
 
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
+	"github.com/swaggest/openapi-go/internal"
 	"github.com/swaggest/refl"
 )
 
@@ -22,10 +23,39 @@ type Reflector struct {
 	Spec *Spec
 }
 
+// OperationAccessor is an extra behavior present in openapi.OperationContext.
+type OperationAccessor interface {
+	Operation() *Operation
+}
+
+// NewOperationContext initializes openapi.OperationContext to be prepared
+// and added later with Reflector.SetOperation.
+func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
+	method, pathPattern, pathParams, err := internal.SanitizeMethodPath(method, pathPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	pathItem := r.SpecEns().Paths.MapOfPathItemValues[pathPattern]
+	operation, found := pathItem.MapOfOperationValues[method]
+
+	if found {
+		return nil, fmt.Errorf("operation already exists: %s %s", method, pathPattern)
+	}
+
+	oc := operationContext{
+		OperationContext: internal.NewOperationContext(method, pathPattern),
+		op:               &operation,
+		pathParams:       pathParams,
+	}
+
+	return oc, nil
+}
+
 // ResolveJSONSchemaRef builds JSON Schema from OpenAPI Component Schema reference.
 //
 // Can be used in jsonschema.Schema IsTrivial().
-func (r Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
+func (r *Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
 	if r.Spec == nil || r.Spec.Components == nil || r.Spec.Components.Schemas == nil ||
 		!strings.HasPrefix(ref, "#/components/schemas/") {
 		return s, false
@@ -68,6 +98,8 @@ func (r *Reflector) SpecEns() *Spec {
 }
 
 // OperationContext describes operation.
+//
+// Deprecated: use Reflector.NewOperationContext.
 type OperationContext struct {
 	Operation  *Operation
 	Input      interface{}
@@ -88,18 +120,21 @@ type OperationContext struct {
 	ProcessingIn       string
 }
 
-type opCtx struct {
-	*openapi.OpCtx
+type operationContext struct {
+	*internal.OperationContext
 
-	o *Operation
+	op *Operation
+
+	pathParams map[string]bool
 }
 
-func (c opCtx) Operation() *Operation {
-	return c.o
+// Operation returns OpenAPI 3 operation for customization.
+func (o operationContext) Operation() *Operation {
+	return o.op
 }
 
-func toOpCtx(c OperationContext) opCtx {
-	oc := openapi.NewOperationContext(c.HTTPMethod, "")
+func toOpCtx(c OperationContext) operationContext {
+	oc := internal.NewOperationContext(c.HTTPMethod, "")
 
 	oc.AddReqStructure(c.Input,
 		openapi.FieldMapping(openapi.InHeader, c.ReqHeaderMapping),
@@ -120,9 +155,9 @@ func toOpCtx(c OperationContext) opCtx {
 	oc.SetProcessingIn(openapi.In(c.ProcessingIn))
 	oc.SetIsProcessingResponse(c.ProcessingResponse)
 
-	return opCtx{
-		OpCtx: oc,
-		o:     c.Operation,
+	return operationContext{
+		OperationContext: oc,
+		op:               c.Operation,
 	}
 }
 
@@ -157,13 +192,18 @@ func fromOpCtx(oc openapi.OperationContext) OperationContext {
 	return c
 }
 
-// SetupOperation configures operation request and response schema.
-func (r *Reflector) SetupOperation(o *Operation, oc openapi.OperationContext) error {
-	if err := r.setupRequest(o, oc); err != nil {
+// AddOperation configures operation request and response schema.
+func (r *Reflector) AddOperation(oc openapi.OperationContext) error {
+	c, ok := oc.(operationContext)
+	if !ok {
+		return fmt.Errorf("wrong operation context %T received, %T expected", oc, operationContext{})
+	}
+
+	if err := c.op.validatePathParams(c.pathParams); err != nil {
 		return err
 	}
 
-	return r.setupResponse(o, oc)
+	return r.SpecEns().AddOperation(oc.Method(), oc.PathPattern(), *c.op)
 }
 
 func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) error {

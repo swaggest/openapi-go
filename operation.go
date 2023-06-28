@@ -53,14 +53,6 @@ func FieldMapping(in In, fieldToParamName map[string]string) ContentOption {
 	}
 }
 
-// OperationPreparer controls operation parameters.
-type OperationPreparer interface {
-	SetMethod(method string)
-	SetPathPattern(pattern string)
-	AddReqStructure(i interface{}, options ...ContentOption)
-	AddRespStructure(o interface{}, options ...ContentOption)
-}
-
 // OperationContext defines operation and processing state.
 type OperationContext interface {
 	Method() string
@@ -69,104 +61,16 @@ type OperationContext interface {
 	Request() []ContentUnit
 	Response() []ContentUnit
 
-	SetIsProcessingResponse(bool)
-	IsProcessingResponse() bool
+	AddReqStructure(i interface{}, options ...ContentOption)
+	AddRespStructure(o interface{}, options ...ContentOption)
 
-	SetProcessingIn(in In)
+	IsProcessingResponse() bool
 	ProcessingIn() In
 }
 
-// NewOperationContext creates OperationContext.
-func NewOperationContext(method, pathPattern string) *OpCtx {
-	return &OpCtx{
-		method:      method,
-		pathPattern: pathPattern,
-	}
-}
-
-// OpCtx implements OperationContext and OperationPreparer.
-type OpCtx struct {
-	method      string
-	pathPattern string
-	req         []ContentUnit
-	resp        []ContentUnit
-
-	isProcessingResponse bool
-	processingIn         In
-}
-
-// Method returns HTTP method of an operation.
-func (o *OpCtx) Method() string {
-	return o.method
-}
-
-// PathPattern returns operation HTTP URL path pattern.
-func (o *OpCtx) PathPattern() string {
-	return o.pathPattern
-}
-
-// Request returns list of operation request content schemas.
-func (o *OpCtx) Request() []ContentUnit {
-	return o.req
-}
-
-// Response returns list of operation response content schemas.
-func (o *OpCtx) Response() []ContentUnit {
-	return o.resp
-}
-
-// SetIsProcessingResponse sets current processing state.
-func (o *OpCtx) SetIsProcessingResponse(is bool) {
-	o.isProcessingResponse = is
-}
-
-// IsProcessingResponse indicates if response is being processed.
-func (o *OpCtx) IsProcessingResponse() bool {
-	return o.isProcessingResponse
-}
-
-// SetProcessingIn sets current content location being processed.
-func (o *OpCtx) SetProcessingIn(in In) {
-	o.processingIn = in
-}
-
-// ProcessingIn return which content location is being processed now.
-func (o *OpCtx) ProcessingIn() In {
-	return o.processingIn
-}
-
-// SetMethod sets HTTP method of an operation.
-func (o *OpCtx) SetMethod(method string) {
-	o.method = method
-}
-
-// SetPathPattern sets URL path pattern of an operation.
-func (o *OpCtx) SetPathPattern(pattern string) {
-	o.pathPattern = pattern
-}
-
-// AddReqStructure adds request content schema.
-func (o *OpCtx) AddReqStructure(s interface{}, options ...ContentOption) {
-	c := ContentUnit{}
-	c.Structure = s
-
-	for _, o := range options {
-		o(&c)
-	}
-
-	o.req = append(o.req, c)
-}
-
-// AddRespStructure adds response content schema.
-func (o *OpCtx) AddRespStructure(s interface{}, options ...ContentOption) {
-	c := ContentUnit{}
-	c.Structure = s
-
-	for _, o := range options {
-		o(&c)
-	}
-
-	o.resp = append(o.resp, c)
+type operationState interface {
+	SetIsProcessingResponse(bool)
+	SetProcessingIn(in In)
 }
 
 type ocCtxKey struct{}
@@ -174,8 +78,10 @@ type ocCtxKey struct{}
 // WithOperationCtx is a jsonschema.ReflectContext option.
 func WithOperationCtx(oc OperationContext, isProcessingResponse bool, in In) func(rc *jsonschema.ReflectContext) {
 	return func(rc *jsonschema.ReflectContext) {
-		oc.SetIsProcessingResponse(isProcessingResponse)
-		oc.SetProcessingIn(in)
+		if os, ok := oc.(operationState); ok {
+			os.SetIsProcessingResponse(isProcessingResponse)
+			os.SetProcessingIn(in)
+		}
 
 		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc)
 	}
