@@ -556,13 +556,13 @@ func ExampleReflector_SetRequest_queryObject() {
 	//       - content:
 	//           application/json:
 	//             schema:
-	//               $ref: '#/components/schemas/Openapi3TestJsonFilter'
+	//               $ref: '#/components/schemas/QueryOpenapi3TestJsonFilter'
 	//         in: query
 	//         name: json_filter
 	//       - content:
 	//           application/json:
 	//             schema:
-	//               $ref: '#/components/schemas/Openapi3TestDeepObjectFilter'
+	//               $ref: '#/components/schemas/QueryOpenapi3TestDeepObjectFilter'
 	//         in: query
 	//         name: deep_object_filter
 	//       - in: path
@@ -576,13 +576,13 @@ func ExampleReflector_SetRequest_queryObject() {
 	//           description: No Content
 	// components:
 	//   schemas:
-	//     Openapi3TestDeepObjectFilter:
+	//     QueryOpenapi3TestDeepObjectFilter:
 	//       properties:
 	//         deeper:
 	//           nullable: true
 	//           type: object
 	//       type: object
-	//     Openapi3TestJsonFilter:
+	//     QueryOpenapi3TestJsonFilter:
 	//       properties:
 	//         bar:
 	//           type: integer

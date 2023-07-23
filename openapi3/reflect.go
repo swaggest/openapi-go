@@ -257,10 +257,13 @@ func (r *Reflector) parseParametersIn(
 		return nil
 	}
 
+	defNamePrefix := strings.Title(string(in))
+	definitionsPrefix := "#/components/schemas/" + defNamePrefix
+
 	s, err := r.Reflect(input,
 		r.withOperation(oc, false, string(in)),
-		jsonschema.DefinitionsPrefix("#/components/schemas/"),
-		jsonschema.CollectDefinitions(r.collectDefinition),
+		jsonschema.DefinitionsPrefix(definitionsPrefix),
+		jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
 		jsonschema.PropertyNameMapping(propertyMapping),
 		jsonschema.PropertyNameTag(string(in), additionalTags...),
 		func(rc *jsonschema.ReflectContext) {
@@ -309,8 +312,8 @@ func (r *Reflector) parseParametersIn(
 			if refl.HasTaggedFields(property, tagJSON) {
 				propertySchema, err := r.Reflect(property,
 					r.withOperation(oc, false, string(in)),
-					jsonschema.DefinitionsPrefix("#/components/schemas/"),
-					jsonschema.CollectDefinitions(r.collectDefinition),
+					jsonschema.DefinitionsPrefix(definitionsPrefix),
+					jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
 					jsonschema.RootRef,
 				)
 				if err != nil {
@@ -374,15 +377,19 @@ func (r *Reflector) parseParametersIn(
 	return nil
 }
 
-func (r *Reflector) collectDefinition(name string, schema jsonschema.Schema) {
-	if _, exists := r.SpecEns().ComponentsEns().SchemasEns().MapOfSchemaOrRefValues[name]; exists {
-		return
+func (r *Reflector) collectDefinition(namePrefix string) func(name string, schema jsonschema.Schema) {
+	return func(name string, schema jsonschema.Schema) {
+		name = namePrefix + name
+
+		if _, exists := r.SpecEns().ComponentsEns().SchemasEns().MapOfSchemaOrRefValues[name]; exists {
+			return
+		}
+
+		s := SchemaOrRef{}
+		s.FromJSONSchema(schema.ToSchemaOrBool())
+
+		r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 	}
-
-	s := SchemaOrRef{}
-	s.FromJSONSchema(schema.ToSchemaOrBool())
-
-	r.SpecEns().ComponentsEns().SchemasEns().WithMapOfSchemaOrRefValuesItem(name, s)
 }
 
 func (r *Reflector) parseResponseHeader(resp *Response, oc OperationContext) error {
@@ -555,7 +562,7 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc OperationContext) error
 		r.withOperation(oc, true, "body"),
 		jsonschema.RootRef,
 		jsonschema.DefinitionsPrefix("#/components/schemas/"),
-		jsonschema.CollectDefinitions(r.collectDefinition),
+		jsonschema.CollectDefinitions(r.collectDefinition("")),
 	)
 	if err != nil {
 		return err
