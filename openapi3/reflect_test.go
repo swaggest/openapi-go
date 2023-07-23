@@ -903,3 +903,105 @@ func TestReflector_SetupRequest_form_only(t *testing.T) {
 	  }
 	}`), r.SpecEns())
 }
+
+func TestReflector_SetRequest_queryObject(t *testing.T) {
+	reflector := openapi3.Reflector{}
+
+	type jsonFilter struct {
+		Foo    string `json:"foo"`
+		Bar    int    `json:"bar"`
+		Deeper struct {
+			Val string `json:"val"`
+		} `json:"deeper"`
+	}
+
+	type deepObjectFilter struct {
+		Baz    bool    `query:"baz"`
+		Quux   float64 `query:"quux"`
+		Deeper struct {
+			Val string `query:"val"`
+		} `query:"deeper"`
+	}
+
+	type EmbeddedParams struct {
+		Embedded string `query:"embedded"`
+	}
+
+	type DeeplyEmbedded struct {
+		EmbeddedParams
+	}
+
+	type req struct {
+		// Simple scalar parameters.
+		ID     string `path:"id" example:"XXX-XXXXX"`
+		Locale string `query:"locale" pattern:"^[a-z]{2}-[A-Z]{2}$"`
+		// Embedded types are expanded into top-level scope.
+		DeeplyEmbedded
+		// Object values can be serialized in JSON (with json field tags in the value struct).
+		JSONFilter jsonFilter `query:"json_filter"`
+		// Or as deepObject (with same field tag as parent, .e.g query).
+		DeepObjectFilter deepObjectFilter `query:"deep_object_filter"`
+		// JSON body tags are ignored for GET request by default.
+		Amount uint `json:"amount"`
+	}
+
+	getOp := openapi3.Operation{}
+
+	handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
+	handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
+
+	assertjson.EqualMarshal(t, []byte(`{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/things/{id}":{
+		  "get":{
+			"parameters":[
+			  {
+				"name":"locale","in":"query",
+				"schema":{"pattern":"^[a-z]{2}-[A-Z]{2}$","type":"string"}
+			  },
+			  {"name":"embedded","in":"query","schema":{"type":"string"}},
+			  {
+				"name":"json_filter","in":"query",
+				"content":{
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/Openapi3TestJsonFilter"}
+				  }
+				}
+			  },
+			  {
+				"name":"deep_object_filter","in":"query","style":"deepObject",
+				"explode":true,
+				"schema":{"$ref":"#/components/schemas/Openapi3TestDeepObjectFilter"}
+			  },
+			  {
+				"name":"id","in":"path","required":true,
+				"schema":{"type":"string","example":"XXX-XXXXX"}
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi3TestDeepObjectFilter":{
+			"type":"object",
+			"properties":{
+			  "baz":{"type":"boolean"},
+			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "quux":{"type":"number"}
+			}
+		  },
+		  "Openapi3TestJsonFilter":{
+			"type":"object",
+			"properties":{
+			  "bar":{"type":"integer"},
+			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "foo":{"type":"string"}
+			}
+		  }
+		}
+	  }
+	}`), reflector.Spec)
+}

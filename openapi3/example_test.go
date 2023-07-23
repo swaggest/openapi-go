@@ -492,3 +492,106 @@ func ExampleReflector_SetJSONResponse() {
 	//           type: string
 	//       type: object
 }
+
+func ExampleReflector_SetRequest_queryObject() {
+	reflector := openapi3.Reflector{}
+	reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}
+	reflector.Spec.Info.
+		WithTitle("Things API").
+		WithVersion("1.2.3").
+		WithDescription("Put something here")
+
+	type jsonFilter struct {
+		Foo    string `json:"foo"`
+		Bar    int    `json:"bar"`
+		Deeper struct {
+			Val string `json:"val"`
+		} `json:"deeper"`
+	}
+
+	type deepObjectFilter struct {
+		Baz    bool    `query:"baz"`
+		Quux   float64 `query:"quux"`
+		Deeper struct {
+			Val string `query:"val"`
+		} `json:"deeper"`
+	}
+
+	type req struct {
+		ID     string `path:"id" example:"XXX-XXXXX"`
+		Locale string `query:"locale" pattern:"^[a-z]{2}-[A-Z]{2}$"`
+		// Object values can be serialized in JSON (with json field tags in the value struct).
+		JSONFilter jsonFilter `query:"json_filter"`
+		// Or as deepObject (with same field tag as parent, .e.g query).
+		DeepObjectFilter deepObjectFilter `query:"deep_object_filter"`
+	}
+
+	getOp := openapi3.Operation{}
+
+	_ = reflector.SetRequest(&getOp, new(req), http.MethodGet)
+	_ = reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp)
+
+	schema, err := reflector.Spec.MarshalYAML()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(string(schema))
+
+	// Output:
+	// openapi: 3.0.3
+	// info:
+	//   description: Put something here
+	//   title: Things API
+	//   version: 1.2.3
+	// paths:
+	//   /things/{id}:
+	//     get:
+	//       parameters:
+	//       - in: query
+	//         name: locale
+	//         schema:
+	//           pattern: ^[a-z]{2}-[A-Z]{2}$
+	//           type: string
+	//       - content:
+	//           application/json:
+	//             schema:
+	//               $ref: '#/components/schemas/Openapi3TestJsonFilter'
+	//         in: query
+	//         name: json_filter
+	//       - content:
+	//           application/json:
+	//             schema:
+	//               $ref: '#/components/schemas/Openapi3TestDeepObjectFilter'
+	//         in: query
+	//         name: deep_object_filter
+	//       - in: path
+	//         name: id
+	//         required: true
+	//         schema:
+	//           example: XXX-XXXXX
+	//           type: string
+	//       responses:
+	//         "204":
+	//           description: No Content
+	// components:
+	//   schemas:
+	//     Openapi3TestDeepObjectFilter:
+	//       properties:
+	//         deeper:
+	//           nullable: true
+	//           type: object
+	//       type: object
+	//     Openapi3TestJsonFilter:
+	//       properties:
+	//         bar:
+	//           type: integer
+	//         deeper:
+	//           properties:
+	//             val:
+	//               type: string
+	//           type: object
+	//         foo:
+	//           type: string
+	//       type: object
+}

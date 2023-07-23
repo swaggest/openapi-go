@@ -268,7 +268,7 @@ func (r *Reflector) parseParametersIn(
 		},
 		jsonschema.SkipEmbeddedMapsSlices,
 		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
-			if !params.Processed {
+			if !params.Processed || len(params.Path) > 1 {
 				return nil
 			}
 
