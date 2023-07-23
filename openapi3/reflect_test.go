@@ -486,26 +486,28 @@ func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
 	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere":{
-	   "post":{
-		"parameters":[
-		 {
-		  "name":"in_query","in":"query","style":"deepObject","explode":true,
-		  "schema":{"$ref":"#/components/schemas/Openapi3TestLabels"}
-		 }
-		],
-		"responses":{"204":{"description":"No Content"}}
-	   }
+	  "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere":{
+		  "post":{
+			"parameters":[
+			  {
+				"name":"in_query","in":"query","style":"deepObject","explode":true,
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestLabels"}
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "QueryOpenapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
+		}
 	  }
-	 },
-	 "components":{
-	  "schemas":{"Openapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}}
-	 }
 	}`, s)
 
-	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi3TestLabels")
 	assert.True(t, found)
 	assertjson.EqMarshal(t, `{"type":"object","additionalProperties":{"type":"number"}}`, js)
 }
@@ -540,13 +542,17 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 			  {
 				"name":"one","in":"query",
 				"content":{
-				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+				  }
 				}
 			  },
 			  {
 				"name":"two","in":"query",
 				"content":{
-				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+				  }
 				}
 			  },
 			  {
@@ -560,7 +566,7 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "Openapi3TestFilter":{
+		  "QueryOpenapi3TestFilter":{
 			"type":"object",
 			"properties":{
 			  "labels":{"type":"array","items":{"type":"string"}},
@@ -930,14 +936,14 @@ func TestReflector_SetRequest_queryObject(t *testing.T) {
 				"name":"json_filter","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/Openapi3TestJsonFilter"}
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestJsonFilter"}
 				  }
 				}
 			  },
 			  {
 				"name":"deep_object_filter","in":"query","style":"deepObject",
 				"explode":true,
-				"schema":{"$ref":"#/components/schemas/Openapi3TestDeepObjectFilter"}
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestDeepObjectFilter"}
 			  },
 			  {
 				"name":"id","in":"path","required":true,
@@ -950,7 +956,7 @@ func TestReflector_SetRequest_queryObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "Openapi3TestDeepObjectFilter":{
+		  "QueryOpenapi3TestDeepObjectFilter":{
 			"type":"object",
 			"properties":{
 			  "baz":{"type":"boolean"},
@@ -958,7 +964,7 @@ func TestReflector_SetRequest_queryObject(t *testing.T) {
 			  "quux":{"type":"number"}
 			}
 		  },
-		  "Openapi3TestJsonFilter":{
+		  "QueryOpenapi3TestJsonFilter":{
 			"type":"object",
 			"properties":{
 			  "bar":{"type":"integer"},
