@@ -878,6 +878,8 @@ func TestReflector_SetupRequest_form_only(t *testing.T) {
 func TestReflector_SetRequest_queryObject(t *testing.T) {
 	reflector := openapi3.Reflector{}
 
+	// JSON object is only enabled when at least one `json` tag is available on top-level property,
+	// and there are no `in` tags, e.g. `query`.
 	type jsonFilter struct {
 		Foo    string `json:"foo"`
 		Bar    int    `json:"bar"`
@@ -886,9 +888,11 @@ func TestReflector_SetRequest_queryObject(t *testing.T) {
 		} `json:"deeper"`
 	}
 
+	// Deep object structure may have `json` tags, they are ignored in presence of
+	// at least one top-level field with a matching `in` tag, e.g. `query`.
 	type deepObjectFilter struct {
-		Baz    bool    `query:"baz"`
-		Quux   float64 `query:"quux"`
+		Baz    bool    `json:"baz" query:"baz"`
+		Quux   float64 `json:"quux" query:"quux"`
 		Deeper struct {
 			Val string `query:"val"`
 		} `query:"deeper"`

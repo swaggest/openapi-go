@@ -514,7 +514,7 @@ func ExampleReflector_SetRequest_queryObject() {
 		Quux   float64 `query:"quux"`
 		Deeper struct {
 			Val string `query:"val"`
-		} `json:"deeper"`
+		} `query:"deeper"`
 	}
 
 	type req struct {
@@ -559,12 +559,12 @@ func ExampleReflector_SetRequest_queryObject() {
 	//               $ref: '#/components/schemas/QueryOpenapi3TestJsonFilter'
 	//         in: query
 	//         name: json_filter
-	//       - content:
-	//           application/json:
-	//             schema:
-	//               $ref: '#/components/schemas/QueryOpenapi3TestDeepObjectFilter'
+	//       - explode: true
 	//         in: query
 	//         name: deep_object_filter
+	//         schema:
+	//           $ref: '#/components/schemas/QueryOpenapi3TestDeepObjectFilter'
+	//         style: deepObject
 	//       - in: path
 	//         name: id
 	//         required: true
@@ -578,9 +578,15 @@ func ExampleReflector_SetRequest_queryObject() {
 	//   schemas:
 	//     QueryOpenapi3TestDeepObjectFilter:
 	//       properties:
+	//         baz:
+	//           type: boolean
 	//         deeper:
-	//           nullable: true
+	//           properties:
+	//             val:
+	//               type: string
 	//           type: object
+	//         quux:
+	//           type: number
 	//       type: object
 	//     QueryOpenapi3TestJsonFilter:
 	//       properties:

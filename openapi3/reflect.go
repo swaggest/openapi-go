@@ -309,7 +309,7 @@ func (r *Reflector) parseParametersIn(
 
 			// Check if parameter is an JSON encoded object.
 			property := reflect.New(field.Type).Interface()
-			if refl.HasTaggedFields(property, tagJSON) {
+			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) {
 				propertySchema, err := r.Reflect(property,
 					r.withOperation(oc, false, string(in)),
 					jsonschema.DefinitionsPrefix(definitionsPrefix),
