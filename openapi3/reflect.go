@@ -23,11 +23,6 @@ type Reflector struct {
 	Spec *Spec
 }
 
-// OperationAccessor is an extra behavior present in openapi.OperationContext.
-type OperationAccessor interface {
-	Operation() *Operation
-}
-
 // NewOperationContext initializes openapi.OperationContext to be prepared
 // and added later with Reflector.SetOperation.
 func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
@@ -199,8 +194,16 @@ func (r *Reflector) AddOperation(oc openapi.OperationContext) error {
 		return fmt.Errorf("wrong operation context %T received, %T expected", oc, operationContext{})
 	}
 
+	if err := r.setupRequest(c.op, oc); err != nil {
+		return fmt.Errorf("setup request %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	}
+
 	if err := c.op.validatePathParams(c.pathParams); err != nil {
-		return err
+		return fmt.Errorf("validate path params %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	}
+
+	if err := r.setupResponse(c.op, oc); err != nil {
+		return fmt.Errorf("setup response %s %s: %w", oc.Method(), oc.PathPattern(), err)
 	}
 
 	return r.SpecEns().AddOperation(oc.Method(), oc.PathPattern(), *c.op)
@@ -234,11 +237,15 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 }
 
 // SetupRequest sets up operation parameters.
+//
+// Deprecated: use AddOperation.
 func (r *Reflector) SetupRequest(c OperationContext) error {
 	return r.setupRequest(c.Operation, toOpCtx(c))
 }
 
 // SetRequest sets up operation parameters.
+//
+// Deprecated: use AddOperation.
 func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
 	return r.SetupRequest(OperationContext{
 		Operation:  o,
@@ -261,6 +268,8 @@ const (
 //
 // Should be implemented on input structure, function body can be empty.
 // Forcing request body is not recommended and should only be used for backwards compatibility.
+//
+// Deprecated: use openapi.RequestBodyEnforcer.
 type RequestBodyEnforcer interface {
 	ForceRequestBody()
 }
@@ -268,6 +277,8 @@ type RequestBodyEnforcer interface {
 // RequestJSONBodyEnforcer enables JSON request body for structures with `formData` tags.
 //
 // Should be implemented on input structure, function body can be empty.
+//
+// Deprecated: use openapi.RequestJSONBodyEnforcer.
 type RequestJSONBodyEnforcer interface {
 	ForceJSONRequestBody()
 }
@@ -637,6 +648,8 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 }
 
 // SetStringResponse sets unstructured response.
+//
+// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
 func (r *Reflector) SetStringResponse(o *Operation, httpStatus int, contentType string) error {
 	return r.SetupResponse(OperationContext{
 		Operation:       o,
@@ -646,6 +659,8 @@ func (r *Reflector) SetStringResponse(o *Operation, httpStatus int, contentType 
 }
 
 // SetJSONResponse sets up operation JSON response.
+//
+// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
 func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
 	return r.SetupResponse(OperationContext{
 		Operation:  o,
@@ -719,6 +734,8 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 }
 
 // SetupResponse sets up operation response.
+//
+// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
 func (r *Reflector) SetupResponse(oc OperationContext) error {
 	return r.setupResponse(oc.Operation, toOpCtx(oc))
 }
@@ -787,6 +804,8 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 }
 
 // OperationCtx retrieves operation context from reflect context.
+//
+// Deprecated: use openapi.OperationCtx.
 func OperationCtx(rc *jsonschema.ReflectContext) (OperationContext, bool) {
 	if oc, ok := openapi.OperationCtx(rc); ok {
 		return fromOpCtx(oc), true
