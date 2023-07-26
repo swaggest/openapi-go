@@ -26,7 +26,7 @@ type Reflector struct {
 // NewOperationContext initializes openapi.OperationContext to be prepared
 // and added later with Reflector.AddOperation.
 func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
-	method, pathPattern, pathParams, err := internal.SanitizeMethodPath(method, pathPattern)
+	method, pathPattern, pathParams, err := openapi.SanitizeMethodPath(method, pathPattern)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +38,15 @@ func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.Ope
 		return nil, fmt.Errorf("operation already exists: %s %s", method, pathPattern)
 	}
 
+	pathParamsMap := make(map[string]bool, len(pathParams))
+	for _, p := range pathParams {
+		pathParamsMap[p] = true
+	}
+
 	oc := operationContext{
 		OperationContext: internal.NewOperationContext(method, pathPattern),
 		op:               &operation,
-		pathParams:       pathParams,
+		pathParams:       pathParamsMap,
 	}
 
 	return oc, nil

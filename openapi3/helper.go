@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/swaggest/openapi-go/internal"
+	"github.com/swaggest/openapi-go"
 )
 
 // ToParameterOrRef exposes Parameter in general form.
@@ -64,7 +64,7 @@ func (o *Operation) validatePathParams(pathParams map[string]bool) error {
 
 // SetupOperation creates operation if it is not present and applies setup functions.
 func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) error) error {
-	method, path, pathParams, err := internal.SanitizeMethodPath(method, path)
+	method, path, pathParams, err := openapi.SanitizeMethodPath(method, path)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,12 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 		}
 	}
 
-	if err := operation.validatePathParams(pathParams); err != nil {
+	pathParamsMap := make(map[string]bool, len(pathParams))
+	for _, p := range pathParams {
+		pathParamsMap[p] = true
+	}
+
+	if err := operation.validatePathParams(pathParamsMap); err != nil {
 		return err
 	}
 
