@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"os"
 
-	v3 "github.com/swaggest/swgui/v5"
+	swgui "github.com/swaggest/swgui/v5"
 )
 
 func main() {
-	h := v3.NewHandler("Foo", "/openapi.json", "/")
+	h := swgui.NewHandler("Foo", "/openapi.json", "/")
 	hh := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/openapi.json" {
 			o, err := os.ReadFile("../openapi.json")

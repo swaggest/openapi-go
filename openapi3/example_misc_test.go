@@ -26,13 +26,10 @@ func ExampleReflector_options() {
 		Foo []int `json:"foo"`
 	}
 
-	oc := openapi3.OperationContext{
-		Operation: &openapi3.Operation{},
-		Input:     new(req),
-	}
+	oc, _ := r.NewOperationContext(http.MethodPost, "/foo")
+	oc.AddReqStructure(new(req))
 
-	_ = r.SetupRequest(oc)
-	_ = r.SpecEns().AddOperation(http.MethodGet, "/foo", *oc.Operation)
+	_ = r.AddOperation(oc)
 
 	j, _ := assertjson.MarshalIndentCompact(r.Spec, "", " ", 120)
 
@@ -43,7 +40,7 @@ func ExampleReflector_options() {
 	//  "openapi":"3.0.3","info":{"title":"","version":""},
 	//  "paths":{
 	//   "/foo":{
-	//    "get":{
+	//    "post":{
 	//     "requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReq"}}}},
 	//     "responses":{"204":{"description":"No Content"}}
 	//    }

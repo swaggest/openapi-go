@@ -72,6 +72,8 @@ type OperationInfo interface {
 	SetSummary(summary string)
 	SetDescription(description string)
 	SetID(operationID string)
+
+	AddSecurity(securityName string, scopes ...string)
 }
 
 // OperationState extends OperationContext with processing state information.

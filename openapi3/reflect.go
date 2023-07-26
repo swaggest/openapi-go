@@ -105,6 +105,14 @@ type OperationExposer interface {
 	Operation() *Operation
 }
 
+func (o operationContext) AddSecurity(securityName string, scopes ...string) {
+	if scopes == nil {
+		scopes = []string{}
+	}
+
+	o.op.Security = append(o.op.Security, map[string][]string{securityName: scopes})
+}
+
 func (o operationContext) SetTags(tags ...string) {
 	o.op.WithTags(tags...)
 }
