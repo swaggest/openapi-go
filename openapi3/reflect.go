@@ -24,7 +24,7 @@ type Reflector struct {
 }
 
 // NewOperationContext initializes openapi.OperationContext to be prepared
-// and added later with Reflector.SetOperation.
+// and added later with Reflector.AddOperation.
 func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
 	method, pathPattern, pathParams, err := internal.SanitizeMethodPath(method, pathPattern)
 	if err != nil {
@@ -92,35 +92,37 @@ func (r *Reflector) SpecEns() *Spec {
 	return r.Spec
 }
 
-// OperationContext describes operation.
-//
-// Deprecated: use Reflector.NewOperationContext.
-type OperationContext struct {
-	Operation  *Operation
-	Input      interface{}
-	HTTPMethod string
-
-	ReqQueryMapping    map[string]string
-	ReqPathMapping     map[string]string
-	ReqCookieMapping   map[string]string
-	ReqHeaderMapping   map[string]string
-	ReqFormDataMapping map[string]string
-
-	Output            interface{}
-	HTTPStatus        int
-	RespContentType   string
-	RespHeaderMapping map[string]string
-
-	ProcessingResponse bool
-	ProcessingIn       string
-}
-
 type operationContext struct {
 	*internal.OperationContext
 
 	op *Operation
 
 	pathParams map[string]bool
+}
+
+// OperationExposer grants access to underlying *Operation.
+type OperationExposer interface {
+	Operation() *Operation
+}
+
+func (o operationContext) SetTags(tags ...string) {
+	o.op.WithTags(tags...)
+}
+
+func (o operationContext) SetIsDeprecated(isDeprecated bool) {
+	o.op.WithDeprecated(isDeprecated)
+}
+
+func (o operationContext) SetSummary(summary string) {
+	o.op.WithSummary(summary)
+}
+
+func (o operationContext) SetDescription(description string) {
+	o.op.WithDescription(description)
+}
+
+func (o operationContext) SetID(operationID string) {
+	o.op.WithID(operationID)
 }
 
 // Operation returns OpenAPI 3 operation for customization.
@@ -132,18 +134,20 @@ func toOpCtx(c OperationContext) operationContext {
 	oc := internal.NewOperationContext(c.HTTPMethod, "")
 
 	oc.AddReqStructure(c.Input,
-		openapi.FieldMapping(openapi.InHeader, c.ReqHeaderMapping),
-		openapi.FieldMapping(openapi.InQuery, c.ReqQueryMapping),
-		openapi.FieldMapping(openapi.InCookie, c.ReqCookieMapping),
-		openapi.FieldMapping(openapi.InPath, c.ReqPathMapping),
-		openapi.FieldMapping(openapi.InFormData, c.ReqFormDataMapping),
+		func(cu *openapi.ContentUnit) {
+			cu.SetFieldMapping(openapi.InHeader, c.ReqHeaderMapping)
+			cu.SetFieldMapping(openapi.InQuery, c.ReqQueryMapping)
+			cu.SetFieldMapping(openapi.InCookie, c.ReqCookieMapping)
+			cu.SetFieldMapping(openapi.InPath, c.ReqPathMapping)
+			cu.SetFieldMapping(openapi.InFormData, c.ReqFormDataMapping)
+		},
 	)
 
 	oc.AddRespStructure(c.Output,
-		openapi.FieldMapping(openapi.InHeader, c.RespHeaderMapping),
 		func(cu *openapi.ContentUnit) {
 			cu.ContentType = c.RespContentType
 			cu.HTTPStatus = c.HTTPStatus
+			cu.SetFieldMapping(openapi.InHeader, c.RespHeaderMapping)
 		},
 	)
 
@@ -236,24 +240,6 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 	return nil
 }
 
-// SetupRequest sets up operation parameters.
-//
-// Deprecated: use AddOperation.
-func (r *Reflector) SetupRequest(c OperationContext) error {
-	return r.setupRequest(c.Operation, toOpCtx(c))
-}
-
-// SetRequest sets up operation parameters.
-//
-// Deprecated: use AddOperation.
-func (r *Reflector) SetRequest(o *Operation, input interface{}, httpMethod string) error {
-	return r.SetupRequest(OperationContext{
-		Operation:  o,
-		Input:      input,
-		HTTPMethod: httpMethod,
-	})
-}
-
 const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
@@ -263,25 +249,6 @@ const (
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
 )
-
-// RequestBodyEnforcer enables request body for GET and HEAD methods.
-//
-// Should be implemented on input structure, function body can be empty.
-// Forcing request body is not recommended and should only be used for backwards compatibility.
-//
-// Deprecated: use openapi.RequestBodyEnforcer.
-type RequestBodyEnforcer interface {
-	ForceRequestBody()
-}
-
-// RequestJSONBodyEnforcer enables JSON request body for structures with `formData` tags.
-//
-// Should be implemented on input structure, function body can be empty.
-//
-// Deprecated: use openapi.RequestJSONBodyEnforcer.
-type RequestJSONBodyEnforcer interface {
-	ForceJSONRequestBody()
-}
 
 func mediaType(format string) MediaType {
 	schema := jsonschema.String.ToSchemaOrBool()
@@ -601,7 +568,7 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tagHeader),
 		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
-			if !params.Processed {
+			if !params.Processed || len(params.Path) > 1 { // only top-level fields (including embedded).
 				return nil
 			}
 
@@ -647,28 +614,6 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 	return nil
 }
 
-// SetStringResponse sets unstructured response.
-//
-// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
-func (r *Reflector) SetStringResponse(o *Operation, httpStatus int, contentType string) error {
-	return r.SetupResponse(OperationContext{
-		Operation:       o,
-		HTTPStatus:      httpStatus,
-		RespContentType: contentType,
-	})
-}
-
-// SetJSONResponse sets up operation JSON response.
-//
-// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
-func (r *Reflector) SetJSONResponse(o *Operation, output interface{}, httpStatus int) error {
-	return r.SetupResponse(OperationContext{
-		Operation:  o,
-		Output:     output,
-		HTTPStatus: httpStatus,
-	})
-}
-
 func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
 	schema, err := r.Reflect(output)
 	if err != nil {
@@ -710,15 +655,22 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			resp = &Response{}
 		}
 
-		if err := joinErrors(
-			r.parseJSONResponse(resp, oc, cu),
-			r.parseResponseHeader(resp, oc, cu),
-		); err != nil {
-			return err
-		}
+		if strings.ToUpper(oc.Method()) != http.MethodHead {
+			if err := joinErrors(
+				r.parseJSONResponse(resp, oc, cu),
+				r.parseResponseHeader(resp, oc, cu),
+			); err != nil {
+				return err
+			}
 
-		if cu.ContentType != "" {
-			r.ensureResponseContentType(resp, cu.ContentType, cu.Format)
+			if cu.ContentType != "" {
+				r.ensureResponseContentType(resp, cu.ContentType, cu.Format)
+			}
+		} else {
+			// Only headers with HEAD method.
+			if err := r.parseResponseHeader(resp, oc, cu); err != nil {
+				return err
+			}
 		}
 
 		if resp.Description == "" {
@@ -731,13 +683,6 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 	}
 
 	return nil
-}
-
-// SetupResponse sets up operation response.
-//
-// Deprecated: use AddOperation with openapi.OperationContext AddRespStructure.
-func (r *Reflector) SetupResponse(oc OperationContext) error {
-	return r.setupResponse(oc.Operation, toOpCtx(oc))
 }
 
 func (r *Reflector) ensureResponseContentType(resp *Response, contentType string, format string) {
@@ -801,15 +746,4 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 	}
 
 	return nil
-}
-
-// OperationCtx retrieves operation context from reflect context.
-//
-// Deprecated: use openapi.OperationCtx.
-func OperationCtx(rc *jsonschema.ReflectContext) (OperationContext, bool) {
-	if oc, ok := openapi.OperationCtx(rc); ok {
-		return fromOpCtx(oc), true
-	}
-
-	return OperationContext{}, false
 }

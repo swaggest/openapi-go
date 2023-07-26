@@ -28,9 +28,21 @@ type ContentUnit struct {
 	ContentType  string
 	Format       string
 	HTTPStatus   int
-	IsSchemaLess bool
 	Description  string
 	fieldMapping map[In]map[string]string
+}
+
+// SetFieldMapping sets custom field mapping.
+func (c *ContentUnit) SetFieldMapping(in In, fieldToParamName map[string]string) {
+	if len(fieldToParamName) == 0 {
+		return
+	}
+
+	if c.fieldMapping == nil {
+		c.fieldMapping = make(map[In]map[string]string)
+	}
+
+	c.fieldMapping[in] = fieldToParamName
 }
 
 // FieldMapping returns custom field mapping.
@@ -38,23 +50,11 @@ func (c ContentUnit) FieldMapping(in In) map[string]string {
 	return c.fieldMapping[in]
 }
 
-// FieldMapping is an option to set up custom field mapping (instead of field tags).
-func FieldMapping(in In, fieldToParamName map[string]string) ContentOption {
-	return func(c *ContentUnit) {
-		if len(fieldToParamName) == 0 {
-			return
-		}
-
-		if c.fieldMapping == nil {
-			c.fieldMapping = make(map[In]map[string]string)
-		}
-
-		c.fieldMapping[in] = fieldToParamName
-	}
-}
-
 // OperationContext defines operation and processing state.
 type OperationContext interface {
+	OperationInfo
+	OperationState
+
 	Method() string
 	PathPattern() string
 
@@ -63,12 +63,22 @@ type OperationContext interface {
 
 	AddReqStructure(i interface{}, options ...ContentOption)
 	AddRespStructure(o interface{}, options ...ContentOption)
-
-	IsProcessingResponse() bool
-	ProcessingIn() In
 }
 
-type operationState interface {
+// OperationInfo extends OperationContext with general information.
+type OperationInfo interface {
+	SetTags(tags ...string)
+	SetIsDeprecated(isDeprecated bool)
+	SetSummary(summary string)
+	SetDescription(description string)
+	SetID(operationID string)
+}
+
+// OperationState extends OperationContext with processing state information.
+type OperationState interface {
+	IsProcessingResponse() bool
+	ProcessingIn() In
+
 	SetIsProcessingResponse(bool)
 	SetProcessingIn(in In)
 }
@@ -78,10 +88,8 @@ type ocCtxKey struct{}
 // WithOperationCtx is a jsonschema.ReflectContext option.
 func WithOperationCtx(oc OperationContext, isProcessingResponse bool, in In) func(rc *jsonschema.ReflectContext) {
 	return func(rc *jsonschema.ReflectContext) {
-		if os, ok := oc.(operationState); ok {
-			os.SetIsProcessingResponse(isProcessingResponse)
-			os.SetProcessingIn(in)
-		}
+		oc.SetIsProcessingResponse(isProcessingResponse)
+		oc.SetProcessingIn(in)
 
 		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc)
 	}
