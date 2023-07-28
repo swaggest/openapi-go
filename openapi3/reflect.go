@@ -23,6 +23,14 @@ type Reflector struct {
 	Spec *Spec
 }
 
+// NewReflector creates an instance of OpenAPI 3.0 reflector.
+func NewReflector() *Reflector {
+	r := &Reflector{}
+	r.SpecEns()
+
+	return r
+}
+
 // NewOperationContext initializes openapi.OperationContext to be prepared
 // and added later with Reflector.AddOperation.
 func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
@@ -136,6 +144,10 @@ func (o operationContext) SetDescription(description string) {
 
 func (o operationContext) SetID(operationID string) {
 	o.op.WithID(operationID)
+}
+
+func (o operationContext) UnknownParamsAreForbidden(in openapi.In) bool {
+	return o.op.UnknownParamIsForbidden(ParameterIn(in))
 }
 
 // Operation returns OpenAPI 3 operation for customization.

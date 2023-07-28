@@ -66,6 +66,8 @@ type OperationContext interface {
 
 	AddReqStructure(i interface{}, options ...ContentOption)
 	AddRespStructure(o interface{}, options ...ContentOption)
+
+	UnknownParamsAreForbidden(in In) bool
 }
 
 // OperationInfo extends OperationContext with general information.
