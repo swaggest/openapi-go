@@ -5,10 +5,11 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
-func ExampleReflector_SetJSONResponse_http_basic_auth() {
+func ExampleReflector_AddOperation_http_basic_auth() {
 	reflector := openapi3.Reflector{}
 	securityName := "admin"
 
@@ -22,21 +23,23 @@ func ExampleReflector_SetJSONResponse_http_basic_auth() {
 		},
 	)
 
-	op := openapi3.Operation{}
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
+	oc.AddRespStructure(struct {
 		Secret string `json:"secret"`
-	}{}, http.StatusOK)
+	}{})
 
 	// Add security requirement to operation.
-	op.Security = append(op.Security, map[string][]string{securityName: {}})
+	oc.AddSecurity(securityName)
 
 	// Describe unauthorized response.
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc.AddRespStructure(struct {
 		Error string `json:"error"`
-	}{}, http.StatusUnauthorized)
+	}{}, func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusUnauthorized
+	})
 
 	// Add operation to schema.
-	_ = reflector.SpecEns().AddOperation(http.MethodGet, "/secure", op)
+	_ = reflector.AddOperation(oc)
 
 	schema, err := reflector.Spec.MarshalYAML()
 	if err != nil {
@@ -82,7 +85,7 @@ func ExampleReflector_SetJSONResponse_http_basic_auth() {
 	//       type: http
 }
 
-func ExampleReflector_SetJSONResponse_api_key_auth() {
+func ExampleReflector_AddOperation_api_key_auth() {
 	reflector := openapi3.Reflector{}
 	securityName := "api_key"
 
@@ -99,21 +102,23 @@ func ExampleReflector_SetJSONResponse_api_key_auth() {
 		},
 	)
 
-	op := openapi3.Operation{}
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
+	oc.AddRespStructure(struct {
 		Secret string `json:"secret"`
-	}{}, http.StatusOK)
+	}{})
 
 	// Add security requirement to operation.
-	op.Security = append(op.Security, map[string][]string{securityName: {}})
+	oc.AddSecurity(securityName)
 
 	// Describe unauthorized response.
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc.AddRespStructure(struct {
 		Error string `json:"error"`
-	}{}, http.StatusUnauthorized)
+	}{}, func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusUnauthorized
+	})
 
 	// Add operation to schema.
-	_ = reflector.SpecEns().AddOperation(http.MethodGet, "/secure", op)
+	_ = reflector.AddOperation(oc)
 
 	schema, err := reflector.Spec.MarshalYAML()
 	if err != nil {
@@ -160,7 +165,7 @@ func ExampleReflector_SetJSONResponse_api_key_auth() {
 	//       type: apiKey
 }
 
-func ExampleReflector_SetJSONResponse_http_bearer_token_auth() {
+func ExampleReflector_AddOperation_http_bearer_token_auth() {
 	reflector := openapi3.Reflector{}
 	securityName := "bearer_token"
 
@@ -177,21 +182,23 @@ func ExampleReflector_SetJSONResponse_http_bearer_token_auth() {
 		},
 	)
 
-	op := openapi3.Operation{}
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
+	oc.AddRespStructure(struct {
 		Secret string `json:"secret"`
-	}{}, http.StatusOK)
+	}{})
 
 	// Add security requirement to operation.
-	op.Security = append(op.Security, map[string][]string{securityName: {}})
+	oc.AddSecurity(securityName)
 
 	// Describe unauthorized response.
-	_ = reflector.SetJSONResponse(&op, struct {
+	oc.AddRespStructure(struct {
 		Error string `json:"error"`
-	}{}, http.StatusUnauthorized)
+	}{}, func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusUnauthorized
+	})
 
 	// Add operation to schema.
-	_ = reflector.SpecEns().AddOperation(http.MethodGet, "/secure", op)
+	_ = reflector.AddOperation(oc)
 
 	schema, err := reflector.Spec.MarshalYAML()
 	if err != nil {
