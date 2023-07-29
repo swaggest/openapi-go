@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -65,11 +66,11 @@ func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.Ope
 // Can be used in jsonschema.Schema IsTrivial().
 func (r *Reflector) ResolveJSONSchemaRef(ref string) (s jsonschema.SchemaOrBool, found bool) {
 	if r.Spec == nil || r.Spec.Components == nil || r.Spec.Components.Schemas == nil ||
-		!strings.HasPrefix(ref, "#/components/schemas/") {
+		!strings.HasPrefix(ref, componentsSchemas) {
 		return s, false
 	}
 
-	ref = strings.TrimPrefix(ref, "#/components/schemas/")
+	ref = strings.TrimPrefix(ref, componentsSchemas)
 	os, found := r.Spec.Components.Schemas.MapOfSchemaOrRefValues[ref]
 
 	if found {
@@ -273,6 +274,8 @@ const (
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
+
+	componentsSchemas = "#/components/schemas/"
 )
 
 func mediaType(format string) MediaType {
@@ -357,10 +360,11 @@ func (r *Reflector) parseRequestBody(
 
 	schema, err := r.Reflect(input,
 		openapi.WithOperationCtx(oc, false, "body"),
-		jsonschema.DefinitionsPrefix("#/components/schemas/"+definitionPrefix),
+		jsonschema.DefinitionsPrefix(componentsSchemas+definitionPrefix),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tag, additionalTags...),
+		sanitizeDefName,
 		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
 			vv := params.Value.Interface()
 
@@ -443,7 +447,7 @@ func (r *Reflector) parseParametersIn(
 	}
 
 	defNamePrefix := strings.Title(string(in))
-	definitionsPrefix := "#/components/schemas/" + defNamePrefix
+	definitionsPrefix := componentsSchemas + defNamePrefix
 
 	s, err := r.Reflect(input,
 		openapi.WithOperationCtx(oc, false, in),
@@ -454,6 +458,7 @@ func (r *Reflector) parseParametersIn(
 		func(rc *jsonschema.ReflectContext) {
 			rc.UnnamedFieldWithTag = true
 		},
+		sanitizeDefName,
 		jsonschema.SkipEmbeddedMapsSlices,
 		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
 			if !params.Processed || len(params.Path) > 1 {
@@ -500,6 +505,7 @@ func (r *Reflector) parseParametersIn(
 					jsonschema.DefinitionsPrefix(definitionsPrefix),
 					jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
 					jsonschema.RootRef,
+					sanitizeDefName,
 				)
 				if err != nil {
 					return err
@@ -512,7 +518,9 @@ func (r *Reflector) parseParametersIn(
 			} else {
 				ps, err := r.Reflect(reflect.New(field.Type).Interface(),
 					openapi.WithOperationCtx(oc, false, in),
-					jsonschema.InlineRefs)
+					jsonschema.InlineRefs,
+					sanitizeDefName,
+				)
 				if err != nil {
 					return err
 				}
@@ -562,6 +570,14 @@ func (r *Reflector) parseParametersIn(
 	return nil
 }
 
+var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
+
+func sanitizeDefName(rc *jsonschema.ReflectContext) {
+	rc.DefName = func(t reflect.Type, defaultDefName string) string {
+		return defNameSanitizer.ReplaceAllString(defaultDefName, "")
+	}
+}
+
 func (r *Reflector) collectDefinition(namePrefix string) func(name string, schema jsonschema.Schema) {
 	return func(name string, schema jsonschema.Schema) {
 		name = namePrefix + name
@@ -592,6 +608,7 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 		jsonschema.InlineRefs,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tagHeader),
+		sanitizeDefName,
 		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
 			if !params.Processed || len(params.Path) > 1 { // only top-level fields (including embedded).
 				return nil
@@ -640,7 +657,7 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 }
 
 func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
-	schema, err := r.Reflect(output)
+	schema, err := r.Reflect(output, sanitizeDefName)
 	if err != nil {
 		return false, err
 	}
@@ -736,8 +753,9 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 	schema, err := r.Reflect(output,
 		openapi.WithOperationCtx(oc, true, openapi.InBody),
 		jsonschema.RootRef,
-		jsonschema.DefinitionsPrefix("#/components/schemas/"),
+		jsonschema.DefinitionsPrefix(componentsSchemas),
 		jsonschema.CollectDefinitions(r.collectDefinition("")),
+		sanitizeDefName,
 	)
 	if err != nil {
 		return err
