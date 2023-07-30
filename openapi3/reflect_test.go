@@ -162,9 +162,10 @@ func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 func TestReflector_AddOperation_request(t *testing.T) {
 	reflector := openapi3.Reflector{}
 
-	s := reflector.SpecEns()
-	s.Info.Title = apiName
-	s.Info.Version = apiVersion
+	s := reflector.SpecSchema()
+	s.SetTitle(apiName)
+	s.SetVersion(apiVersion)
+	s.SetDescription("This a sample API description.")
 
 	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere/{in_path}")
 	require.NoError(t, err)

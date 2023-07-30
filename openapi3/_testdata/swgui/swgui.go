@@ -3,27 +3,23 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	swgui "github.com/swaggest/swgui/v5"
 )
 
 func main() {
-	h := swgui.NewHandler("Foo", "/openapi.json", "/")
+	urlToSchema := "/openapi.json"
+	filePathToSchema := "../openapi.json"
+
+	swh := swgui.NewHandler("Foo", urlToSchema, "/")
 	hh := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/openapi.json" {
-			o, err := os.ReadFile("../openapi.json")
-			if err != nil {
-				http.Error(rw, err.Error(), 500)
-				return
-			}
-			rw.Header().Set("Content-Type", "application/json")
-			rw.Write(o)
-			return
+		if r.URL.Path == urlToSchema {
+			http.ServeFile(rw, r, filePathToSchema)
 		}
 
-		h.ServeHTTP(rw, r)
+		swh.ServeHTTP(rw, r)
 	})
+
 	log.Println("Starting Swagger UI server at http://localhost:8082/")
 	_ = http.ListenAndServe("localhost:8082", hh)
 }

@@ -8,6 +8,9 @@ type Reflector interface {
 
 	NewOperationContext(method, pathPattern string) (OperationContext, error)
 	AddOperation(oc OperationContext) error
+
+	SpecSchema() SpecSchema
+	JSONSchemaReflector() *jsonschema.Reflector
 }
 
 // JSONSchemaCallback is a user function called by JSONSchemaWalker.

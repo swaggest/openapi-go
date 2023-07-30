@@ -83,8 +83,9 @@ func TestReflector_SetRequest(t *testing.T) {
 	reflector := openapi3.Reflector{}
 
 	s := reflector.SpecEns()
-	s.Info.Title = apiName
-	s.Info.Version = apiVersion
+	s.SetTitle(apiName)
+	s.SetVersion(apiVersion)
+	s.SetDescription("This a sample API description.")
 
 	op := openapi3.Operation{}
 

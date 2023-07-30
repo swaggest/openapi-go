@@ -1,5 +1,5 @@
 {
- "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+ "openapi":"3.0.3","info":{"title":"SampleAPI","description":"This a sample API description.","version":"1.2.3"},
  "paths":{
   "/somewhere/{in_path}":{
    "get":{

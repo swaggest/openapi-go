@@ -790,3 +790,13 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 
 	return nil
 }
+
+// SpecSchema returns OpenAPI spec schema.
+func (r *Reflector) SpecSchema() openapi.SpecSchema {
+	return r.SpecEns()
+}
+
+// JSONSchemaReflector provides access to a low-level struct reflector.
+func (r *Reflector) JSONSchemaReflector() *jsonschema.Reflector {
+	return &r.Reflector
+}
