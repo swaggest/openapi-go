@@ -573,9 +573,9 @@ func (r *Reflector) parseParametersIn(
 var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
 
 func sanitizeDefName(rc *jsonschema.ReflectContext) {
-	rc.DefName = func(t reflect.Type, defaultDefName string) string {
+	jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
 		return defNameSanitizer.ReplaceAllString(defaultDefName, "")
-	}
+	})(rc)
 }
 
 func (r *Reflector) collectDefinition(namePrefix string) func(name string, schema jsonschema.Schema) {
