@@ -170,6 +170,10 @@ func TestReflector_AddOperation_request(t *testing.T) {
 	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere/{in_path}")
 	require.NoError(t, err)
 	oc.AddReqStructure(new(GetReq))
+	oc.AddReqStructure(nil, func(cu *openapi.ContentUnit) {
+		cu.ContentType = "text/csv"
+		cu.Description = "Request body in CSV format."
+	})
 
 	require.NoError(t, reflector.AddOperation(oc))
 

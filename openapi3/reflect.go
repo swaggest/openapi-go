@@ -243,21 +243,27 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 	for _, cu := range oc.Request() {
 		switch cu.ContentType {
 		case "":
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
-			)
+			); err != nil {
+				return err
+			}
 		case mimeJSON:
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
-			)
+			); err != nil {
+				return err
+			}
 		case mimeFormUrlencoded, mimeMultipart:
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
-			)
+			); err != nil {
+				return err
+			}
 		default:
 			r.stringRequestBody(o, cu.ContentType, cu.Format)
 		}
