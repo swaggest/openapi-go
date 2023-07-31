@@ -162,13 +162,18 @@ func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 func TestReflector_AddOperation_request(t *testing.T) {
 	reflector := openapi3.Reflector{}
 
-	s := reflector.SpecEns()
-	s.Info.Title = apiName
-	s.Info.Version = apiVersion
+	s := reflector.SpecSchema()
+	s.SetTitle(apiName)
+	s.SetVersion(apiVersion)
+	s.SetDescription("This a sample API description.")
 
 	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere/{in_path}")
 	require.NoError(t, err)
 	oc.AddReqStructure(new(GetReq))
+	oc.AddReqStructure(nil, func(cu *openapi.ContentUnit) {
+		cu.ContentType = "text/csv"
+		cu.Description = "Request body in CSV format."
+	})
 
 	require.NoError(t, reflector.AddOperation(oc))
 

@@ -243,21 +243,27 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 	for _, cu := range oc.Request() {
 		switch cu.ContentType {
 		case "":
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
-			)
+			); err != nil {
+				return err
+			}
 		case mimeJSON:
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
-			)
+			); err != nil {
+				return err
+			}
 		case mimeFormUrlencoded, mimeMultipart:
-			return joinErrors(
+			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
-			)
+			); err != nil {
+				return err
+			}
 		default:
 			r.stringRequestBody(o, cu.ContentType, cu.Format)
 		}
@@ -573,9 +579,9 @@ func (r *Reflector) parseParametersIn(
 var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
 
 func sanitizeDefName(rc *jsonschema.ReflectContext) {
-	rc.DefName = func(t reflect.Type, defaultDefName string) string {
+	jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
 		return defNameSanitizer.ReplaceAllString(defaultDefName, "")
-	}
+	})(rc)
 }
 
 func (r *Reflector) collectDefinition(namePrefix string) func(name string, schema jsonschema.Schema) {
@@ -789,4 +795,14 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 	}
 
 	return nil
+}
+
+// SpecSchema returns OpenAPI spec schema.
+func (r *Reflector) SpecSchema() openapi.SpecSchema {
+	return r.SpecEns()
+}
+
+// JSONSchemaReflector provides access to a low-level struct reflector.
+func (r *Reflector) JSONSchemaReflector() *jsonschema.Reflector {
+	return &r.Reflector
 }

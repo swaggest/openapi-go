@@ -127,3 +127,20 @@ func (o Operation) UnknownParamIsForbidden(in ParameterIn) bool {
 
 	return f && ok
 }
+
+var _ openapi.SpecSchema = &Spec{}
+
+// SetTitle describes the service.
+func (s *Spec) SetTitle(t string) {
+	s.Info.Title = t
+}
+
+// SetDescription describes the service.
+func (s *Spec) SetDescription(d string) {
+	s.Info.WithDescription(d)
+}
+
+// SetVersion describes the service.
+func (s *Spec) SetVersion(v string) {
+	s.Info.Version = v
+}

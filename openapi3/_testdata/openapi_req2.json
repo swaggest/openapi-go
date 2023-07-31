@@ -16,7 +16,6 @@
      {"name":"in_cookie","in":"cookie","deprecated":true,"schema":{"type":"string","deprecated":true}},
      {"name":"in_header","in":"header","schema":{"type":"number"}}
     ],
-    "requestBody":{"content":{"text/csv":{"schema":{"type":"string"}}}},
     "responses":{"204":{"description":"No Content"}}
    }
   }
