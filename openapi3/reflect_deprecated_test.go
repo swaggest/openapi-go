@@ -97,9 +97,9 @@ func TestReflector_SetRequest(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/openapi_req_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("_testdata/openapi_req2_last_run.json", b, 0o600))
 
-	expected, err := os.ReadFile("_testdata/openapi_req.json")
+	expected, err := os.ReadFile("_testdata/openapi_req2.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)

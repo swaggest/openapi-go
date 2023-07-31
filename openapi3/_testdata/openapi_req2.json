@@ -1,0 +1,23 @@
+{
+ "openapi":"3.0.3","info":{"title":"SampleAPI","description":"This a sample API description.","version":"1.2.3"},
+ "paths":{
+  "/somewhere/{in_path}":{
+   "get":{
+    "parameters":[
+     {
+      "name":"in_query1","in":"query","description":"Query parameter.","required":true,
+      "schema":{"type":"integer","description":"Query parameter."}
+     },
+     {
+      "name":"in_query3","in":"query","description":"Query parameter.","required":true,
+      "schema":{"type":"integer","description":"Query parameter."}
+     },
+     {"name":"in_path","in":"path","required":true,"schema":{"type":"integer"}},
+     {"name":"in_cookie","in":"cookie","deprecated":true,"schema":{"type":"string","deprecated":true}},
+     {"name":"in_header","in":"header","schema":{"type":"number"}}
+    ],
+    "responses":{"204":{"description":"No Content"}}
+   }
+  }
+ }
+}
