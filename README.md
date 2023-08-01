@@ -23,6 +23,11 @@ For automated HTTP REST service framework built with this library please check [
     * `header`, `cookie`, `formData`, `file` for other parameters
     * `form` acts as `query` and `formData`
     * [field tags](https://github.com/swaggest/jsonschema-go#field-tags) named after JSON Schema/OpenAPI 3 Schema constraints
+    * `collectionFormat` to unpack slices from string
+        * `csv` comma-separated values,
+        * `ssv` space-separated values,
+        * `pipes` pipe-separated values (`|`),
+        * `multi` ampersand-separated values (`&`), 
 * Flexible schema control with [`jsonschema-go`](https://github.com/swaggest/jsonschema-go#implementing-interfaces-on-a-type)
 
 ## Example
