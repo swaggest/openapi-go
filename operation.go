@@ -46,6 +46,23 @@ type ContentUnitPreparer interface {
 	SetupContentUnit(cu *ContentUnit)
 }
 
+func ContentTypeAndStatus(contentType string, httpStatus int) ContentUnitPreparer {
+	return contentTypeAndStatus{
+		contentType: contentType,
+		httpStatus:  httpStatus,
+	}
+}
+
+type contentTypeAndStatus struct {
+	contentType string
+	httpStatus  int
+}
+
+func (c contentTypeAndStatus) SetupContentUnit(cu *ContentUnit) {
+	cu.HTTPStatus = c.httpStatus
+	cu.ContentType = c.contentType
+}
+
 // SetFieldMapping sets custom field mapping.
 func (c *ContentUnit) SetFieldMapping(in In, fieldToParamName map[string]string) {
 	if len(fieldToParamName) == 0 {
