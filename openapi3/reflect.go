@@ -690,14 +690,28 @@ func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
 
 func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) error {
 	for _, cu := range oc.Response() {
-		if cu.HTTPStatus == 0 {
-			cu.HTTPStatus = 200
+		if cu.HTTPStatus == 0 && !cu.IsDefault {
+			cu.HTTPStatus = http.StatusOK
 		}
 
 		cu.ContentType = strings.Split(cu.ContentType, ";")[0]
 
 		httpStatus := strconv.Itoa(cu.HTTPStatus)
 		resp := o.Responses.MapOfResponseOrRefValues[httpStatus].Response
+
+		switch {
+		case cu.IsDefault:
+			httpStatus = "default"
+
+			if o.Responses.Default == nil {
+				o.Responses.Default = &ResponseOrRef{}
+			}
+
+			resp = o.Responses.Default.Response
+		case cu.HTTPStatus > 0 && cu.HTTPStatus < 6:
+			httpStatus = strconv.Itoa(cu.HTTPStatus) + "XX"
+			resp = o.Responses.MapOfResponseOrRefValues[httpStatus].Response
+		}
 
 		if resp == nil {
 			resp = &Response{}
@@ -725,9 +739,11 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			resp.Description = http.StatusText(cu.HTTPStatus)
 		}
 
-		o.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{
-			Response: resp,
-		})
+		if cu.IsDefault {
+			o.Responses.Default = &ResponseOrRef{Response: resp}
+		} else {
+			o.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{Response: resp})
+		}
 	}
 
 	return nil
