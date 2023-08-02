@@ -41,6 +41,11 @@ type ContentUnit struct {
 	fieldMapping map[In]map[string]string
 }
 
+// ContentUnitPreparer defines self-contained ContentUnit.
+type ContentUnitPreparer interface {
+	SetupContentUnit(cu *ContentUnit)
+}
+
 // SetFieldMapping sets custom field mapping.
 func (c *ContentUnit) SetFieldMapping(in In, fieldToParamName map[string]string) {
 	if len(fieldToParamName) == 0 {

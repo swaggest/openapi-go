@@ -75,7 +75,12 @@ func (o *OperationContext) SetPathPattern(pattern string) {
 // AddReqStructure adds request content schema.
 func (o *OperationContext) AddReqStructure(s interface{}, options ...openapi.ContentOption) {
 	c := openapi.ContentUnit{}
-	c.Structure = s
+
+	if cp, ok := s.(openapi.ContentUnitPreparer); ok {
+		cp.SetupContentUnit(&c)
+	} else {
+		c.Structure = s
+	}
 
 	for _, o := range options {
 		o(&c)
@@ -87,7 +92,12 @@ func (o *OperationContext) AddReqStructure(s interface{}, options ...openapi.Con
 // AddRespStructure adds response content schema.
 func (o *OperationContext) AddRespStructure(s interface{}, options ...openapi.ContentOption) {
 	c := openapi.ContentUnit{}
-	c.Structure = s
+
+	if cp, ok := s.(openapi.ContentUnitPreparer); ok {
+		cp.SetupContentUnit(&c)
+	} else {
+		c.Structure = s
+	}
 
 	for _, o := range options {
 		o(&c)
