@@ -46,21 +46,18 @@ type ContentUnitPreparer interface {
 	SetupContentUnit(cu *ContentUnit)
 }
 
-func ContentTypeAndStatus(contentType string, httpStatus int) ContentUnitPreparer {
-	return contentTypeAndStatus{
-		contentType: contentType,
-		httpStatus:  httpStatus,
+// WithContentType is a ContentUnit option.
+func WithContentType(contentType string) func(cu *ContentUnit) {
+	return func(cu *ContentUnit) {
+		cu.ContentType = contentType
 	}
 }
 
-type contentTypeAndStatus struct {
-	contentType string
-	httpStatus  int
-}
-
-func (c contentTypeAndStatus) SetupContentUnit(cu *ContentUnit) {
-	cu.HTTPStatus = c.httpStatus
-	cu.ContentType = c.contentType
+// WithHTTPStatus is a ContentUnit option.
+func WithHTTPStatus(httpStatus int) func(cu *ContentUnit) {
+	return func(cu *ContentUnit) {
+		cu.HTTPStatus = httpStatus
+	}
 }
 
 // SetFieldMapping sets custom field mapping.
