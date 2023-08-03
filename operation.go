@@ -27,12 +27,37 @@ type ContentOption func(cu *ContentUnit)
 
 // ContentUnit defines HTTP content.
 type ContentUnit struct {
-	Structure    interface{}
-	ContentType  string
-	Format       string
-	HTTPStatus   int
+	Structure   interface{}
+	ContentType string
+	Format      string
+
+	// HTTPStatus can have values 100-599 for single status, or 1-5 for status families (e.g. 2XX)
+	HTTPStatus int
+
+	// IsDefault indicates default response.
+	IsDefault bool
+
 	Description  string
 	fieldMapping map[In]map[string]string
+}
+
+// ContentUnitPreparer defines self-contained ContentUnit.
+type ContentUnitPreparer interface {
+	SetupContentUnit(cu *ContentUnit)
+}
+
+// WithContentType is a ContentUnit option.
+func WithContentType(contentType string) func(cu *ContentUnit) {
+	return func(cu *ContentUnit) {
+		cu.ContentType = contentType
+	}
+}
+
+// WithHTTPStatus is a ContentUnit option.
+func WithHTTPStatus(httpStatus int) func(cu *ContentUnit) {
+	return func(cu *ContentUnit) {
+		cu.HTTPStatus = httpStatus
+	}
 }
 
 // SetFieldMapping sets custom field mapping.

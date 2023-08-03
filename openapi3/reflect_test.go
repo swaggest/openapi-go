@@ -989,3 +989,42 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 	  }
 	}`, reflector.Spec)
 }
+
+type textCSV struct{}
+
+func (t textCSV) SetupContentUnit(cu *openapi.ContentUnit) {
+	cu.ContentType = "text/csv"
+	cu.Description = "This is CSV."
+	cu.IsDefault = true
+}
+
+func TestReflector_AddOperation_contentUnitPreparer(t *testing.T) {
+	r := openapi3.NewReflector()
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(textCSV{})
+	oc.AddRespStructure(textCSV{})
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"requestBody":{
+			  "description":"This is CSV.",
+			  "content":{"text/csv":{"schema":{"type":"string"}}}
+			},
+			"responses":{
+			  "default":{
+				"description":"This is CSV.",
+				"content":{"text/csv":{"schema":{"type":"string"}}}
+			  }
+			}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
+}
