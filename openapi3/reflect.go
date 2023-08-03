@@ -267,6 +267,10 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 		default:
 			r.stringRequestBody(o, cu.ContentType, cu.Format)
 		}
+
+		if cu.Description != "" && o.RequestBody != nil && o.RequestBody.RequestBody != nil {
+			o.RequestBody.RequestBody.WithDescription(cu.Description)
+		}
 	}
 
 	return nil
@@ -733,6 +737,10 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			if err := r.parseResponseHeader(resp, oc, cu); err != nil {
 				return err
 			}
+		}
+
+		if cu.Description != "" {
+			resp.Description = cu.Description
 		}
 
 		if resp.Description == "" {
