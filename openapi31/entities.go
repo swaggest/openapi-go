@@ -1768,10 +1768,8 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constHeader is unconditionally added to JSON.
-	constHeader = json.RawMessage(`{"style":"simple"}`)
-)
+// constHeader is unconditionally added to JSON.
+var constHeader = json.RawMessage(`{"style":"simple"}`)
 
 // MarshalJSON encodes JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
@@ -3869,8 +3867,14 @@ func (c *Components) WithPathItemsItem(key string, val PathItemOrReference) *Com
 
 // SecurityScheme structure is generated from "#/$defs/security-scheme".
 type SecurityScheme struct {
-	Type        SecuritySchemeType `json:"type"` // Required.
-	Description *string            `json:"description,omitempty"`
+	Type          SecuritySchemeType        `json:"type"` // Required.
+	Description   *string                   `json:"description,omitempty"`
+	APIKey        *SecuritySchemeAPIKey     `json:"-"`
+	HTTP          *SecuritySchemeHTTP       `json:"-"`
+	HTTPBearer    *SecuritySchemeHTTPBearer `json:"-"`
+	Oauth2        *SecuritySchemeOauth2     `json:"-"`
+	Oidc          *SecuritySchemeOidc       `json:"-"`
+	MapOfAnything map[string]interface{}    `json:"-"` // Key must match pattern: `^x-`.
 }
 
 // WithType sets Type value.
@@ -3885,7 +3889,104 @@ func (s *SecurityScheme) WithDescription(val string) *SecurityScheme {
 	return s
 }
 
+// WithAPIKey sets APIKey value.
+func (s *SecurityScheme) WithAPIKey(val SecuritySchemeAPIKey) *SecurityScheme {
+	s.APIKey = &val
+	return s
+}
+
+// APIKeyEns ensures returned APIKey is not nil.
+func (s *SecurityScheme) APIKeyEns() *SecuritySchemeAPIKey {
+	if s.APIKey == nil {
+		s.APIKey = new(SecuritySchemeAPIKey)
+	}
+
+	return s.APIKey
+}
+
+// WithHTTP sets HTTP value.
+func (s *SecurityScheme) WithHTTP(val SecuritySchemeHTTP) *SecurityScheme {
+	s.HTTP = &val
+	return s
+}
+
+// HTTPEns ensures returned HTTP is not nil.
+func (s *SecurityScheme) HTTPEns() *SecuritySchemeHTTP {
+	if s.HTTP == nil {
+		s.HTTP = new(SecuritySchemeHTTP)
+	}
+
+	return s.HTTP
+}
+
+// WithHTTPBearer sets HTTPBearer value.
+func (s *SecurityScheme) WithHTTPBearer(val SecuritySchemeHTTPBearer) *SecurityScheme {
+	s.HTTPBearer = &val
+	return s
+}
+
+// HTTPBearerEns ensures returned HTTPBearer is not nil.
+func (s *SecurityScheme) HTTPBearerEns() *SecuritySchemeHTTPBearer {
+	if s.HTTPBearer == nil {
+		s.HTTPBearer = new(SecuritySchemeHTTPBearer)
+	}
+
+	return s.HTTPBearer
+}
+
+// WithOauth2 sets Oauth2 value.
+func (s *SecurityScheme) WithOauth2(val SecuritySchemeOauth2) *SecurityScheme {
+	s.Oauth2 = &val
+	return s
+}
+
+// Oauth2Ens ensures returned Oauth2 is not nil.
+func (s *SecurityScheme) Oauth2Ens() *SecuritySchemeOauth2 {
+	if s.Oauth2 == nil {
+		s.Oauth2 = new(SecuritySchemeOauth2)
+	}
+
+	return s.Oauth2
+}
+
+// WithOidc sets Oidc value.
+func (s *SecurityScheme) WithOidc(val SecuritySchemeOidc) *SecurityScheme {
+	s.Oidc = &val
+	return s
+}
+
+// OidcEns ensures returned Oidc is not nil.
+func (s *SecurityScheme) OidcEns() *SecuritySchemeOidc {
+	if s.Oidc == nil {
+		s.Oidc = new(SecuritySchemeOidc)
+	}
+
+	return s.Oidc
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (s *SecurityScheme) WithMapOfAnything(val map[string]interface{}) *SecurityScheme {
+	s.MapOfAnything = val
+	return s
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (s *SecurityScheme) WithMapOfAnythingItem(key string, val interface{}) *SecurityScheme {
+	if s.MapOfAnything == nil {
+		s.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	s.MapOfAnything[key] = val
+
+	return s
+}
+
 type marshalSecurityScheme SecurityScheme
+
+var knownKeysSecurityScheme = []string{
+	"type",
+	"description",
+}
 
 var requireKeysSecurityScheme = []string{
 	"type",
@@ -3902,6 +4003,53 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	oneOfErrors := make(map[string]error, 5)
+	oneOfValid := 0
+
+	err = json.Unmarshal(data, &ms.APIKey)
+	if err != nil {
+		oneOfErrors["APIKey"] = err
+		ms.APIKey = nil
+	} else {
+		oneOfValid++
+	}
+
+	err = json.Unmarshal(data, &ms.HTTP)
+	if err != nil {
+		oneOfErrors["HTTP"] = err
+		ms.HTTP = nil
+	} else {
+		oneOfValid++
+	}
+
+	err = json.Unmarshal(data, &ms.HTTPBearer)
+	if err != nil {
+		oneOfErrors["HTTPBearer"] = err
+		ms.HTTPBearer = nil
+	} else {
+		oneOfValid++
+	}
+
+	err = json.Unmarshal(data, &ms.Oauth2)
+	if err != nil {
+		oneOfErrors["Oauth2"] = err
+		ms.Oauth2 = nil
+	} else {
+		oneOfValid++
+	}
+
+	err = json.Unmarshal(data, &ms.Oidc)
+	if err != nil {
+		oneOfErrors["Oidc"] = err
+		ms.Oidc = nil
+	} else {
+		oneOfValid++
+	}
+
+	if oneOfValid != 1 {
+		return fmt.Errorf("oneOf constraint failed for SecurityScheme with %d valid results: %v", oneOfValid, oneOfErrors)
+	}
+
 	var rawMap map[string]json.RawMessage
 
 	err = json.Unmarshal(data, &rawMap)
@@ -3915,42 +4063,8 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	*s = SecurityScheme(ms)
-
-	return nil
-}
-
-// SecuritySchemeAllOf0 structure is generated from "#/$defs/security-scheme/allOf/0".
-type SecuritySchemeAllOf0 struct {
-	MapOfAnything map[string]interface{} `json:"-"` // Key must match pattern: `^x-`.
-}
-
-// WithMapOfAnything sets MapOfAnything value.
-func (s *SecuritySchemeAllOf0) WithMapOfAnything(val map[string]interface{}) *SecuritySchemeAllOf0 {
-	s.MapOfAnything = val
-	return s
-}
-
-// WithMapOfAnythingItem sets MapOfAnything item value.
-func (s *SecuritySchemeAllOf0) WithMapOfAnythingItem(key string, val interface{}) *SecuritySchemeAllOf0 {
-	if s.MapOfAnything == nil {
-		s.MapOfAnything = make(map[string]interface{}, 1)
-	}
-
-	s.MapOfAnything[key] = val
-
-	return s
-}
-
-// UnmarshalJSON decodes JSON.
-func (s *SecuritySchemeAllOf0) UnmarshalJSON(data []byte) error {
-	var err error
-
-	var rawMap map[string]json.RawMessage
-
-	err = json.Unmarshal(data, &rawMap)
-	if err != nil {
-		rawMap = nil
+	for _, key := range knownKeysSecurityScheme {
+		delete(rawMap, key)
 	}
 
 	for key, rawValue := range rawMap {
@@ -3959,8 +4073,8 @@ func (s *SecuritySchemeAllOf0) UnmarshalJSON(data []byte) error {
 		if regexX.MatchString(key) {
 			matched = true
 
-			if s.MapOfAnything == nil {
-				s.MapOfAnything = make(map[string]interface{}, 1)
+			if ms.MapOfAnything == nil {
+				ms.MapOfAnything = make(map[string]interface{}, 1)
 			}
 
 			var val interface{}
@@ -3970,7 +4084,7 @@ func (s *SecuritySchemeAllOf0) UnmarshalJSON(data []byte) error {
 				return err
 			}
 
-			s.MapOfAnything[key] = val
+			ms.MapOfAnything[key] = val
 		}
 
 		if matched {
@@ -3978,12 +4092,1029 @@ func (s *SecuritySchemeAllOf0) UnmarshalJSON(data []byte) error {
 		}
 	}
 
+	*s = SecurityScheme(ms)
+
 	return nil
 }
 
 // MarshalJSON encodes JSON.
-func (s SecuritySchemeAllOf0) MarshalJSON() ([]byte, error) {
-	return marshalUnion(s.MapOfAnything)
+func (s SecurityScheme) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalSecurityScheme(s), s.MapOfAnything, s.APIKey, s.HTTP, s.HTTPBearer, s.Oauth2, s.Oidc)
+}
+
+// SecuritySchemeAPIKey structure is generated from "#/$defs/security-scheme/$defs/type-apikey".
+type SecuritySchemeAPIKey struct {
+	Name string                 `json:"name"` // Required.
+	In   SecuritySchemeAPIKeyIn `json:"in"`   // Required.
+}
+
+// WithName sets Name value.
+func (s *SecuritySchemeAPIKey) WithName(val string) *SecuritySchemeAPIKey {
+	s.Name = val
+	return s
+}
+
+// WithIn sets In value.
+func (s *SecuritySchemeAPIKey) WithIn(val SecuritySchemeAPIKeyIn) *SecuritySchemeAPIKey {
+	s.In = val
+	return s
+}
+
+type marshalSecuritySchemeAPIKey SecuritySchemeAPIKey
+
+var requireKeysSecuritySchemeAPIKey = []string{
+	"type",
+	"name",
+	"in",
+}
+
+// UnmarshalJSON decodes JSON.
+func (s *SecuritySchemeAPIKey) UnmarshalJSON(data []byte) error {
+	var err error
+
+	ms := marshalSecuritySchemeAPIKey(*s)
+
+	err = json.Unmarshal(data, &ms)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysSecuritySchemeAPIKey {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"apiKey"` {
+		return fmt.Errorf(`bad const value for "type" ("apiKey" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	*s = SecuritySchemeAPIKey(ms)
+
+	return nil
+}
+
+// constSecuritySchemeAPIKey is unconditionally added to JSON.
+var constSecuritySchemeAPIKey = json.RawMessage(`{"type":"apiKey"}`)
+
+// MarshalJSON encodes JSON.
+func (s SecuritySchemeAPIKey) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constSecuritySchemeAPIKey, marshalSecuritySchemeAPIKey(s))
+}
+
+// SecuritySchemeHTTP structure is generated from "#/$defs/security-scheme/$defs/type-http".
+type SecuritySchemeHTTP struct {
+	Scheme string `json:"scheme"` // Required.
+}
+
+// WithScheme sets Scheme value.
+func (s *SecuritySchemeHTTP) WithScheme(val string) *SecuritySchemeHTTP {
+	s.Scheme = val
+	return s
+}
+
+type marshalSecuritySchemeHTTP SecuritySchemeHTTP
+
+var requireKeysSecuritySchemeHTTP = []string{
+	"type",
+	"scheme",
+}
+
+// UnmarshalJSON decodes JSON.
+func (s *SecuritySchemeHTTP) UnmarshalJSON(data []byte) error {
+	var err error
+
+	ms := marshalSecuritySchemeHTTP(*s)
+
+	err = json.Unmarshal(data, &ms)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysSecuritySchemeHTTP {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"http"` {
+		return fmt.Errorf(`bad const value for "type" ("http" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	*s = SecuritySchemeHTTP(ms)
+
+	return nil
+}
+
+// constSecuritySchemeHTTP is unconditionally added to JSON.
+var constSecuritySchemeHTTP = json.RawMessage(`{"type":"http"}`)
+
+// MarshalJSON encodes JSON.
+func (s SecuritySchemeHTTP) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constSecuritySchemeHTTP, marshalSecuritySchemeHTTP(s))
+}
+
+// SecuritySchemeHTTPBearer structure is generated from "#/$defs/security-scheme/$defs/type-http-bearer".
+type SecuritySchemeHTTPBearer struct {
+	// Value must match pattern: `^[Bb][Ee][Aa][Rr][Ee][Rr]$`.
+	// Required.
+	Scheme       string  `json:"scheme"`
+	BearerFormat *string `json:"bearerFormat,omitempty"`
+}
+
+// WithScheme sets Scheme value.
+func (s *SecuritySchemeHTTPBearer) WithScheme(val string) *SecuritySchemeHTTPBearer {
+	s.Scheme = val
+	return s
+}
+
+// WithBearerFormat sets BearerFormat value.
+func (s *SecuritySchemeHTTPBearer) WithBearerFormat(val string) *SecuritySchemeHTTPBearer {
+	s.BearerFormat = &val
+	return s
+}
+
+type marshalSecuritySchemeHTTPBearer SecuritySchemeHTTPBearer
+
+var requireKeysSecuritySchemeHTTPBearer = []string{
+	"type",
+	"scheme",
+}
+
+// UnmarshalJSON decodes JSON.
+func (s *SecuritySchemeHTTPBearer) UnmarshalJSON(data []byte) error {
+	var err error
+
+	ms := marshalSecuritySchemeHTTPBearer(*s)
+
+	err = json.Unmarshal(data, &ms)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysSecuritySchemeHTTPBearer {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"http"` {
+		return fmt.Errorf(`bad const value for "type" ("http" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	*s = SecuritySchemeHTTPBearer(ms)
+
+	return nil
+}
+
+// constSecuritySchemeHTTPBearer is unconditionally added to JSON.
+var constSecuritySchemeHTTPBearer = json.RawMessage(`{"type":"http"}`)
+
+// MarshalJSON encodes JSON.
+func (s SecuritySchemeHTTPBearer) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constSecuritySchemeHTTPBearer, marshalSecuritySchemeHTTPBearer(s))
+}
+
+// SecuritySchemeOauth2 structure is generated from "#/$defs/security-scheme/$defs/type-oauth2".
+type SecuritySchemeOauth2 struct {
+	Flows OauthFlows `json:"flows"` // Required.
+}
+
+// WithFlows sets Flows value.
+func (s *SecuritySchemeOauth2) WithFlows(val OauthFlows) *SecuritySchemeOauth2 {
+	s.Flows = val
+	return s
+}
+
+type marshalSecuritySchemeOauth2 SecuritySchemeOauth2
+
+var requireKeysSecuritySchemeOauth2 = []string{
+	"type",
+	"flows",
+}
+
+// UnmarshalJSON decodes JSON.
+func (s *SecuritySchemeOauth2) UnmarshalJSON(data []byte) error {
+	var err error
+
+	ms := marshalSecuritySchemeOauth2(*s)
+
+	err = json.Unmarshal(data, &ms)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysSecuritySchemeOauth2 {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"oauth2"` {
+		return fmt.Errorf(`bad const value for "type" ("oauth2" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	*s = SecuritySchemeOauth2(ms)
+
+	return nil
+}
+
+// constSecuritySchemeOauth2 is unconditionally added to JSON.
+var constSecuritySchemeOauth2 = json.RawMessage(`{"type":"oauth2"}`)
+
+// MarshalJSON encodes JSON.
+func (s SecuritySchemeOauth2) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constSecuritySchemeOauth2, marshalSecuritySchemeOauth2(s))
+}
+
+// OauthFlows structure is generated from "#/$defs/oauth-flows".
+type OauthFlows struct {
+	Implicit          *OauthFlowsDefsImplicit          `json:"implicit,omitempty"`
+	Password          *OauthFlowsDefsPassword          `json:"password,omitempty"`
+	ClientCredentials *OauthFlowsDefsClientCredentials `json:"clientCredentials,omitempty"`
+	AuthorizationCode *OauthFlowsDefsAuthorizationCode `json:"authorizationCode,omitempty"`
+	MapOfAnything     map[string]interface{}           `json:"-"` // Key must match pattern: `^x-`.
+}
+
+// WithImplicit sets Implicit value.
+func (o *OauthFlows) WithImplicit(val OauthFlowsDefsImplicit) *OauthFlows {
+	o.Implicit = &val
+	return o
+}
+
+// ImplicitEns ensures returned Implicit is not nil.
+func (o *OauthFlows) ImplicitEns() *OauthFlowsDefsImplicit {
+	if o.Implicit == nil {
+		o.Implicit = new(OauthFlowsDefsImplicit)
+	}
+
+	return o.Implicit
+}
+
+// WithPassword sets Password value.
+func (o *OauthFlows) WithPassword(val OauthFlowsDefsPassword) *OauthFlows {
+	o.Password = &val
+	return o
+}
+
+// PasswordEns ensures returned Password is not nil.
+func (o *OauthFlows) PasswordEns() *OauthFlowsDefsPassword {
+	if o.Password == nil {
+		o.Password = new(OauthFlowsDefsPassword)
+	}
+
+	return o.Password
+}
+
+// WithClientCredentials sets ClientCredentials value.
+func (o *OauthFlows) WithClientCredentials(val OauthFlowsDefsClientCredentials) *OauthFlows {
+	o.ClientCredentials = &val
+	return o
+}
+
+// ClientCredentialsEns ensures returned ClientCredentials is not nil.
+func (o *OauthFlows) ClientCredentialsEns() *OauthFlowsDefsClientCredentials {
+	if o.ClientCredentials == nil {
+		o.ClientCredentials = new(OauthFlowsDefsClientCredentials)
+	}
+
+	return o.ClientCredentials
+}
+
+// WithAuthorizationCode sets AuthorizationCode value.
+func (o *OauthFlows) WithAuthorizationCode(val OauthFlowsDefsAuthorizationCode) *OauthFlows {
+	o.AuthorizationCode = &val
+	return o
+}
+
+// AuthorizationCodeEns ensures returned AuthorizationCode is not nil.
+func (o *OauthFlows) AuthorizationCodeEns() *OauthFlowsDefsAuthorizationCode {
+	if o.AuthorizationCode == nil {
+		o.AuthorizationCode = new(OauthFlowsDefsAuthorizationCode)
+	}
+
+	return o.AuthorizationCode
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (o *OauthFlows) WithMapOfAnything(val map[string]interface{}) *OauthFlows {
+	o.MapOfAnything = val
+	return o
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (o *OauthFlows) WithMapOfAnythingItem(key string, val interface{}) *OauthFlows {
+	if o.MapOfAnything == nil {
+		o.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	o.MapOfAnything[key] = val
+
+	return o
+}
+
+type marshalOauthFlows OauthFlows
+
+var knownKeysOauthFlows = []string{
+	"implicit",
+	"password",
+	"clientCredentials",
+	"authorizationCode",
+}
+
+// UnmarshalJSON decodes JSON.
+func (o *OauthFlows) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mo := marshalOauthFlows(*o)
+
+	err = json.Unmarshal(data, &mo)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range knownKeysOauthFlows {
+		delete(rawMap, key)
+	}
+
+	for key, rawValue := range rawMap {
+		matched := false
+
+		if regexX.MatchString(key) {
+			matched = true
+
+			if mo.MapOfAnything == nil {
+				mo.MapOfAnything = make(map[string]interface{}, 1)
+			}
+
+			var val interface{}
+
+			err = json.Unmarshal(rawValue, &val)
+			if err != nil {
+				return err
+			}
+
+			mo.MapOfAnything[key] = val
+		}
+
+		if matched {
+			delete(rawMap, key)
+		}
+	}
+
+	*o = OauthFlows(mo)
+
+	return nil
+}
+
+// MarshalJSON encodes JSON.
+func (o OauthFlows) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalOauthFlows(o), o.MapOfAnything)
+}
+
+// OauthFlowsDefsImplicit structure is generated from "#/$defs/oauth-flows/$defs/implicit".
+type OauthFlowsDefsImplicit struct {
+	// Format: uri.
+	// Required.
+	AuthorizationURL string                 `json:"authorizationUrl"`
+	RefreshURL       *string                `json:"refreshUrl,omitempty"` // Format: uri.
+	Scopes           map[string]string      `json:"scopes"`               // Required.
+	MapOfAnything    map[string]interface{} `json:"-"`                    // Key must match pattern: `^x-`.
+}
+
+// WithAuthorizationURL sets AuthorizationURL value.
+func (o *OauthFlowsDefsImplicit) WithAuthorizationURL(val string) *OauthFlowsDefsImplicit {
+	o.AuthorizationURL = val
+	return o
+}
+
+// WithRefreshURL sets RefreshURL value.
+func (o *OauthFlowsDefsImplicit) WithRefreshURL(val string) *OauthFlowsDefsImplicit {
+	o.RefreshURL = &val
+	return o
+}
+
+// WithScopes sets Scopes value.
+func (o *OauthFlowsDefsImplicit) WithScopes(val map[string]string) *OauthFlowsDefsImplicit {
+	o.Scopes = val
+	return o
+}
+
+// WithScopesItem sets Scopes item value.
+func (o *OauthFlowsDefsImplicit) WithScopesItem(key string, val string) *OauthFlowsDefsImplicit {
+	if o.Scopes == nil {
+		o.Scopes = make(map[string]string, 1)
+	}
+
+	o.Scopes[key] = val
+
+	return o
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (o *OauthFlowsDefsImplicit) WithMapOfAnything(val map[string]interface{}) *OauthFlowsDefsImplicit {
+	o.MapOfAnything = val
+	return o
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (o *OauthFlowsDefsImplicit) WithMapOfAnythingItem(key string, val interface{}) *OauthFlowsDefsImplicit {
+	if o.MapOfAnything == nil {
+		o.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	o.MapOfAnything[key] = val
+
+	return o
+}
+
+type marshalOauthFlowsDefsImplicit OauthFlowsDefsImplicit
+
+var knownKeysOauthFlowsDefsImplicit = []string{
+	"authorizationUrl",
+	"refreshUrl",
+	"scopes",
+}
+
+var requireKeysOauthFlowsDefsImplicit = []string{
+	"authorizationUrl",
+	"scopes",
+}
+
+// UnmarshalJSON decodes JSON.
+func (o *OauthFlowsDefsImplicit) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mo := marshalOauthFlowsDefsImplicit(*o)
+
+	err = json.Unmarshal(data, &mo)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysOauthFlowsDefsImplicit {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	for _, key := range knownKeysOauthFlowsDefsImplicit {
+		delete(rawMap, key)
+	}
+
+	for key, rawValue := range rawMap {
+		matched := false
+
+		if regexX.MatchString(key) {
+			matched = true
+
+			if mo.MapOfAnything == nil {
+				mo.MapOfAnything = make(map[string]interface{}, 1)
+			}
+
+			var val interface{}
+
+			err = json.Unmarshal(rawValue, &val)
+			if err != nil {
+				return err
+			}
+
+			mo.MapOfAnything[key] = val
+		}
+
+		if matched {
+			delete(rawMap, key)
+		}
+	}
+
+	*o = OauthFlowsDefsImplicit(mo)
+
+	return nil
+}
+
+// MarshalJSON encodes JSON.
+func (o OauthFlowsDefsImplicit) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalOauthFlowsDefsImplicit(o), o.MapOfAnything)
+}
+
+// OauthFlowsDefsPassword structure is generated from "#/$defs/oauth-flows/$defs/password".
+type OauthFlowsDefsPassword struct {
+	// Format: uri.
+	// Required.
+	TokenURL      string                 `json:"tokenUrl"`
+	RefreshURL    *string                `json:"refreshUrl,omitempty"` // Format: uri.
+	Scopes        map[string]string      `json:"scopes"`               // Required.
+	MapOfAnything map[string]interface{} `json:"-"`                    // Key must match pattern: `^x-`.
+}
+
+// WithTokenURL sets TokenURL value.
+func (o *OauthFlowsDefsPassword) WithTokenURL(val string) *OauthFlowsDefsPassword {
+	o.TokenURL = val
+	return o
+}
+
+// WithRefreshURL sets RefreshURL value.
+func (o *OauthFlowsDefsPassword) WithRefreshURL(val string) *OauthFlowsDefsPassword {
+	o.RefreshURL = &val
+	return o
+}
+
+// WithScopes sets Scopes value.
+func (o *OauthFlowsDefsPassword) WithScopes(val map[string]string) *OauthFlowsDefsPassword {
+	o.Scopes = val
+	return o
+}
+
+// WithScopesItem sets Scopes item value.
+func (o *OauthFlowsDefsPassword) WithScopesItem(key string, val string) *OauthFlowsDefsPassword {
+	if o.Scopes == nil {
+		o.Scopes = make(map[string]string, 1)
+	}
+
+	o.Scopes[key] = val
+
+	return o
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (o *OauthFlowsDefsPassword) WithMapOfAnything(val map[string]interface{}) *OauthFlowsDefsPassword {
+	o.MapOfAnything = val
+	return o
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (o *OauthFlowsDefsPassword) WithMapOfAnythingItem(key string, val interface{}) *OauthFlowsDefsPassword {
+	if o.MapOfAnything == nil {
+		o.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	o.MapOfAnything[key] = val
+
+	return o
+}
+
+type marshalOauthFlowsDefsPassword OauthFlowsDefsPassword
+
+var knownKeysOauthFlowsDefsPassword = []string{
+	"tokenUrl",
+	"refreshUrl",
+	"scopes",
+}
+
+var requireKeysOauthFlowsDefsPassword = []string{
+	"tokenUrl",
+	"scopes",
+}
+
+// UnmarshalJSON decodes JSON.
+func (o *OauthFlowsDefsPassword) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mo := marshalOauthFlowsDefsPassword(*o)
+
+	err = json.Unmarshal(data, &mo)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysOauthFlowsDefsPassword {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	for _, key := range knownKeysOauthFlowsDefsPassword {
+		delete(rawMap, key)
+	}
+
+	for key, rawValue := range rawMap {
+		matched := false
+
+		if regexX.MatchString(key) {
+			matched = true
+
+			if mo.MapOfAnything == nil {
+				mo.MapOfAnything = make(map[string]interface{}, 1)
+			}
+
+			var val interface{}
+
+			err = json.Unmarshal(rawValue, &val)
+			if err != nil {
+				return err
+			}
+
+			mo.MapOfAnything[key] = val
+		}
+
+		if matched {
+			delete(rawMap, key)
+		}
+	}
+
+	*o = OauthFlowsDefsPassword(mo)
+
+	return nil
+}
+
+// MarshalJSON encodes JSON.
+func (o OauthFlowsDefsPassword) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalOauthFlowsDefsPassword(o), o.MapOfAnything)
+}
+
+// OauthFlowsDefsClientCredentials structure is generated from "#/$defs/oauth-flows/$defs/client-credentials".
+type OauthFlowsDefsClientCredentials struct {
+	// Format: uri.
+	// Required.
+	TokenURL      string                 `json:"tokenUrl"`
+	RefreshURL    *string                `json:"refreshUrl,omitempty"` // Format: uri.
+	Scopes        map[string]string      `json:"scopes"`               // Required.
+	MapOfAnything map[string]interface{} `json:"-"`                    // Key must match pattern: `^x-`.
+}
+
+// WithTokenURL sets TokenURL value.
+func (o *OauthFlowsDefsClientCredentials) WithTokenURL(val string) *OauthFlowsDefsClientCredentials {
+	o.TokenURL = val
+	return o
+}
+
+// WithRefreshURL sets RefreshURL value.
+func (o *OauthFlowsDefsClientCredentials) WithRefreshURL(val string) *OauthFlowsDefsClientCredentials {
+	o.RefreshURL = &val
+	return o
+}
+
+// WithScopes sets Scopes value.
+func (o *OauthFlowsDefsClientCredentials) WithScopes(val map[string]string) *OauthFlowsDefsClientCredentials {
+	o.Scopes = val
+	return o
+}
+
+// WithScopesItem sets Scopes item value.
+func (o *OauthFlowsDefsClientCredentials) WithScopesItem(key string, val string) *OauthFlowsDefsClientCredentials {
+	if o.Scopes == nil {
+		o.Scopes = make(map[string]string, 1)
+	}
+
+	o.Scopes[key] = val
+
+	return o
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (o *OauthFlowsDefsClientCredentials) WithMapOfAnything(val map[string]interface{}) *OauthFlowsDefsClientCredentials {
+	o.MapOfAnything = val
+	return o
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (o *OauthFlowsDefsClientCredentials) WithMapOfAnythingItem(key string, val interface{}) *OauthFlowsDefsClientCredentials {
+	if o.MapOfAnything == nil {
+		o.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	o.MapOfAnything[key] = val
+
+	return o
+}
+
+type marshalOauthFlowsDefsClientCredentials OauthFlowsDefsClientCredentials
+
+var knownKeysOauthFlowsDefsClientCredentials = []string{
+	"tokenUrl",
+	"refreshUrl",
+	"scopes",
+}
+
+var requireKeysOauthFlowsDefsClientCredentials = []string{
+	"tokenUrl",
+	"scopes",
+}
+
+// UnmarshalJSON decodes JSON.
+func (o *OauthFlowsDefsClientCredentials) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mo := marshalOauthFlowsDefsClientCredentials(*o)
+
+	err = json.Unmarshal(data, &mo)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysOauthFlowsDefsClientCredentials {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	for _, key := range knownKeysOauthFlowsDefsClientCredentials {
+		delete(rawMap, key)
+	}
+
+	for key, rawValue := range rawMap {
+		matched := false
+
+		if regexX.MatchString(key) {
+			matched = true
+
+			if mo.MapOfAnything == nil {
+				mo.MapOfAnything = make(map[string]interface{}, 1)
+			}
+
+			var val interface{}
+
+			err = json.Unmarshal(rawValue, &val)
+			if err != nil {
+				return err
+			}
+
+			mo.MapOfAnything[key] = val
+		}
+
+		if matched {
+			delete(rawMap, key)
+		}
+	}
+
+	*o = OauthFlowsDefsClientCredentials(mo)
+
+	return nil
+}
+
+// MarshalJSON encodes JSON.
+func (o OauthFlowsDefsClientCredentials) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalOauthFlowsDefsClientCredentials(o), o.MapOfAnything)
+}
+
+// OauthFlowsDefsAuthorizationCode structure is generated from "#/$defs/oauth-flows/$defs/authorization-code".
+type OauthFlowsDefsAuthorizationCode struct {
+	// Format: uri.
+	// Required.
+	AuthorizationURL string `json:"authorizationUrl"`
+	// Format: uri.
+	// Required.
+	TokenURL      string                 `json:"tokenUrl"`
+	RefreshURL    *string                `json:"refreshUrl,omitempty"` // Format: uri.
+	Scopes        map[string]string      `json:"scopes"`               // Required.
+	MapOfAnything map[string]interface{} `json:"-"`                    // Key must match pattern: `^x-`.
+}
+
+// WithAuthorizationURL sets AuthorizationURL value.
+func (o *OauthFlowsDefsAuthorizationCode) WithAuthorizationURL(val string) *OauthFlowsDefsAuthorizationCode {
+	o.AuthorizationURL = val
+	return o
+}
+
+// WithTokenURL sets TokenURL value.
+func (o *OauthFlowsDefsAuthorizationCode) WithTokenURL(val string) *OauthFlowsDefsAuthorizationCode {
+	o.TokenURL = val
+	return o
+}
+
+// WithRefreshURL sets RefreshURL value.
+func (o *OauthFlowsDefsAuthorizationCode) WithRefreshURL(val string) *OauthFlowsDefsAuthorizationCode {
+	o.RefreshURL = &val
+	return o
+}
+
+// WithScopes sets Scopes value.
+func (o *OauthFlowsDefsAuthorizationCode) WithScopes(val map[string]string) *OauthFlowsDefsAuthorizationCode {
+	o.Scopes = val
+	return o
+}
+
+// WithScopesItem sets Scopes item value.
+func (o *OauthFlowsDefsAuthorizationCode) WithScopesItem(key string, val string) *OauthFlowsDefsAuthorizationCode {
+	if o.Scopes == nil {
+		o.Scopes = make(map[string]string, 1)
+	}
+
+	o.Scopes[key] = val
+
+	return o
+}
+
+// WithMapOfAnything sets MapOfAnything value.
+func (o *OauthFlowsDefsAuthorizationCode) WithMapOfAnything(val map[string]interface{}) *OauthFlowsDefsAuthorizationCode {
+	o.MapOfAnything = val
+	return o
+}
+
+// WithMapOfAnythingItem sets MapOfAnything item value.
+func (o *OauthFlowsDefsAuthorizationCode) WithMapOfAnythingItem(key string, val interface{}) *OauthFlowsDefsAuthorizationCode {
+	if o.MapOfAnything == nil {
+		o.MapOfAnything = make(map[string]interface{}, 1)
+	}
+
+	o.MapOfAnything[key] = val
+
+	return o
+}
+
+type marshalOauthFlowsDefsAuthorizationCode OauthFlowsDefsAuthorizationCode
+
+var knownKeysOauthFlowsDefsAuthorizationCode = []string{
+	"authorizationUrl",
+	"tokenUrl",
+	"refreshUrl",
+	"scopes",
+}
+
+var requireKeysOauthFlowsDefsAuthorizationCode = []string{
+	"authorizationUrl",
+	"tokenUrl",
+	"scopes",
+}
+
+// UnmarshalJSON decodes JSON.
+func (o *OauthFlowsDefsAuthorizationCode) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mo := marshalOauthFlowsDefsAuthorizationCode(*o)
+
+	err = json.Unmarshal(data, &mo)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysOauthFlowsDefsAuthorizationCode {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	for _, key := range knownKeysOauthFlowsDefsAuthorizationCode {
+		delete(rawMap, key)
+	}
+
+	for key, rawValue := range rawMap {
+		matched := false
+
+		if regexX.MatchString(key) {
+			matched = true
+
+			if mo.MapOfAnything == nil {
+				mo.MapOfAnything = make(map[string]interface{}, 1)
+			}
+
+			var val interface{}
+
+			err = json.Unmarshal(rawValue, &val)
+			if err != nil {
+				return err
+			}
+
+			mo.MapOfAnything[key] = val
+		}
+
+		if matched {
+			delete(rawMap, key)
+		}
+	}
+
+	*o = OauthFlowsDefsAuthorizationCode(mo)
+
+	return nil
+}
+
+// MarshalJSON encodes JSON.
+func (o OauthFlowsDefsAuthorizationCode) MarshalJSON() ([]byte, error) {
+	return marshalUnion(marshalOauthFlowsDefsAuthorizationCode(o), o.MapOfAnything)
+}
+
+// SecuritySchemeOidc structure is generated from "#/$defs/security-scheme/$defs/type-oidc".
+type SecuritySchemeOidc struct {
+	// Format: uri.
+	// Required.
+	OpenIDConnectURL string `json:"openIdConnectUrl"`
+}
+
+// WithOpenIDConnectURL sets OpenIDConnectURL value.
+func (s *SecuritySchemeOidc) WithOpenIDConnectURL(val string) *SecuritySchemeOidc {
+	s.OpenIDConnectURL = val
+	return s
+}
+
+type marshalSecuritySchemeOidc SecuritySchemeOidc
+
+var requireKeysSecuritySchemeOidc = []string{
+	"type",
+	"openIdConnectUrl",
+}
+
+// UnmarshalJSON decodes JSON.
+func (s *SecuritySchemeOidc) UnmarshalJSON(data []byte) error {
+	var err error
+
+	ms := marshalSecuritySchemeOidc(*s)
+
+	err = json.Unmarshal(data, &ms)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysSecuritySchemeOidc {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"openIdConnect"` {
+		return fmt.Errorf(`bad const value for "type" ("openIdConnect" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	*s = SecuritySchemeOidc(ms)
+
+	return nil
+}
+
+// constSecuritySchemeOidc is unconditionally added to JSON.
+var constSecuritySchemeOidc = json.RawMessage(`{"type":"openIdConnect"}`)
+
+// MarshalJSON encodes JSON.
+func (s SecuritySchemeOidc) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constSecuritySchemeOidc, marshalSecuritySchemeOidc(s))
 }
 
 // SecuritySchemeOrReference structure is generated from "#/$defs/security-scheme-or-reference".
@@ -4388,6 +5519,55 @@ func (i *SecuritySchemeType) UnmarshalJSON(data []byte) error {
 
 	default:
 		return fmt.Errorf("unexpected SecuritySchemeType value: %v", v)
+	}
+
+	*i = v
+
+	return nil
+}
+
+// SecuritySchemeAPIKeyIn is an enum type.
+type SecuritySchemeAPIKeyIn string
+
+// SecuritySchemeAPIKeyIn values enumeration.
+const (
+	SecuritySchemeAPIKeyInQuery  = SecuritySchemeAPIKeyIn("query")
+	SecuritySchemeAPIKeyInHeader = SecuritySchemeAPIKeyIn("header")
+	SecuritySchemeAPIKeyInCookie = SecuritySchemeAPIKeyIn("cookie")
+)
+
+// MarshalJSON encodes JSON.
+func (i SecuritySchemeAPIKeyIn) MarshalJSON() ([]byte, error) {
+	switch i {
+	case SecuritySchemeAPIKeyInQuery:
+	case SecuritySchemeAPIKeyInHeader:
+	case SecuritySchemeAPIKeyInCookie:
+
+	default:
+		return nil, fmt.Errorf("unexpected SecuritySchemeAPIKeyIn value: %v", i)
+	}
+
+	return json.Marshal(string(i))
+}
+
+// UnmarshalJSON decodes JSON.
+func (i *SecuritySchemeAPIKeyIn) UnmarshalJSON(data []byte) error {
+	var ii string
+
+	err := json.Unmarshal(data, &ii)
+	if err != nil {
+		return err
+	}
+
+	v := SecuritySchemeAPIKeyIn(ii)
+
+	switch v {
+	case SecuritySchemeAPIKeyInQuery:
+	case SecuritySchemeAPIKeyInHeader:
+	case SecuritySchemeAPIKeyInCookie:
+
+	default:
+		return fmt.Errorf("unexpected SecuritySchemeAPIKeyIn value: %v", v)
 	}
 
 	*i = v

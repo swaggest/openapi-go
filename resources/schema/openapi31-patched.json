@@ -76,7 +76,9 @@
       ]
     }
   ],
-  "patternProperties": {"^x-": {}},
+  "patternProperties": {
+    "^x-": {}
+  },
   "unevaluatedProperties": false,
   "$defs": {
     "info": {
@@ -110,7 +112,9 @@
         "title",
         "version"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "contact": {
@@ -129,7 +133,9 @@
           "format": "email"
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "license": {
@@ -159,7 +165,9 @@
           }
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "server": {
@@ -183,7 +191,9 @@
       "required": [
         "url"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "server-variable": {
@@ -207,7 +217,9 @@
       "required": [
         "default"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "components": {
@@ -335,7 +347,9 @@
           "$ref": "#/$defs/operation"
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "path-item-or-reference": {
@@ -417,7 +431,9 @@
           }
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "external-documentation": {
@@ -435,7 +451,9 @@
       "required": [
         "url"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "parameter": {
@@ -681,7 +699,9 @@
           }
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "parameter-or-reference": {
@@ -724,7 +744,9 @@
       "required": [
         "content"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "request-body-or-reference": {
@@ -781,7 +803,9 @@
           }
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "encoding": {
@@ -817,7 +841,9 @@
       },
       "allOf": [
         {
-          "patternProperties": {"^x-": {}}
+          "patternProperties": {
+            "^x-": {}
+          }
         },
         {
           "$ref": "#/$defs/encoding/$defs/explode-default"
@@ -896,7 +922,9 @@
       "required": [
         "description"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "response-or-reference": {
@@ -924,7 +952,9 @@
     "callbacks": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#callback-object",
       "type": "object",
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "additionalProperties": {
         "$ref": "#/$defs/path-item-or-reference"
       }
@@ -973,7 +1003,9 @@
           "externalValue"
         ]
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "example-or-reference": {
@@ -1032,7 +1064,9 @@
           ]
         }
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "link-or-reference": {
@@ -1089,7 +1123,8 @@
           }
         },
         "style": {
-          "default": "simple", "const": "simple"
+          "default": "simple",
+          "const": "simple"
         },
         "explode": {
           "default": false,
@@ -1108,7 +1143,9 @@
           ]
         }
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "header-or-reference": {
@@ -1150,7 +1187,9 @@
       "required": [
         "name"
       ],
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false
     },
     "reference": {
@@ -1195,13 +1234,13 @@
           "type": "string"
         }
       },
+      "patternProperties": {
+        "^x-": {}
+      },
       "required": [
         "type"
       ],
-      "allOf": [
-        {
-          "patternProperties": {"^x-": {}}
-        },
+      "oneOf": [
         {
           "$ref": "#/$defs/security-scheme/$defs/type-apikey"
         },
@@ -1221,125 +1260,87 @@
       "unevaluatedProperties": false,
       "$defs": {
         "type-apikey": {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "apiKey"
-              }
+          "properties": {
+            "type": {
+              "const": "apiKey"
             },
-            "required": [
-              "type"
-            ]
+            "name": {
+              "type": "string"
+            },
+            "in": {
+              "enum": [
+                "query",
+                "header",
+                "cookie"
+              ]
+            }
           },
-          "then": {
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "in": {
-                "enum": [
-                  "query",
-                  "header",
-                  "cookie"
-                ]
-              }
-            },
-            "required": [
-              "name",
-              "in"
-            ]
-          }
+          "required": [
+            "type",
+            "name",
+            "in"
+          ]
         },
         "type-http": {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "http"
-              }
+          "properties": {
+            "type": {
+              "const": "http"
             },
-            "required": [
-              "type"
-            ]
+            "scheme": {
+              "type": "string"
+            }
           },
-          "then": {
-            "properties": {
-              "scheme": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "scheme"
-            ]
-          }
+          "required": [
+            "type",
+            "scheme"
+          ]
         },
         "type-http-bearer": {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "http"
-              },
-              "scheme": {
-                "type": "string",
-                "pattern": "^[Bb][Ee][Aa][Rr][Ee][Rr]$"
-              }
+          "properties": {
+            "type": {
+              "const": "http"
             },
-            "required": [
-              "type",
-              "scheme"
-            ]
-          },
-          "then": {
-            "properties": {
-              "bearerFormat": {
-                "type": "string"
-              }
+            "scheme": {
+              "type": "string",
+              "pattern": "^[Bb][Ee][Aa][Rr][Ee][Rr]$"
+            },
+            "bearerFormat": {
+              "type": "string"
             }
-          }
+          },
+          "required": [
+            "type",
+            "scheme"
+          ]
         },
         "type-oauth2": {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "oauth2"
-              }
+          "properties": {
+            "type": {
+              "const": "oauth2"
             },
-            "required": [
-              "type"
-            ]
+            "flows": {
+              "$ref": "#/$defs/oauth-flows"
+            }
           },
-          "then": {
-            "properties": {
-              "flows": {
-                "$ref": "#/$defs/oauth-flows"
-              }
-            },
-            "required": [
-              "flows"
-            ]
-          }
+          "required": [
+            "type",
+            "flows"
+          ]
         },
         "type-oidc": {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "openIdConnect"
-              }
+          "properties": {
+            "type": {
+              "const": "openIdConnect"
             },
-            "required": [
-              "type"
-            ]
+            "openIdConnectUrl": {
+              "type": "string",
+              "format": "uri"
+            }
           },
-          "then": {
-            "properties": {
-              "openIdConnectUrl": {
-                "type": "string",
-                "format": "uri"
-              }
-            },
-            "required": [
-              "openIdConnectUrl"
-            ]
-          }
+          "required": [
+            "type",
+            "openIdConnectUrl"
+          ]
         }
       }
     },
@@ -1351,19 +1352,7 @@
         {
           "$ref": "#/$defs/security-scheme"
         }
-      ],
-      "if": {
-        "type": "object",
-        "required": [
-          "$ref"
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/reference"
-      },
-      "else": {
-        "$ref": "#/$defs/security-scheme"
-      }
+      ]
     },
     "oauth-flows": {
       "type": "object",
@@ -1381,7 +1370,9 @@
           "$ref": "#/$defs/oauth-flows/$defs/authorization-code"
         }
       },
-      "patternProperties": {"^x-": {}},
+      "patternProperties": {
+        "^x-": {}
+      },
       "unevaluatedProperties": false,
       "$defs": {
         "implicit": {
@@ -1403,7 +1394,9 @@
             "authorizationUrl",
             "scopes"
           ],
-          "patternProperties": {"^x-": {}},
+          "patternProperties": {
+            "^x-": {}
+          },
           "unevaluatedProperties": false
         },
         "password": {
@@ -1425,7 +1418,9 @@
             "tokenUrl",
             "scopes"
           ],
-          "patternProperties": {"^x-": {}},
+          "patternProperties": {
+            "^x-": {}
+          },
           "unevaluatedProperties": false
         },
         "client-credentials": {
@@ -1447,7 +1442,9 @@
             "tokenUrl",
             "scopes"
           ],
-          "patternProperties": {"^x-": {}},
+          "patternProperties": {
+            "^x-": {}
+          },
           "unevaluatedProperties": false
         },
         "authorization-code": {
@@ -1474,7 +1471,9 @@
             "tokenUrl",
             "scopes"
           ],
-          "patternProperties": {"^x-": {}},
+          "patternProperties": {
+            "^x-": {}
+          },
           "unevaluatedProperties": false
         }
       }
@@ -1491,7 +1490,9 @@
     },
     "specification-extensions": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#specification-extensions",
-      "patternProperties": {"^x-": {}}
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "examples": {
       "properties": {

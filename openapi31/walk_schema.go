@@ -47,14 +47,7 @@ func (r *Reflector) WalkResponseJSONSchemas(cu openapi.ContentUnit, cb openapi.J
 			continue
 		}
 
-		//sm := jsonschema.SchemaOrBool{}
-		//if err := sm.FromSimpleMap(cont.Schema); err != nil {
-		//	return err
-		//}
-
 		sm := ToJSONSchema(cont.Schema, r.Spec)
-
-		//schema := cont.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
 
 		if err := cb(openapi.InBody, "body", &sm, false); err != nil {
 			return fmt.Errorf("response body schema: %w", err)
@@ -71,13 +64,6 @@ func (r *Reflector) provideHeaderSchemas(resp *Response, cb openapi.JSONSchemaCa
 		}
 
 		hh := h.Header
-		//schema := hh.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
-
-		//schema := jsonschema.SchemaOrBool{}
-		//if err := schema.FromSimpleMap(hh.Schema); err != nil {
-		//	return err
-		//}
-
 		schema := ToJSONSchema(hh.Schema, r.Spec)
 
 		required := false
@@ -133,13 +119,6 @@ func (r *Reflector) WalkRequestJSONSchemas(
 	}
 
 	for ct, content := range op.RequestBody.RequestBody.Content {
-		//schema := content.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
-
-		//schema := jsonschema.SchemaOrBool{}
-		//if err := schema.FromSimpleMap(content.Schema); err != nil {
-		//	return err
-		//}
-
 		schema := ToJSONSchema(content.Schema, r.Spec)
 
 		if ct == mimeJSON {
@@ -206,13 +185,6 @@ func (r *Reflector) provideParametersJSONSchemas(op *Operation, cb openapi.JSONS
 
 			continue
 		}
-
-		//schema := sc.ToJSONSchema(r.Spec) // TODO: test and remove
-
-		//schema := jsonschema.SchemaOrBool{}
-		//if err := schema.FromSimpleMap(sc); err != nil {
-		//	return err
-		//}
 
 		schema := ToJSONSchema(sc, r.Spec)
 

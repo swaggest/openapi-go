@@ -16,7 +16,7 @@ For automated HTTP REST service framework built with this library please check [
 ## Features
 
 * Type safe mapping of OpenAPI 3 documents with Go structures generated from schema.
-* Type-based reflection of Go structures to OpenAPI 3 schema.
+* Type-based reflection of Go structures to OpenAPI 3.0 or 3.1 schema.
 * Schema control with field tags
     * `json` for request bodies and responses in JSON
     * `query`, `path` for parameters in URL

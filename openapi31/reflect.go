@@ -41,6 +41,7 @@ func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.Ope
 	}
 
 	pathItem := r.SpecEns().PathsEns().MapOfPathItemValues[pathPattern]
+
 	operation, err := pathItem.Operation(method)
 	if err != nil {
 		return nil, err
@@ -459,7 +460,7 @@ func (r *Reflector) parseParametersIn(
 
 			// Check if parameter is an JSON encoded object.
 			property := reflect.New(field.Type).Interface()
-			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) {
+			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) { //nolint:nestif
 				propertySchema, err := r.Reflect(property,
 					openapi.WithOperationCtx(oc, false, in),
 					jsonschema.DefinitionsPrefix(definitionsPrefix),

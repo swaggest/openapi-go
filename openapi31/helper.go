@@ -17,6 +17,7 @@ func (p Parameter) ToParameterOrRef() ParameterOrReference {
 	}
 }
 
+// Operation retrieves method Operation from PathItem.
 func (p PathItem) Operation(method string) (*Operation, error) {
 	switch strings.ToUpper(method) {
 	case http.MethodGet:
@@ -40,6 +41,7 @@ func (p PathItem) Operation(method string) (*Operation, error) {
 	}
 }
 
+// SetOperation sets a method Operation to PathItem.
 func (p *PathItem) SetOperation(method string, op *Operation) error {
 	method = strings.ToUpper(method)
 
@@ -75,6 +77,7 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 	}
 
 	pathItem := s.PathsEns().MapOfPathItemValues[path]
+
 	operation, err := pathItem.Operation(method)
 	if err != nil {
 		return err
@@ -201,4 +204,52 @@ func (s *Spec) SetDescription(d string) {
 // SetVersion describes the service.
 func (s *Spec) SetVersion(v string) {
 	s.Info.Version = v
+}
+
+// SetHTTPBasicSecurity sets security definition.
+func (s *Spec) SetHTTPBasicSecurity(securityName string, description string) {
+	s.ComponentsEns().WithSecuritySchemesItem(
+		securityName,
+		SecuritySchemeOrReference{
+			SecurityScheme: (&SecurityScheme{
+				Type: SecuritySchemeTypeHTTP,
+				HTTP: (&SecuritySchemeHTTP{}).WithScheme("basic"),
+			}).WithDescription(description),
+		},
+	)
+}
+
+// SetAPIKeySecurity sets security definition.
+func (s *Spec) SetAPIKeySecurity(securityName string, fieldName string, fieldIn SecuritySchemeAPIKeyIn, description string) {
+	s.ComponentsEns().WithSecuritySchemesItem(
+		securityName,
+		SecuritySchemeOrReference{
+			SecurityScheme: (&SecurityScheme{
+				Type: SecuritySchemeTypeAPIKey,
+				APIKey: (&SecuritySchemeAPIKey{}).
+					WithName(fieldName).
+					WithIn(fieldIn),
+			}).WithDescription(description),
+		},
+	)
+}
+
+// SetHTTPBearerTokenSecurity sets security definition.
+func (s *Spec) SetHTTPBearerTokenSecurity(securityName string, format string, description string) {
+	ss := (&SecurityScheme{
+		Type: SecuritySchemeTypeHTTP,
+		HTTPBearer: (&SecuritySchemeHTTPBearer{}).
+			WithScheme("bearer"),
+	}).WithDescription(description)
+
+	if format != "" {
+		ss.HTTPBearer.WithBearerFormat(format)
+	}
+
+	s.ComponentsEns().WithSecuritySchemesItem(
+		securityName,
+		SecuritySchemeOrReference{
+			SecurityScheme: ss,
+		},
+	)
 }

@@ -50,5 +50,5 @@ gen-3.0:
 ## Generate entities from schema
 gen-3.1:
 	@test -s $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31) || (curl -sSfL https://github.com/swaggest/json-cli/releases/download/$(JSON_CLI_VERSION_31)/json-cli -o $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31) && chmod +x $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31))
-	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31)  gen-go openapi31-patched.json --output ../../openapi31/entities.go --package-name openapi31 --def-ptr '#/$$defs' --with-zero-values --validate-required --fluent-setters --root-name Spec
+	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31)  gen-go openapi31-patched.json --config openapi31-config.json --output ../../openapi31/entities.go --package-name openapi31 --def-ptr '#/$$defs' --with-zero-values --validate-required --fluent-setters --root-name Spec
 	@gofmt -w ./openapi31/entities.go

@@ -1,8 +1,9 @@
 package openapi31
 
 import (
-	"github.com/swaggest/jsonschema-go"
 	"strings"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 func isDeprecated(schema jsonschema.SchemaOrBool) *bool {
@@ -43,7 +44,7 @@ func ToJSONSchema(s map[string]interface{}, spec *Spec) jsonschema.SchemaOrBool 
 
 	// Inline root reference without recursions.
 	if js.TypeObjectEns().Ref != nil {
-		dstName := strings.TrimPrefix(*js.TypeObjectEns().Ref, "#/components/schemas/")
+		dstName := strings.TrimPrefix(*js.TypeObjectEns().Ref, componentsSchemas)
 		if ctx.refsCount[dstName] == 1 {
 			js = ctx.refsProcessed[dstName]
 			delete(ctx.refsProcessed, dstName)
@@ -67,9 +68,9 @@ func findReferences(js jsonschema.SchemaOrBool, ctx toJSONSchemaContext) {
 
 	jso := js.TypeObjectEns()
 
-	if jso.Ref != nil {
-		if strings.HasPrefix(*jso.Ref, "#/components/schemas/") {
-			dstName := strings.TrimPrefix(*jso.Ref, "#/components/schemas/")
+	if jso.Ref != nil { //nolint:nestif
+		if strings.HasPrefix(*jso.Ref, componentsSchemas) {
+			dstName := strings.TrimPrefix(*jso.Ref, componentsSchemas)
 
 			if _, alreadyProcessed := ctx.refsProcessed[dstName]; !alreadyProcessed {
 				ctx.refsProcessed[dstName] = jsonschema.SchemaOrBool{}
@@ -111,6 +112,7 @@ func findReferences(js jsonschema.SchemaOrBool, ctx toJSONSchemaContext) {
 		if jso.Items.SchemaOrBool != nil {
 			findReferences(*jso.Items.SchemaOrBool, ctx)
 		}
+
 		for _, item := range jso.Items.SchemaArray {
 			findReferences(item, ctx)
 		}

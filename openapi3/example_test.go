@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
@@ -339,8 +340,8 @@ components:
 	// bar
 }
 
-func ExampleReflector_SetJSONResponse() {
-	reflector := openapi3.Reflector{}
+func ExampleReflector_AddOperation() {
+	reflector := openapi3.NewReflector()
 	reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}
 	reflector.Spec.Info.
 		WithTitle("Things API").
@@ -368,18 +369,17 @@ func ExampleReflector_SetJSONResponse() {
 		UpdatedAt time.Time `json:"updated_at"`
 	}
 
-	putOp := openapi3.Operation{}
+	putOp, _ := reflector.NewOperationContext(http.MethodPut, "/things/{id}")
 
-	handleError(reflector.SetRequest(&putOp, new(req), http.MethodPut))
-	handleError(reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK))
-	handleError(reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict))
-	handleError(reflector.Spec.AddOperation(http.MethodPut, "/things/{id}", putOp))
+	putOp.AddReqStructure(new(req))
+	putOp.AddRespStructure(new(resp))
+	putOp.AddRespStructure(new([]resp), openapi.WithHTTPStatus(http.StatusConflict))
+	handleError(reflector.AddOperation(putOp))
 
-	getOp := openapi3.Operation{}
-
-	handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
-	handleError(reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK))
-	handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
+	getOp, _ := reflector.NewOperationContext(http.MethodGet, "/things/{id}")
+	getOp.AddReqStructure(new(req))
+	getOp.AddRespStructure(new(resp))
+	handleError(reflector.AddOperation(getOp))
 
 	schema, err := reflector.Spec.MarshalYAML()
 	if err != nil {
@@ -493,9 +493,8 @@ func ExampleReflector_SetJSONResponse() {
 	//       type: object
 }
 
-func ExampleReflector_SetRequest_queryObject() {
-	reflector := openapi3.Reflector{}
-	reflector.Spec = &openapi3.Spec{Openapi: "3.0.3"}
+func ExampleReflector_AddOperation_queryObject() {
+	reflector := openapi3.NewReflector()
 	reflector.Spec.Info.
 		WithTitle("Things API").
 		WithVersion("1.2.3").
@@ -526,10 +525,10 @@ func ExampleReflector_SetRequest_queryObject() {
 		DeepObjectFilter deepObjectFilter `query:"deep_object_filter"`
 	}
 
-	getOp := openapi3.Operation{}
+	getOp, _ := reflector.NewOperationContext(http.MethodGet, "/things/{id}")
 
-	_ = reflector.SetRequest(&getOp, new(req), http.MethodGet)
-	_ = reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp)
+	getOp.AddReqStructure(new(req))
+	_ = reflector.AddOperation(getOp)
 
 	schema, err := reflector.Spec.MarshalYAML()
 	if err != nil {
