@@ -1,12 +1,9 @@
 package openapi31_test
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -14,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/assertjson"
 	"github.com/swaggest/jsonschema-go"
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"
 )
 
@@ -23,11 +21,15 @@ type WeirdResp interface {
 
 type UUID [16]byte
 
-type Resp struct {
+type EmbeddedHeader struct {
 	HeaderField string `header:"X-Header-Field" description:"Sample header response."`
-	Field1      int    `json:"field1"`
-	Field2      string `json:"field2"`
-	Info        struct {
+}
+
+type Resp struct {
+	EmbeddedHeader
+	Field1 int    `json:"field1"`
+	Field2 string `json:"field2"`
+	Info   struct {
 		Foo string  `json:"foo" default:"baz" required:"true" pattern:"\\d+"`
 		Bar float64 `json:"bar" description:"This is Bar."`
 	} `json:"info"`
@@ -93,55 +95,52 @@ const (
 	apiVersion = "1.2.3"
 )
 
-func TestReflector_SetRequest_array(t *testing.T) {
+func TestReflector_AddOperation_request_array(t *testing.T) {
 	reflector := openapi31.Reflector{}
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere")
+	require.NoError(t, err)
 
-	err := reflector.SetRequest(&op, new([]GetReq), http.MethodPost)
-	assert.NoError(t, err)
+	oc.AddReqStructure(new([]GetReq))
 
-	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+	require.NoError(t, reflector.AddOperation(oc))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0o600))
 
-	expected, err := ioutil.ReadFile("_testdata/openapi_req_array.json")
+	expected, err := os.ReadFile("_testdata/openapi_req_array.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
 }
 
-func TestReflector_SetRequest_uploadInterface(t *testing.T) {
+func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 	type req struct {
 		File1 multipart.File `formData:"upload1"`
 	}
 
 	reflector := openapi31.Reflector{}
-	s := reflector.SpecEns()
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere")
+	require.NoError(t, err)
 
-	err := reflector.SetRequest(&op, new(req), http.MethodPost)
-	assert.NoError(t, err)
+	oc.AddReqStructure(new(req))
 
-	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+	require.NoError(t, reflector.AddOperation(oc))
 
-	assertjson.EqualMarshal(t, []byte(`{
-	  "openapi":"3.1.0","info":{"title":"","version":""},
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
 	  "paths":{
 		"/somewhere":{
 		  "post":{
 			"requestBody":{
 			  "content":{
-				"multipart/form-data":{
-				  "schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}
-				}
+				"multipart/form-data":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
 			  }
 			},
 			"responses":{"204":{"description":"No Content"}}
@@ -150,42 +149,46 @@ func TestReflector_SetRequest_uploadInterface(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "FormDataMultipartFile":{"format":"binary","type":["null","string"]},
-		  "FormDataOpenapi31TestReq":{
-			"properties":{"upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"}},
-			"type":"object"
+		  "FormDataMultipartFile":{"type":"string","format":"binary","nullable":true},
+		  "FormDataOpenapi3TestReq":{
+			"type":"object",
+			"properties":{"upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"}}
 		  }
 		}
 	  }
-	}`), s)
+	}`, reflector.Spec)
 }
 
-func TestReflector_SetRequest(t *testing.T) {
+func TestReflector_AddOperation_request(t *testing.T) {
 	reflector := openapi31.Reflector{}
 
-	s := reflector.SpecEns()
-	s.Info.Title = apiName
-	s.Info.Version = apiVersion
+	s := reflector.SpecSchema()
+	s.SetTitle(apiName)
+	s.SetVersion(apiVersion)
+	s.SetDescription("This a sample API description.")
 
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere/{in_path}")
+	require.NoError(t, err)
+	oc.AddReqStructure(new(GetReq))
+	oc.AddReqStructure(nil, func(cu *openapi.ContentUnit) {
+		cu.ContentType = "text/csv"
+		cu.Description = "Request body in CSV format."
+	})
 
-	err := reflector.SetRequest(&op, new(GetReq), http.MethodGet)
-	assert.NoError(t, err)
-
-	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
+	require.NoError(t, reflector.AddOperation(oc))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_req_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("_testdata/openapi_req_last_run.json", b, 0o600))
 
-	expected, err := ioutil.ReadFile("_testdata/openapi_req.json")
+	expected, err := os.ReadFile("_testdata/openapi_req.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
 }
 
-func TestReflector_SetJSONResponse(t *testing.T) {
+func TestReflector_AddOperation_JSON_response(t *testing.T) {
 	reflector := openapi31.Reflector{}
 
 	s := reflector.SpecEns()
@@ -194,60 +197,75 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
 
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere/{in_path}")
+	require.NoError(t, err)
 
-	assert.NoError(t, reflector.SetRequest(&op, new(Req), http.MethodPost))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict))
-	assert.NoError(t, reflector.SetStringResponse(&op, http.StatusConflict, "text/html"))
+	oc.AddReqStructure(new(Req))
+	oc.AddRespStructure(new(WeirdResp), func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusOK
+	})
+	oc.AddRespStructure(new([]WeirdResp), func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusConflict
+	})
+	oc.AddRespStructure("", func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = http.StatusConflict
+		cu.ContentType = "text/html"
+	})
 
 	pathItem := openapi31.PathItem{}
 	pathItem.
 		WithSummary("Path Summary").
 		WithDescription("Path Description")
-	s.PathsEns().WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
+	s.Paths.WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
 
-	js := op.RequestBody.RequestBody.Content["multipart/form-data"].Schema
-	expected, err := os.ReadFile("_testdata/req_schema.json")
-	require.NoError(t, err)
-	assertjson.EqualMarshal(t, expected, js)
+	require.NoError(t, reflector.AddOperation(oc))
 
-	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{in_path}", op))
+	require.NoError(t, s.SetupOperation(http.MethodPost, "/somewhere/{in_path}", func(op *openapi31.Operation) error {
+		js := op.RequestBody.RequestBody.Content["multipart/form-data"].Schema
+		expected, err := os.ReadFile("_testdata/req_schema.json")
+		require.NoError(t, err)
+		assertjson.EqualMarshal(t, expected, js)
 
-	op = openapi31.Operation{}
+		return nil
+	}))
 
-	assert.NoError(t, reflector.SetRequest(&op, new(GetReq), http.MethodGet))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new(Resp), http.StatusOK))
-	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
-
-	js = op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
-		Schema
-	jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
+	oc, err = reflector.NewOperationContext(http.MethodGet, "/somewhere/{in_path}")
 	require.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0o600))
+	oc.AddReqStructure(new(GetReq))
+	oc.AddRespStructure(new(Resp))
 
-	expected, err = os.ReadFile("_testdata/resp_schema.json")
-	require.NoError(t, err)
-	assertjson.Equal(t, expected, jsb, string(jsb))
+	assert.NoError(t, reflector.AddOperation(oc))
 
-	js = op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Headers["X-Header-Field"].Header.
-		Schema
-	jsb, err = json.Marshal(js)
-	require.NoError(t, err)
-	assertjson.Equal(t, []byte(`{"type": "string", "description": "Sample header response."}`), jsb)
+	require.NoError(t, s.SetupOperation(http.MethodGet, "/somewhere/{in_path}", func(op *openapi31.Operation) error {
+		js := op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
+			Schema
+		jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
+		require.NoError(t, err)
 
-	js = op.Parameters[0].Parameter.Schema
-	jsb, err = json.Marshal(js)
-	require.NoError(t, err)
-	assertjson.Equal(t, []byte(`{"type": "integer", "description": "Query parameter."}`), jsb)
+		require.NoError(t, os.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0o600))
+
+		expected, err := os.ReadFile("_testdata/resp_schema.json")
+		require.NoError(t, err)
+		assertjson.EqualMarshal(t, expected, js)
+
+		js = op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Headers["X-Header-Field"].Header.
+			Schema
+		assertjson.EqMarshal(t, `{"type": "string", "description": "Sample header response."}`, js)
+
+		require.NoError(t, err)
+		assertjson.EqMarshal(t, `{"type": "integer", "description": "Query parameter."}`,
+			op.Parameters[0].Parameter.Schema)
+
+		return nil
+	}))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, ioutil.WriteFile("_testdata/openapi_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("_testdata/openapi_last_run.json", b, 0o600))
 
-	expected, err = ioutil.ReadFile("_testdata/openapi.json")
+	expected, err := os.ReadFile("_testdata/openapi.json")
 	require.NoError(t, err)
 
 	assertjson.EqualMarshal(t, expected, s)
@@ -264,22 +282,21 @@ type PathParamAndBody struct {
 	Data
 }
 
-func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
+func TestReflector_AddOperation_pathParamAndBody(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
 
-	err := reflector.SetRequest(&op, new(PathParamAndBody), http.MethodPost)
-	assert.NoError(t, err)
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere/{id}")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(new(PathParamAndBody))
+
+	assert.NoError(t, reflector.AddOperation(oc))
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
-	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{id}", op))
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 100)
-	assert.NoError(t, err)
-
-	expected := []byte(`{
+	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
@@ -295,31 +312,27 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 	 "components":{
 	  "schemas":{"Openapi3TestPathParamAndBody":{"type":"array","items":{"type":"string"},"nullable":true}}
 	 }
-	}`)
-
-	assertjson.Equal(t, expected, b, string(b))
+	}`, s)
 }
 
 type WithReqBody PathParamAndBody
 
 func (*WithReqBody) ForceRequestBody() {}
 
-func TestRequestBodyEnforcer(t *testing.T) {
+func TestReflector_AddOperation_RequestBodyEnforcer(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere/{id}")
+	require.NoError(t, err)
 
-	err := reflector.SetRequest(&op, new(WithReqBody), http.MethodGet)
-	assert.NoError(t, err)
+	oc.AddReqStructure(new(WithReqBody))
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
-	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{id}", op))
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	assert.NoError(t, reflector.AddOperation(oc))
 
-	expected := []byte(`{
+	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{id}":{
@@ -331,38 +344,33 @@ func TestRequestBodyEnforcer(t *testing.T) {
 	  }
 	 },
 	 "components":{"schemas":{"Openapi3TestWithReqBody":{"type":"array","items":{"type":"string"},"nullable":true}}}
-	}`)
-
-	assertjson.Equal(t, expected, b, string(b))
+	}`, s)
 }
 
-func TestReflector_SetupResponse(t *testing.T) {
+func TestReflector_AddOperation_response(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodGet, "/somewhere")
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	require.NoError(t, reflector.SetupResponse(openapi31.OperationContext{
-		Operation:       &op,
-		RespContentType: "text/csv; charset=utf-8",
-		HTTPStatus:      http.StatusNoContent,
-		Output: new(struct {
-			Val1 int
-			Val2 string
-		}),
-		RespHeaderMapping: map[string]string{
+	oc.AddRespStructure(new(struct {
+		Val1 int
+		Val2 string
+	}), func(cu *openapi.ContentUnit) {
+		cu.ContentType = "text/csv; charset=utf-8"
+		cu.HTTPStatus = http.StatusNoContent
+		cu.SetFieldMapping(openapi.InHeader, map[string]string{
 			"Val1": "X-Value-1",
 			"Val2": "X-Value-2",
-		},
-	}))
-	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere", op))
+		})
+	})
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, reflector.AddOperation(oc))
 
-	expected := []byte(`{
+	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
@@ -380,53 +388,47 @@ func TestReflector_SetupResponse(t *testing.T) {
 	   }
 	  }
 	 }
-	}`)
-
-	assertjson.Equal(t, expected, b, string(b))
+	}`, s)
 }
 
-func TestReflector_SetupRequest(t *testing.T) {
+func TestReflector_AddOperation_setup_request(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere/{value-4}")
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	require.NoError(t, reflector.SetupRequest(openapi31.OperationContext{
-		Operation:  &op,
-		HTTPMethod: http.MethodPost,
-		Input: new(struct {
-			Val1 int
-			Val2 string
-			Val3 float64
-			Val4 bool
-			Val5 string
-			Val6 multipart.File
-		}),
-		ReqHeaderMapping: map[string]string{
+	oc.AddReqStructure(new(struct {
+		Val1 int
+		Val2 string
+		Val3 float64
+		Val4 bool
+		Val5 string
+		Val6 multipart.File
+	}), func(cu *openapi.ContentUnit) {
+		cu.SetFieldMapping(openapi.InHeader, map[string]string{
 			"Val1": "X-Value-1",
-		},
-		ReqQueryMapping: map[string]string{
+		})
+		cu.SetFieldMapping(openapi.InQuery, map[string]string{
 			"Val2": "value_2",
-		},
-		ReqFormDataMapping: map[string]string{
+		})
+		cu.SetFieldMapping(openapi.InFormData, map[string]string{
 			"Val3": "value3",
 			"Val6": "upload6",
-		},
-		ReqPathMapping: map[string]string{
+		})
+		cu.SetFieldMapping(openapi.InPath, map[string]string{
 			"Val4": "value-4",
-		},
-		ReqCookieMapping: map[string]string{
+		})
+		cu.SetFieldMapping(openapi.InCookie, map[string]string{
 			"Val5": "value_5",
-		},
-	}))
-	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{value-4}", op))
+		})
+	})
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, reflector.AddOperation(oc))
 
-	expected := []byte(`{
+	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere/{value-4}":{
@@ -452,32 +454,26 @@ func TestReflector_SetupRequest(t *testing.T) {
 	  }
 	 },
 	 "components":{"schemas":{"FormDataMultipartFile":{"type":"string","format":"binary","nullable":true}}}
-	}`)
-
-	assertjson.Equal(t, expected, b, string(b))
+	}`, s)
 }
 
-func TestReflector_SetupRequest_queryObject(t *testing.T) {
+func TestReflector_AddOperation_request_queryObject(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
+
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere")
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	require.NoError(t, reflector.SetupRequest(openapi31.OperationContext{
-		Operation:  &op,
-		HTTPMethod: http.MethodGet,
-		Input: new(struct {
-			InQuery map[int]float64 `query:"in_query"`
-		}),
+	oc.AddReqStructure(new(struct {
+		InQuery map[int]float64 `query:"in_query"`
 	}))
-	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, reflector.AddOperation(oc))
 
-	expected := []byte(`{
+	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
@@ -492,9 +488,7 @@ func TestReflector_SetupRequest_queryObject(t *testing.T) {
 	   }
 	  }
 	 }
-	}`)
-
-	assertjson.Equal(t, expected, b, string(b))
+	}`, s)
 }
 
 type namedType struct {
@@ -503,52 +497,46 @@ type namedType struct {
 
 type labels map[int]float64
 
-func TestReflector_SetupRequest_queryNamedObject(t *testing.T) {
+func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 	reflector := openapi31.Reflector{}
-	op := openapi31.Operation{}
+	oc, err := reflector.NewOperationContext(http.MethodPost, "/somewhere")
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	require.NoError(t, reflector.SetupRequest(openapi31.OperationContext{
-		Operation:  &op,
-		HTTPMethod: http.MethodGet,
-		Input:      new(namedType),
-	}))
-	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
+	oc.AddReqStructure(new(namedType))
+	require.NoError(t, reflector.AddOperation(oc))
 
-	b, err := assertjson.MarshalIndentCompact(s, "", " ", 100)
-	assert.NoError(t, err)
-
-	expected := []byte(`{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere":{
-	   "post":{
-		"parameters":[
-		 {
-		  "name":"in_query","in":"query","style":"deepObject","explode":true,
-		  "schema":{"$ref":"#/components/schemas/Openapi3TestLabels"}
-		 }
-		],
-		"responses":{"204":{"description":"No Content"}}
-	   }
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere":{
+		  "post":{
+			"parameters":[
+			  {
+				"name":"in_query","in":"query","style":"deepObject","explode":true,
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestLabels"}
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "QueryOpenapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
+		}
 	  }
-	 },
-	 "components":{
-	  "schemas":{"Openapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"},"nullable":true}}
-	 }
-	}`)
+	}`, s)
 
-	assertjson.Equal(t, expected, b, string(b))
-
-	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi3TestLabels")
 	assert.True(t, found)
-	assertjson.EqualMarshal(t, []byte(`{"type":["object","null"],"additionalProperties":{"type":"number"}}`), js)
+	assertjson.EqMarshal(t, `{"type":"object","additionalProperties":{"type":"number"}}`, js)
 }
 
-func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
+func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 	type filter struct {
 		Labels []string `json:"labels,omitempty"`
 		Type   string   `json:"type"`
@@ -561,15 +549,14 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 	}
 
 	r := openapi31.Reflector{}
-	oc := openapi31.OperationContext{
-		Operation: &openapi31.Operation{},
-		Input:     new(req),
-	}
+	oc, err := r.NewOperationContext(http.MethodGet, "/")
+	require.NoError(t, err)
 
-	require.NoError(t, r.SetupRequest(oc))
-	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/", *oc.Operation))
+	oc.AddReqStructure(new(req))
 
-	assertjson.EqualMarshal(t, []byte(`{
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
 	  "openapi":"3.0.3","info":{"title":"","version":""},
 	  "paths":{
 		"/":{
@@ -578,13 +565,17 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 			  {
 				"name":"one","in":"query",
 				"content":{
-				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+				  }
 				}
 			  },
 			  {
 				"name":"two","in":"query",
 				"content":{
-				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+				  }
 				}
 			  },
 			  {
@@ -598,7 +589,7 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "Openapi3TestFilter":{
+		  "QueryOpenapi3TestFilter":{
 			"type":"object",
 			"properties":{
 			  "labels":{"type":"array","items":{"type":"string"}},
@@ -607,10 +598,10 @@ func TestReflector_SetupRequest_jsonQuery(t *testing.T) {
 		  }
 		}
 	  }
-	}`), r.SpecEns())
+	}`, r.SpecEns())
 }
 
-func TestReflector_SetupRequest_forbidParams(t *testing.T) {
+func TestReflector_AddOperation_request_forbidParams(t *testing.T) {
 	type req struct {
 		Query  string `query:"query"`
 		Header string `header:"header"`
@@ -621,15 +612,14 @@ func TestReflector_SetupRequest_forbidParams(t *testing.T) {
 	}
 
 	r := openapi31.Reflector{}
-	oc := openapi31.OperationContext{
-		Operation: &openapi31.Operation{},
-		Input:     new(req),
-	}
+	oc, err := r.NewOperationContext(http.MethodGet, "/{path}")
+	require.NoError(t, err)
 
-	require.NoError(t, r.SetupRequest(oc))
-	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/{path}", *oc.Operation))
+	oc.AddReqStructure(new(req))
 
-	assertjson.EqualMarshal(t, []byte(`{
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
 	  "openapi":"3.0.3","info":{"title":"","version":""},
 	  "paths":{
 		"/{path}":{
@@ -648,15 +638,18 @@ func TestReflector_SetupRequest_forbidParams(t *testing.T) {
 		  }
 		}
 	  }
-	}`), r.SpecEns())
+	}`, r.SpecEns())
 
-	assert.True(t, oc.Operation.UnknownParamIsForbidden(openapi31.ParameterInCookie))
-	assert.False(t, oc.Operation.UnknownParamIsForbidden(openapi31.ParameterInHeader))
-	assert.True(t, oc.Operation.UnknownParamIsForbidden(openapi31.ParameterInQuery))
-	assert.False(t, oc.Operation.UnknownParamIsForbidden(openapi31.ParameterInPath))
+	o3, ok := oc.(openapi31.OperationExposer)
+	require.True(t, ok)
+
+	assert.True(t, o3.Operation().UnknownParamIsForbidden(openapi31.ParameterInCookie))
+	assert.False(t, o3.Operation().UnknownParamIsForbidden(openapi31.ParameterInHeader))
+	assert.True(t, o3.Operation().UnknownParamIsForbidden(openapi31.ParameterInQuery))
+	assert.False(t, o3.Operation().UnknownParamIsForbidden(openapi31.ParameterInPath))
 }
 
-func TestReflector_SetupRequest_noBody(t *testing.T) {
+func TestReflector_AddOperation_request_noBody(t *testing.T) {
 	type req struct {
 		ID int `json:"id" path:"id"`
 	}
@@ -664,40 +657,48 @@ func TestReflector_SetupRequest_noBody(t *testing.T) {
 	r := openapi31.Reflector{}
 
 	for _, method := range []string{http.MethodHead, http.MethodGet, http.MethodDelete, http.MethodTrace} {
-		oc := openapi31.OperationContext{
-			Operation:  &openapi31.Operation{},
-			HTTPMethod: method,
-			Input:      new(req),
-		}
+		oc, err := r.NewOperationContext(method, "/{id}")
+		require.NoError(t, err)
 
-		require.NoError(t, r.SetupRequest(oc))
-		assertjson.EqualMarshal(t, []byte(`{
-		  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
-		  "responses":{}
-		}`), oc.Operation)
+		oc.AddReqStructure(new(req))
+
+		require.NoError(t, r.AddOperation(oc))
+
+		require.NoError(t, r.SpecEns().SetupOperation(method, "/{id}", func(op *openapi31.Operation) error {
+			assertjson.EqMarshal(t, `{
+			  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
+			  "responses":{"204":{"description":"No Content"}}
+			}`, op)
+
+			return nil
+		}))
 	}
 
 	for _, method := range []string{http.MethodPost, http.MethodPatch, http.MethodPut} {
-		oc := openapi31.OperationContext{
-			Operation:  &openapi31.Operation{},
-			HTTPMethod: method,
-			Input:      new(req),
-		}
+		oc, err := r.NewOperationContext(method, "/{id}")
+		require.NoError(t, err)
 
-		require.NoError(t, r.SetupRequest(oc))
-		assertjson.EqualMarshal(t, []byte(`{
-		  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
-		  "requestBody":{
-			"content":{
-			  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReq"}}
-			}
-		  },
-		  "responses":{}
-		}`), oc.Operation)
+		oc.AddReqStructure(new(req))
+
+		require.NoError(t, r.AddOperation(oc))
+
+		require.NoError(t, r.SpecEns().SetupOperation(method, "/{id}", func(op *openapi31.Operation) error {
+			assertjson.EqMarshal(t, `{
+			  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
+			  "requestBody":{
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReq"}}
+				}
+			  },
+			  "responses":{"204":{"description":"No Content"}}
+			}`, op)
+
+			return nil
+		}))
 	}
 }
 
-func TestOperationCtx(t *testing.T) {
+func TestReflector_AddOperation_OperationCtx(t *testing.T) {
 	type req struct {
 		Query  string `query:"query"`
 		Header string `header:"header"`
@@ -712,31 +713,34 @@ func TestOperationCtx(t *testing.T) {
 	}
 
 	r := openapi31.Reflector{}
-	oc := openapi31.OperationContext{
-		Operation: &openapi31.Operation{},
-		Input:     new(req),
-		Output:    new(resp),
-	}
+	oc, err := r.NewOperationContext(http.MethodPost, "/{path}")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(new(req))
+	oc.AddRespStructure(new(resp))
 
 	visited := map[string]bool{}
 
-	r.DefaultOptions = append(r.DefaultOptions, func(rc *jsonschema.ReflectContext) {
-		it := rc.InterceptType
-		rc.InterceptType = func(value reflect.Value, schema *jsonschema.Schema) (bool, error) {
-			if occ, ok := openapi31.OperationCtx(rc); ok {
-				if occ.ProcessingResponse {
-					visited["resp:"+occ.ProcessingIn] = true
+	var currentRC *jsonschema.ReflectContext
+
+	r.DefaultOptions = append(r.DefaultOptions,
+		func(rc *jsonschema.ReflectContext) {
+			currentRC = rc
+		},
+		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
+			if occ, ok := openapi.OperationCtx(currentRC); ok {
+				if occ.IsProcessingResponse() {
+					visited["resp:"+string(occ.ProcessingIn())] = true
 				} else {
-					visited["req:"+occ.ProcessingIn] = true
+					visited["req:"+string(occ.ProcessingIn())] = true
 				}
 			}
 
-			return it(value, schema)
-		}
-	})
+			return false, nil
+		}),
+	)
 
-	require.NoError(t, r.SetupRequest(oc))
-	require.NoError(t, r.SetupResponse(oc))
+	require.NoError(t, r.AddOperation(oc))
 
 	assert.Equal(t, map[string]bool{
 		"req:body":    true,
@@ -749,47 +753,24 @@ func TestOperationCtx(t *testing.T) {
 	}, visited)
 }
 
-func TestReflector_SetStringResponse(t *testing.T) {
-	reflector := openapi31.Reflector{}
-
-	s := reflector.SpecEns()
-	s.Info.Title = apiName
-	s.Info.Version = apiVersion
-
-	reflector.AddTypeMapping(new(WeirdResp), new(Resp))
-
-	op := openapi31.Operation{}
-
-	err := reflector.SetRequest(&op, new(Req), http.MethodPost)
-	assert.NoError(t, err)
-
-	err = reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK)
-	assert.NoError(t, err)
-
-	err = reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict)
-	assert.NoError(t, err)
-}
-
-func TestReflector_SetRequest_formData_with_json(t *testing.T) {
+func TestReflector_AddOperation_request_formData_with_json(t *testing.T) {
 	// In presence of `formData` tags, `json` tags would be ignored as request body.
 	type req struct {
 		Foo int `formData:"foo" json:"foo"`
 	}
 
 	r := openapi31.Reflector{}
-	oc := openapi31.OperationContext{
-		Operation: &openapi31.Operation{},
-		Input:     new(req),
-	}
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
 
-	require.NoError(t, r.SetupRequest(oc))
-	require.NoError(t, r.SpecEns().AddOperation(http.MethodGet, "/foo", *oc.Operation))
+	oc.AddReqStructure(new(req))
+	require.NoError(t, r.AddOperation(oc))
 
-	assertjson.EqualMarshal(t, []byte(`{
+	assertjson.EqMarshal(t, `{
 	  "openapi":"3.0.3","info":{"title":"","version":""},
 	  "paths":{
 		"/foo":{
-		  "get":{
+		  "post":{
 			"requestBody":{
 			  "content":{
 				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
@@ -804,5 +785,246 @@ func TestReflector_SetRequest_formData_with_json(t *testing.T) {
 		  "FormDataOpenapi3TestReq":{"type":"object","properties":{"foo":{"type":"integer"}}}
 		}
 	  }
-	}`), r.SpecEns())
+	}`, r.SpecEns())
+}
+
+func TestReflector_AddOperation_request_form(t *testing.T) {
+	// Fields with `form` will be present as both `query` parameter and `formData` property.
+	type req struct {
+		Foo  int    `formData:"foo"`
+		Bar  int    `form:"bar"`
+		Baz  string `query:"baz"`
+		Quux string `query:"quux" form:"ignored"`
+	}
+
+	r := openapi31.Reflector{}
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(req{})
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.1.0","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"parameters":[
+			  {"name":"bar","in":"query","schema":{"type":"integer"}},
+			  {"name":"baz","in":"query","schema":{"type":"string"}},
+			  {"name":"quux","in":"query","schema":{"type":"string"}}
+			],
+			"requestBody":{
+			  "content":{
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "FormDataOpenapi31TestReq":{
+			"type":"object",
+			"properties":{
+			  "bar":{"type":"integer"},"foo":{"type":"integer"},
+			  "ignored":{"type":"string"}
+			}
+		  }
+		}
+	  }
+	}`, r.SpecEns())
+}
+
+func TestReflector_AddOperation_request_form_only(t *testing.T) {
+	// Fields with `form` will be present as both `query` parameter and `formData` property.
+	type req struct {
+		Bar  int    `form:"bar"`
+		Quux string `form:"quux"`
+	}
+
+	r := openapi31.Reflector{}
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(req{})
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"parameters":[
+			  {"name":"bar","in":"query","schema":{"type":"integer"}},
+			  {"name":"quux","in":"query","schema":{"type":"string"}}
+			],
+			"requestBody":{
+			  "content":{
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "FormDataOpenapi3TestReq":{
+			"type":"object",
+			"properties":{"bar":{"type":"integer"},"quux":{"type":"string"}}
+		  }
+		}
+	  }
+	}`, r.SpecEns())
+}
+
+func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
+	reflector := openapi31.Reflector{}
+
+	// JSON object is only enabled when at least one `json` tag is available on top-level property,
+	// and there are no `in` tags, e.g. `query`.
+	type jsonFilter struct {
+		Foo    string `json:"foo"`
+		Bar    int    `json:"bar"`
+		Deeper struct {
+			Val string `json:"val"`
+		} `json:"deeper"`
+	}
+
+	// Deep object structure may have `json` tags, they are ignored in presence of
+	// at least one top-level field with a matching `in` tag, e.g. `query`.
+	type deepObjectFilter struct {
+		Baz    bool    `json:"baz" query:"baz"`
+		Quux   float64 `json:"quux" query:"quux"`
+		Deeper struct {
+			Val string `query:"val"`
+		} `query:"deeper"`
+	}
+
+	type EmbeddedParams struct {
+		Embedded string `query:"embedded"`
+	}
+
+	type DeeplyEmbedded struct {
+		EmbeddedParams
+	}
+
+	type req struct {
+		// Simple scalar parameters.
+		ID     string `path:"id" example:"XXX-XXXXX"`
+		Locale string `query:"locale" pattern:"^[a-z]{2}-[A-Z]{2}$"`
+		// Embedded types are expanded into top-level scope.
+		DeeplyEmbedded
+		// Object values can be serialized in JSON (with json field tags in the value struct).
+		JSONFilter jsonFilter `query:"json_filter"`
+		// Or as deepObject (with same field tag as parent, .e.g query).
+		DeepObjectFilter deepObjectFilter `query:"deep_object_filter"`
+		// JSON body tags are ignored for GET request by default.
+		Amount uint `json:"amount"`
+	}
+
+	oc, err := reflector.NewOperationContext(http.MethodGet, "/things/{id}")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(new(req))
+
+	require.NoError(t, reflector.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/things/{id}":{
+		  "get":{
+			"parameters":[
+			  {
+				"name":"locale","in":"query",
+				"schema":{"pattern":"^[a-z]{2}-[A-Z]{2}$","type":"string"}
+			  },
+			  {"name":"embedded","in":"query","schema":{"type":"string"}},
+			  {
+				"name":"json_filter","in":"query",
+				"content":{
+				  "application/json":{
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestJsonFilter"}
+				  }
+				}
+			  },
+			  {
+				"name":"deep_object_filter","in":"query","style":"deepObject",
+				"explode":true,
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestDeepObjectFilter"}
+			  },
+			  {
+				"name":"id","in":"path","required":true,
+				"schema":{"type":"string","example":"XXX-XXXXX"}
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "QueryOpenapi3TestDeepObjectFilter":{
+			"type":"object",
+			"properties":{
+			  "baz":{"type":"boolean"},
+			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "quux":{"type":"number"}
+			}
+		  },
+		  "QueryOpenapi3TestJsonFilter":{
+			"type":"object",
+			"properties":{
+			  "bar":{"type":"integer"},
+			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "foo":{"type":"string"}
+			}
+		  }
+		}
+	  }
+	}`, reflector.Spec)
+}
+
+type textCSV struct{}
+
+func (t textCSV) SetupContentUnit(cu *openapi.ContentUnit) {
+	cu.ContentType = "text/csv"
+	cu.Description = "This is CSV."
+	cu.IsDefault = true
+}
+
+func TestReflector_AddOperation_contentUnitPreparer(t *testing.T) {
+	r := openapi31.NewReflector()
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
+
+	oc.AddReqStructure(textCSV{})
+	oc.AddRespStructure(textCSV{})
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"requestBody":{
+			  "description":"This is CSV.",
+			  "content":{"text/csv":{"schema":{"type":"string"}}}
+			},
+			"responses":{
+			  "default":{
+				"description":"This is CSV.",
+				"content":{"text/csv":{"schema":{"type":"string"}}}
+			  }
+			}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
 }

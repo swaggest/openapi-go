@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/swaggest/openapi-go"
 )
 
 // ToParameterOrRef exposes Parameter in general form.
@@ -15,8 +16,6 @@ func (p Parameter) ToParameterOrRef() ParameterOrReference {
 		Parameter: &p,
 	}
 }
-
-var regexFindPathParameter = regexp.MustCompile(`{([^}:]+)(:[^}]+)?(?:})`)
 
 func (p PathItem) Operation(method string) (*Operation, error) {
 	method = strings.ToUpper(method)
@@ -72,21 +71,10 @@ func (p *PathItem) SetOperation(method string, op *Operation) error {
 
 // SetupOperation creates operation if it is not present and applies setup functions.
 func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) error) error {
-	pathParametersSubmatches := regexFindPathParameter.FindAllStringSubmatch(path, -1)
-
-	pathParams := map[string]bool{}
-
-	if len(pathParametersSubmatches) > 0 {
-		for _, submatch := range pathParametersSubmatches {
-			pathParams[submatch[1]] = true
-
-			if submatch[2] != "" { // Remove gorilla.Mux-style regexp in path
-				path = strings.Replace(path, submatch[0], "{"+submatch[1]+"}", 1)
-			}
-		}
+	method, path, pathParams, err := openapi.SanitizeMethodPath(method, path)
+	if err != nil {
+		return err
 	}
-
-	var errs []string
 
 	pathItem := s.PathsEns().MapOfPathItemValues[path]
 	operation, err := pathItem.Operation(method)
@@ -99,15 +87,35 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 	}
 
 	for _, f := range setup {
-		err := f(operation)
-		if err != nil {
+		if err := f(operation); err != nil {
 			return err
 		}
 	}
 
-	paramIndex := make(map[string]bool, len(operation.Parameters))
+	pathParamsMap := make(map[string]bool, len(pathParams))
+	for _, p := range pathParams {
+		pathParamsMap[p] = true
+	}
 
-	for _, p := range operation.Parameters {
+	if err := operation.validatePathParams(pathParamsMap); err != nil {
+		return err
+	}
+
+	if err := pathItem.SetOperation(method, operation); err != nil {
+		return err
+	}
+
+	s.PathsEns().WithMapOfPathItemValuesItem(path, pathItem)
+
+	return nil
+}
+
+func (o *Operation) validatePathParams(pathParams map[string]bool) error {
+	paramIndex := make(map[string]bool, len(o.Parameters))
+
+	var errs []string
+
+	for _, p := range o.Parameters {
 		if p.Parameter == nil {
 			continue
 		}
@@ -137,12 +145,6 @@ func (s *Spec) SetupOperation(method, path string, setup ...func(*Operation) err
 		return errors.New(strings.Join(errs, ", "))
 	}
 
-	if err := pathItem.SetOperation(method, operation); err != nil {
-		return err
-	}
-
-	s.PathsEns().WithMapOfPathItemValuesItem(path, pathItem)
-
 	return nil
 }
 
@@ -160,7 +162,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	}
 
 	if op != nil {
-		return errors.New("operation with method and path already exists")
+		return fmt.Errorf("operation already exists: %s %s", method, path)
 	}
 
 	// Add "No Content" response if there are no responses configured.
@@ -184,4 +186,21 @@ func (o Operation) UnknownParamIsForbidden(in ParameterIn) bool {
 	f, ok := o.MapOfAnything[xForbidUnknown+string(in)].(bool)
 
 	return f && ok
+}
+
+var _ openapi.SpecSchema = &Spec{}
+
+// SetTitle describes the service.
+func (s *Spec) SetTitle(t string) {
+	s.Info.Title = t
+}
+
+// SetDescription describes the service.
+func (s *Spec) SetDescription(d string) {
+	s.Info.WithDescription(d)
+}
+
+// SetVersion describes the service.
+func (s *Spec) SetVersion(v string) {
+	s.Info.Version = v
 }
