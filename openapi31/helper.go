@@ -18,9 +18,7 @@ func (p Parameter) ToParameterOrRef() ParameterOrReference {
 }
 
 func (p PathItem) Operation(method string) (*Operation, error) {
-	method = strings.ToUpper(method)
-
-	switch method {
+	switch strings.ToUpper(method) {
 	case http.MethodGet:
 		return p.Get, nil
 	case http.MethodPut:
