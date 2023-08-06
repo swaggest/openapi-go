@@ -501,6 +501,26 @@
         {
           "required": [
             "schema"
+          ],
+          "allOf": [
+            {
+              "$ref": "#/$defs/examples"
+            },
+            {
+              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-path"
+            },
+            {
+              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-header"
+            },
+            {
+              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-query"
+            },
+            {
+              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-cookie"
+            },
+            {
+              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-form"
+            }
           ]
         },
         {
@@ -529,28 +549,6 @@
       },
       "dependentSchemas": {
         "schema": {
-          "properties": {
-          },
-          "allOf": [
-            {
-              "$ref": "#/$defs/examples"
-            },
-            {
-              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-path"
-            },
-            {
-              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-header"
-            },
-            {
-              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-query"
-            },
-            {
-              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-cookie"
-            },
-            {
-              "$ref": "#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-form"
-            }
-          ],
           "$defs": {
             "styles-for-path": {
               "if": {
@@ -1089,8 +1087,14 @@
           "additionalProperties": {
             "$ref": "#/$defs/example-or-reference"
           }
+        },
+        "style": {
+          "default": "simple", "const": "simple"
+        },
+        "explode": {
+          "default": false,
+          "type": "boolean"
         }
-
       },
       "oneOf": [
         {
@@ -1104,21 +1108,6 @@
           ]
         }
       ],
-      "dependentSchemas": {
-        "schema": {
-          "properties": {
-            "style": {
-              "default": "simple",
-              "const": "simple"
-            },
-            "explode": {
-              "default": false,
-              "type": "boolean"
-            }
-          },
-          "$ref": "#/$defs/examples"
-        }
-      },
       "patternProperties": {"^x-": {}},
       "unevaluatedProperties": false
     },
