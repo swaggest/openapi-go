@@ -134,13 +134,13 @@ func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/somewhere":{
 		  "post":{
 			"requestBody":{
 			  "content":{
-				"multipart/form-data":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+				"multipart/form-data":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}}
 			  }
 			},
 			"responses":{"204":{"description":"No Content"}}
@@ -149,8 +149,8 @@ func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "FormDataMultipartFile":{"type":"string","format":"binary","nullable":true},
-		  "FormDataOpenapi3TestReq":{
+		  "FormDataMultipartFile":{"type":["null","string"],"format":"binary"},
+		  "FormDataOpenapi31TestReq":{
 			"type":"object",
 			"properties":{"upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"}}
 		  }
@@ -297,21 +297,27 @@ func TestReflector_AddOperation_pathParamAndBody(t *testing.T) {
 	s.Info.Version = apiVersion
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere/{id}":{
-	   "post":{
-		"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
-		"requestBody":{
-		 "content":{"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestPathParamAndBody"}}}
-		},
-		"responses":{"204":{"description":"No Content"}}
-	   }
+	  "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere/{id}":{
+		  "post":{
+			"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+			"requestBody":{
+			  "content":{
+				"application/json":{
+				  "schema":{"$ref":"#/components/schemas/Openapi31TestPathParamAndBody"}
+				}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi31TestPathParamAndBody":{"items":{"type":"string"},"type":["null","array"]}
+		}
 	  }
-	 },
-	 "components":{
-	  "schemas":{"Openapi3TestPathParamAndBody":{"type":"array","items":{"type":"string"},"nullable":true}}
-	 }
 	}`, s)
 }
 
@@ -333,17 +339,27 @@ func TestReflector_AddOperation_RequestBodyEnforcer(t *testing.T) {
 	assert.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere/{id}":{
-	   "get":{
-		"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
-		"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestWithReqBody"}}}},
-		"responses":{"204":{"description":"No Content"}}
-	   }
+	  "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere/{id}":{
+		  "get":{
+			"parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],
+			"requestBody":{
+			  "content":{
+				"application/json":{
+				  "schema":{"$ref":"#/components/schemas/Openapi31TestWithReqBody"}
+				}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi31TestWithReqBody":{"items":{"type":"string"},"type":["null","array"]}
+		}
 	  }
-	 },
-	 "components":{"schemas":{"Openapi3TestWithReqBody":{"type":"array","items":{"type":"string"},"nullable":true}}}
 	}`, s)
 }
 
@@ -371,7 +387,7 @@ func TestReflector_AddOperation_response(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+	 "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
 	 "paths":{
 	  "/somewhere":{
 	   "get":{
@@ -429,31 +445,39 @@ func TestReflector_AddOperation_setup_request(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere/{value-4}":{
-	   "post":{
-		"parameters":[
-		 {"name":"value_2","in":"query","schema":{"type":"string"}},
-		 {"name":"value-4","in":"path","required":true,"schema":{"type":"boolean"}},
-		 {"name":"value_5","in":"cookie","schema":{"type":"string"}},
-		 {"name":"X-Value-1","in":"header","schema":{"type":"integer"}}
-		],
-		"requestBody":{
-		 "content":{
-		  "multipart/form-data":{
-		   "schema":{
-			"type":"object",
-			"properties":{"upload6":{"$ref":"#/components/schemas/FormDataMultipartFile"},"value3":{"type":"number"}}
-		   }
+	  "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere/{value-4}":{
+		  "post":{
+			"parameters":[
+			  {"name":"value_2","in":"query","schema":{"type":"string"}},
+			  {
+				"name":"value-4","in":"path","required":true,
+				"schema":{"type":"boolean"}
+			  },
+			  {"name":"value_5","in":"cookie","schema":{"type":"string"}},
+			  {"name":"X-Value-1","in":"header","schema":{"type":"integer"}}
+			],
+			"requestBody":{
+			  "content":{
+				"multipart/form-data":{
+				  "schema":{
+					"properties":{
+					  "upload6":{"$ref":"#/components/schemas/FormDataMultipartFile"},
+					  "value3":{"type":"number"}
+					},
+					"type":"object"
+				  }
+				}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
 		  }
-		 }
-		},
-		"responses":{"204":{"description":"No Content"}}
-	   }
+		}
+	  },
+	  "components":{
+		"schemas":{"FormDataMultipartFile":{"format":"binary","type":["null","string"]}}
 	  }
-	 },
-	 "components":{"schemas":{"FormDataMultipartFile":{"type":"string","format":"binary","nullable":true}}}
 	}`, s)
 }
 
@@ -474,20 +498,23 @@ func TestReflector_AddOperation_request_queryObject(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere":{
-	   "post":{
-		"parameters":[
-		 {
-		  "name":"in_query","in":"query","style":"deepObject","explode":true,
-		  "schema":{"type":"object","additionalProperties":{"type":"number"}}
-		 }
-		],
-		"responses":{"204":{"description":"No Content"}}
-	   }
+	  "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere":{
+		  "post":{
+			"parameters":[
+			  {
+				"name":"in_query","in":"query",
+				"schema":{
+				  "additionalProperties":{"type":"number"},"type":["object","null"]
+				},
+				"style":"deepObject","explode":true
+			  }
+			],
+			"responses":{"204":{"description":"No Content"}}
+		  }
+		}
 	  }
-	 }
 	}`, s)
 }
 
@@ -510,14 +537,14 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
 	  "paths":{
 		"/somewhere":{
 		  "post":{
 			"parameters":[
 			  {
 				"name":"in_query","in":"query","style":"deepObject","explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestLabels"}
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestLabels"}
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -526,12 +553,12 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
+		  "QueryOpenapi31TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
 		}
 	  }
 	}`, s)
 
-	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi3TestLabels")
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi31TestLabels")
 	assert.True(t, found)
 	assertjson.EqMarshal(t, `{"type":"object","additionalProperties":{"type":"number"}}`, js)
 }
@@ -557,7 +584,7 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 	require.NoError(t, r.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/":{
 		  "get":{
@@ -566,7 +593,7 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 				"name":"one","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestFilter"}
 				  }
 				}
 			  },
@@ -574,13 +601,17 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 				"name":"two","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestFilter"}
 				  }
 				}
 			  },
 			  {
-				"name":"three","in":"query","style":"deepObject","explode":true,
-				"schema":{"type":"object","additionalProperties":{"type":"integer"}}
+				"name":"three","in":"query",
+				"schema":{
+				  "additionalProperties":{"type":"integer"},
+				  "type":["object","null"]
+				},
+				"style":"deepObject","explode":true
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -589,12 +620,12 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestFilter":{
-			"type":"object",
+		  "QueryOpenapi31TestFilter":{
 			"properties":{
-			  "labels":{"type":"array","items":{"type":"string"}},
+			  "labels":{"items":{"type":"string"},"type":"array"},
 			  "type":{"type":"string"}
-			}
+			},
+			"type":"object"
 		  }
 		}
 	  }
@@ -620,7 +651,7 @@ func TestReflector_AddOperation_request_forbidParams(t *testing.T) {
 	require.NoError(t, r.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/{path}":{
 		  "get":{
@@ -687,7 +718,7 @@ func TestReflector_AddOperation_request_noBody(t *testing.T) {
 			  "parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}}],
 			  "requestBody":{
 				"content":{
-				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReq"}}
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestReq"}}
 				}
 			  },
 			  "responses":{"204":{"description":"No Content"}}
@@ -767,13 +798,13 @@ func TestReflector_AddOperation_request_formData_with_json(t *testing.T) {
 	require.NoError(t, r.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/foo":{
 		  "post":{
 			"requestBody":{
 			  "content":{
-				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}}
 			  }
 			},
 			"responses":{"204":{"description":"No Content"}}
@@ -782,7 +813,7 @@ func TestReflector_AddOperation_request_formData_with_json(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "FormDataOpenapi3TestReq":{"type":"object","properties":{"foo":{"type":"integer"}}}
+		  "FormDataOpenapi31TestReq":{"type":"object","properties":{"foo":{"type":"integer"}}}
 		}
 	  }
 	}`, r.SpecEns())
@@ -854,7 +885,7 @@ func TestReflector_AddOperation_request_form_only(t *testing.T) {
 	require.NoError(t, r.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/foo":{
 		  "post":{
@@ -864,7 +895,7 @@ func TestReflector_AddOperation_request_form_only(t *testing.T) {
 			],
 			"requestBody":{
 			  "content":{
-				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi3TestReq"}}
+				"application/x-www-form-urlencoded":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}}
 			  }
 			},
 			"responses":{"204":{"description":"No Content"}}
@@ -873,7 +904,7 @@ func TestReflector_AddOperation_request_form_only(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "FormDataOpenapi3TestReq":{
+		  "FormDataOpenapi31TestReq":{
 			"type":"object",
 			"properties":{"bar":{"type":"integer"},"quux":{"type":"string"}}
 		  }
@@ -935,7 +966,7 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/things/{id}":{
 		  "get":{
@@ -949,18 +980,18 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 				"name":"json_filter","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestJsonFilter"}
+					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestJsonFilter"}
 				  }
 				}
 			  },
 			  {
 				"name":"deep_object_filter","in":"query","style":"deepObject",
 				"explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestDeepObjectFilter"}
+				"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestDeepObjectFilter"}
 			  },
 			  {
 				"name":"id","in":"path","required":true,
-				"schema":{"type":"string","example":"XXX-XXXXX"}
+				"schema":{"type":"string","examples":["XXX-XXXXX"]}
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -969,7 +1000,7 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestDeepObjectFilter":{
+		  "QueryOpenapi31TestDeepObjectFilter":{
 			"type":"object",
 			"properties":{
 			  "baz":{"type":"boolean"},
@@ -977,7 +1008,7 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 			  "quux":{"type":"number"}
 			}
 		  },
-		  "QueryOpenapi3TestJsonFilter":{
+		  "QueryOpenapi31TestJsonFilter":{
 			"type":"object",
 			"properties":{
 			  "bar":{"type":"integer"},
@@ -1009,7 +1040,7 @@ func TestReflector_AddOperation_contentUnitPreparer(t *testing.T) {
 	require.NoError(t, r.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
-	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "openapi":"3.1.0","info":{"title":"","version":""},
 	  "paths":{
 		"/foo":{
 		  "post":{

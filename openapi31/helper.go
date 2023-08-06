@@ -166,7 +166,7 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	}
 
 	// Add "No Content" response if there are no responses configured.
-	if len(operation.ResponsesEns().MapOfResponseOrReferenceValues) == 0 {
+	if len(operation.ResponsesEns().MapOfResponseOrReferenceValues) == 0 && operation.Responses.Default == nil {
 		operation.Responses.WithMapOfResponseOrReferenceValuesItem(strconv.Itoa(http.StatusNoContent), ResponseOrReference{
 			Response: &Response{
 				Description: http.StatusText(http.StatusNoContent),

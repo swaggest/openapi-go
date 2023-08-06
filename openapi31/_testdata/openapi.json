@@ -92,8 +92,8 @@
  },
  "components":{
   "schemas":{
-   "FormDataMultipartFile":{"type":"string","format":"binary","nullable":true},
-   "FormDataMultipartFileHeader":{"type":"string","format":"binary","nullable":true},
+   "FormDataMultipartFile":{"type":["null","string"],"format":"binary"},
+   "FormDataMultipartFileHeader":{"type":["null","string"],"format":"binary"},
    "FormDataOpenapi31TestReq":{
     "type":"object",
     "properties":{
@@ -102,7 +102,7 @@
      "upload2":{"$ref":"#/components/schemas/FormDataMultipartFileHeader"}
     }
    },
-   "HeaderOpenapi31TestUUID":{"type":"array","items":{"minimum":0,"type":"integer"},"nullable":true},
+   "HeaderOpenapi31TestUUID":{"type":["null","array"],"items":{"minimum":0,"type":"integer"}},
    "Openapi31TestReq":{"type":"object","properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}}},
    "Openapi31TestResp":{
     "title":"Sample Response","type":"object",
@@ -121,7 +121,7 @@
     },
     "description":"This is a sample response.","x-foo":"bar"
    },
-   "Openapi31TestUUID":{"type":"array","items":{"minimum":0,"type":"integer"},"nullable":true}
+   "Openapi31TestUUID":{"type":["null","array"],"items":{"minimum":0,"type":"integer"}}
   }
  }
 }

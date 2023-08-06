@@ -5,7 +5,7 @@
    "post":{
     "requestBody":{
      "content":{
-      "application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Openapi31TestGetReq"},"nullable":true}}
+      "application/json":{"schema":{"items":{"$ref":"#/components/schemas/Openapi31TestGetReq"},"type":["null","array"]}}
      }
     },
     "responses":{"204":{"description":"No Content"}}
@@ -15,11 +15,11 @@
  "components":{
   "schemas":{
    "Openapi31TestGetReq":{
-    "required":["q1","q3"],"type":"object",
     "properties":{
-     "c":{"type":"string","deprecated":true},"h":{"type":"number"},"p":{"type":"integer"},
-     "q1":{"type":"integer","description":"Query parameter."},"q3":{"type":"integer","description":"Query parameter."}
-    }
+     "c":{"deprecated":true,"type":"string"},"h":{"type":"number"},"p":{"type":"integer"},
+     "q1":{"description":"Query parameter.","type":"integer"},"q3":{"description":"Query parameter.","type":"integer"}
+    },
+    "required":["q1","q3"],"type":"object"
    }
   }
  }
