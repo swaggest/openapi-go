@@ -7,8 +7,8 @@
   "type":"object",
   "components":{
     "schemas":{
-      "FormDataMultipartFile":{"type":["string","null"],"format":"binary"},
-      "FormDataMultipartFileHeader":{"type":["string","null"],"format":"binary"}
+      "FormDataMultipartFile":{"type":["null","string"],"format":"binary"},
+      "FormDataMultipartFileHeader":{"type":["null","string"],"format":"binary"}
     }
   }
 }

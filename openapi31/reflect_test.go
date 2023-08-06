@@ -221,7 +221,7 @@ func TestReflector_AddOperation_JSON_response(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	require.NoError(t, s.SetupOperation(http.MethodPost, "/somewhere/{in_path}", func(op *openapi31.Operation) error {
-		js := op.RequestBody.RequestBody.Content["multipart/form-data"].Schema
+		js := openapi31.ToJSONSchema(op.RequestBody.RequestBody.Content["multipart/form-data"].Schema, s)
 		expected, err := os.ReadFile("_testdata/req_schema.json")
 		require.NoError(t, err)
 		assertjson.EqualMarshal(t, expected, js)
@@ -238,8 +238,8 @@ func TestReflector_AddOperation_JSON_response(t *testing.T) {
 	assert.NoError(t, reflector.AddOperation(oc))
 
 	require.NoError(t, s.SetupOperation(http.MethodGet, "/somewhere/{in_path}", func(op *openapi31.Operation) error {
-		js := op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
-			Schema
+		js := openapi31.ToJSONSchema(op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
+			Schema, s)
 		jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
 		require.NoError(t, err)
 
@@ -249,8 +249,8 @@ func TestReflector_AddOperation_JSON_response(t *testing.T) {
 		require.NoError(t, err)
 		assertjson.EqualMarshal(t, expected, js)
 
-		js = op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Headers["X-Header-Field"].Header.
-			Schema
+		js = openapi31.ToJSONSchema(op.Responses.MapOfResponseOrReferenceValues[strconv.Itoa(http.StatusOK)].Response.Headers["X-Header-Field"].Header.
+			Schema, s)
 		assertjson.EqMarshal(t, `{"type": "string", "description": "Sample header response."}`, js)
 
 		require.NoError(t, err)

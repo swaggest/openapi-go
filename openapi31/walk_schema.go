@@ -47,10 +47,12 @@ func (r *Reflector) WalkResponseJSONSchemas(cu openapi.ContentUnit, cb openapi.J
 			continue
 		}
 
-		sm := jsonschema.SchemaOrBool{}
-		if err := sm.FromSimpleMap(cont.Schema); err != nil {
-			return err
-		}
+		//sm := jsonschema.SchemaOrBool{}
+		//if err := sm.FromSimpleMap(cont.Schema); err != nil {
+		//	return err
+		//}
+
+		sm := ToJSONSchema(cont.Schema, r.Spec)
 
 		//schema := cont.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
 
@@ -71,10 +73,12 @@ func (r *Reflector) provideHeaderSchemas(resp *Response, cb openapi.JSONSchemaCa
 		hh := h.Header
 		//schema := hh.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
 
-		schema := jsonschema.SchemaOrBool{}
-		if err := schema.FromSimpleMap(hh.Schema); err != nil {
-			return err
-		}
+		//schema := jsonschema.SchemaOrBool{}
+		//if err := schema.FromSimpleMap(hh.Schema); err != nil {
+		//	return err
+		//}
+
+		schema := ToJSONSchema(hh.Schema, r.Spec)
 
 		required := false
 		if hh.Required != nil && *hh.Required {
@@ -130,10 +134,13 @@ func (r *Reflector) WalkRequestJSONSchemas(
 
 	for ct, content := range op.RequestBody.RequestBody.Content {
 		//schema := content.Schema.ToJSONSchema(r.Spec) // TODO: test and remove.
-		schema := jsonschema.SchemaOrBool{}
-		if err := schema.FromSimpleMap(content.Schema); err != nil {
-			return err
-		}
+
+		//schema := jsonschema.SchemaOrBool{}
+		//if err := schema.FromSimpleMap(content.Schema); err != nil {
+		//	return err
+		//}
+
+		schema := ToJSONSchema(content.Schema, r.Spec)
 
 		if ct == mimeJSON {
 			err = cb(openapi.InBody, "body", &schema, false)
@@ -201,10 +208,13 @@ func (r *Reflector) provideParametersJSONSchemas(op *Operation, cb openapi.JSONS
 		}
 
 		//schema := sc.ToJSONSchema(r.Spec) // TODO: test and remove
-		schema := jsonschema.SchemaOrBool{}
-		if err := schema.FromSimpleMap(sc); err != nil {
-			return err
-		}
+
+		//schema := jsonschema.SchemaOrBool{}
+		//if err := schema.FromSimpleMap(sc); err != nil {
+		//	return err
+		//}
+
+		schema := ToJSONSchema(sc, r.Spec)
 
 		if err := cb(openapi.In(pp.In), pp.Name, &schema, required); err != nil {
 			return fmt.Errorf("schema for parameter (%s, %s): %w", pp.In, pp.Name, err)
