@@ -144,3 +144,50 @@ func (s *Spec) SetDescription(d string) {
 func (s *Spec) SetVersion(v string) {
 	s.Info.Version = v
 }
+
+// SetHTTPBasicSecurity sets security definition.
+func (s *Spec) SetHTTPBasicSecurity(securityName string, description string) {
+	s.ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
+		securityName,
+		SecuritySchemeOrRef{
+			SecurityScheme: &SecurityScheme{
+				HTTPSecurityScheme: (&HTTPSecurityScheme{}).WithScheme("basic").WithDescription(description),
+			},
+		},
+	)
+}
+
+// SetAPIKeySecurity sets security definition.
+func (s *Spec) SetAPIKeySecurity(securityName string, fieldName string, fieldIn openapi.In, description string) {
+	s.ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
+		securityName,
+		SecuritySchemeOrRef{
+			SecurityScheme: &SecurityScheme{
+				APIKeySecurityScheme: (&APIKeySecurityScheme{}).
+					WithName(fieldName).
+					WithIn(APIKeySecuritySchemeIn(fieldIn)).
+					WithDescription(description),
+			},
+		},
+	)
+}
+
+// SetHTTPBearerTokenSecurity sets security definition.
+func (s *Spec) SetHTTPBearerTokenSecurity(securityName string, format string, description string) {
+	ss := &SecurityScheme{
+		HTTPSecurityScheme: (&HTTPSecurityScheme{}).
+			WithScheme("bearer").
+			WithDescription(description),
+	}
+
+	if format != "" {
+		ss.HTTPSecurityScheme.WithBearerFormat(format)
+	}
+
+	s.ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
+		securityName,
+		SecuritySchemeOrRef{
+			SecurityScheme: ss,
+		},
+	)
+}

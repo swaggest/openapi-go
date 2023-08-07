@@ -212,7 +212,6 @@ func (s *Spec) SetHTTPBasicSecurity(securityName string, description string) {
 		securityName,
 		SecuritySchemeOrReference{
 			SecurityScheme: (&SecurityScheme{
-				Type: SecuritySchemeTypeHTTP,
 				HTTP: (&SecuritySchemeHTTP{}).WithScheme("basic"),
 			}).WithDescription(description),
 		},
@@ -220,15 +219,14 @@ func (s *Spec) SetHTTPBasicSecurity(securityName string, description string) {
 }
 
 // SetAPIKeySecurity sets security definition.
-func (s *Spec) SetAPIKeySecurity(securityName string, fieldName string, fieldIn SecuritySchemeAPIKeyIn, description string) {
+func (s *Spec) SetAPIKeySecurity(securityName string, fieldName string, fieldIn openapi.In, description string) {
 	s.ComponentsEns().WithSecuritySchemesItem(
 		securityName,
 		SecuritySchemeOrReference{
 			SecurityScheme: (&SecurityScheme{
-				Type: SecuritySchemeTypeAPIKey,
 				APIKey: (&SecuritySchemeAPIKey{}).
 					WithName(fieldName).
-					WithIn(fieldIn),
+					WithIn(SecuritySchemeAPIKeyIn(fieldIn)),
 			}).WithDescription(description),
 		},
 	)
@@ -237,7 +235,6 @@ func (s *Spec) SetAPIKeySecurity(securityName string, fieldName string, fieldIn 
 // SetHTTPBearerTokenSecurity sets security definition.
 func (s *Spec) SetHTTPBearerTokenSecurity(securityName string, format string, description string) {
 	ss := (&SecurityScheme{
-		Type: SecuritySchemeTypeHTTP,
 		HTTPBearer: (&SecuritySchemeHTTPBearer{}).
 			WithScheme("bearer"),
 	}).WithDescription(description)

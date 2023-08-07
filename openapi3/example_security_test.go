@@ -9,19 +9,12 @@ import (
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
-func ExampleReflector_AddOperation_http_basic_auth() {
+func ExampleSpec_SetHTTPBasicSecurity() {
 	reflector := openapi3.Reflector{}
 	securityName := "admin"
 
 	// Declare security scheme.
-	reflector.SpecEns().ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
-		securityName,
-		openapi3.SecuritySchemeOrRef{
-			SecurityScheme: &openapi3.SecurityScheme{
-				HTTPSecurityScheme: (&openapi3.HTTPSecurityScheme{}).WithScheme("basic").WithDescription("Admin Access"),
-			},
-		},
-	)
+	reflector.SpecEns().SetHTTPBasicSecurity(securityName, "Admin Access")
 
 	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
 	oc.AddRespStructure(struct {
@@ -85,22 +78,12 @@ func ExampleReflector_AddOperation_http_basic_auth() {
 	//       type: http
 }
 
-func ExampleReflector_AddOperation_api_key_auth() {
+func ExampleSpec_SetAPIKeySecurity() {
 	reflector := openapi3.Reflector{}
 	securityName := "api_key"
 
 	// Declare security scheme.
-	reflector.SpecEns().ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
-		securityName,
-		openapi3.SecuritySchemeOrRef{
-			SecurityScheme: &openapi3.SecurityScheme{
-				APIKeySecurityScheme: (&openapi3.APIKeySecurityScheme{}).
-					WithName("Authorization").
-					WithIn("header").
-					WithDescription("API Access"),
-			},
-		},
-	)
+	reflector.SpecEns().SetAPIKeySecurity(securityName, "Authorization", openapi.InHeader, "API Access")
 
 	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
 	oc.AddRespStructure(struct {
@@ -165,22 +148,12 @@ func ExampleReflector_AddOperation_api_key_auth() {
 	//       type: apiKey
 }
 
-func ExampleReflector_AddOperation_http_bearer_token_auth() {
+func ExampleSpec_SetHTTPBearerTokenSecurity() {
 	reflector := openapi3.Reflector{}
 	securityName := "bearer_token"
 
 	// Declare security scheme.
-	reflector.SpecEns().ComponentsEns().SecuritySchemesEns().WithMapOfSecuritySchemeOrRefValuesItem(
-		securityName,
-		openapi3.SecuritySchemeOrRef{
-			SecurityScheme: &openapi3.SecurityScheme{
-				HTTPSecurityScheme: (&openapi3.HTTPSecurityScheme{}).
-					WithScheme("bearer").
-					WithBearerFormat("JWT").
-					WithDescription("Admin Access"),
-			},
-		},
-	)
+	reflector.SpecEns().SetHTTPBearerTokenSecurity(securityName, "JWT", "Admin Access")
 
 	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
 	oc.AddRespStructure(struct {

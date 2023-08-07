@@ -5,4 +5,8 @@ type SpecSchema interface {
 	SetTitle(t string)
 	SetDescription(d string)
 	SetVersion(v string)
+
+	SetHTTPBasicSecurity(securityName string, description string)
+	SetAPIKeySecurity(securityName string, fieldName string, fieldIn In, description string)
+	SetHTTPBearerTokenSecurity(securityName string, format string, description string)
 }

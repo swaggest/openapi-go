@@ -1768,8 +1768,10 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constHeader is unconditionally added to JSON.
-var constHeader = json.RawMessage(`{"style":"simple"}`)
+var (
+	// constHeader is unconditionally added to JSON.
+	constHeader = json.RawMessage(`{"style":"simple"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
@@ -3867,20 +3869,14 @@ func (c *Components) WithPathItemsItem(key string, val PathItemOrReference) *Com
 
 // SecurityScheme structure is generated from "#/$defs/security-scheme".
 type SecurityScheme struct {
-	Type          SecuritySchemeType        `json:"type"` // Required.
 	Description   *string                   `json:"description,omitempty"`
 	APIKey        *SecuritySchemeAPIKey     `json:"-"`
 	HTTP          *SecuritySchemeHTTP       `json:"-"`
 	HTTPBearer    *SecuritySchemeHTTPBearer `json:"-"`
 	Oauth2        *SecuritySchemeOauth2     `json:"-"`
 	Oidc          *SecuritySchemeOidc       `json:"-"`
+	MutualTLS     *MutualTLS                `json:"-"`
 	MapOfAnything map[string]interface{}    `json:"-"` // Key must match pattern: `^x-`.
-}
-
-// WithType sets Type value.
-func (s *SecurityScheme) WithType(val SecuritySchemeType) *SecurityScheme {
-	s.Type = val
-	return s
 }
 
 // WithDescription sets Description value.
@@ -3964,6 +3960,21 @@ func (s *SecurityScheme) OidcEns() *SecuritySchemeOidc {
 	return s.Oidc
 }
 
+// WithMutualTLS sets MutualTLS value.
+func (s *SecurityScheme) WithMutualTLS(val MutualTLS) *SecurityScheme {
+	s.MutualTLS = &val
+	return s
+}
+
+// MutualTLSEns ensures returned MutualTLS is not nil.
+func (s *SecurityScheme) MutualTLSEns() *MutualTLS {
+	if s.MutualTLS == nil {
+		s.MutualTLS = new(MutualTLS)
+	}
+
+	return s.MutualTLS
+}
+
 // WithMapOfAnything sets MapOfAnything value.
 func (s *SecurityScheme) WithMapOfAnything(val map[string]interface{}) *SecurityScheme {
 	s.MapOfAnything = val
@@ -3984,7 +3995,6 @@ func (s *SecurityScheme) WithMapOfAnythingItem(key string, val interface{}) *Sec
 type marshalSecurityScheme SecurityScheme
 
 var knownKeysSecurityScheme = []string{
-	"type",
 	"description",
 }
 
@@ -4003,7 +4013,7 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	oneOfErrors := make(map[string]error, 5)
+	oneOfErrors := make(map[string]error, 6)
 	oneOfValid := 0
 
 	err = json.Unmarshal(data, &ms.APIKey)
@@ -4042,6 +4052,14 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		oneOfErrors["Oidc"] = err
 		ms.Oidc = nil
+	} else {
+		oneOfValid++
+	}
+
+	err = json.Unmarshal(data, &ms.MutualTLS)
+	if err != nil {
+		oneOfErrors["MutualTLS"] = err
+		ms.MutualTLS = nil
 	} else {
 		oneOfValid++
 	}
@@ -4099,7 +4117,7 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON encodes JSON.
 func (s SecurityScheme) MarshalJSON() ([]byte, error) {
-	return marshalUnion(marshalSecurityScheme(s), s.MapOfAnything, s.APIKey, s.HTTP, s.HTTPBearer, s.Oauth2, s.Oidc)
+	return marshalUnion(marshalSecurityScheme(s), s.MapOfAnything, s.APIKey, s.HTTP, s.HTTPBearer, s.Oauth2, s.Oidc, s.MutualTLS)
 }
 
 // SecuritySchemeAPIKey structure is generated from "#/$defs/security-scheme/$defs/type-apikey".
@@ -4163,8 +4181,10 @@ func (s *SecuritySchemeAPIKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constSecuritySchemeAPIKey is unconditionally added to JSON.
-var constSecuritySchemeAPIKey = json.RawMessage(`{"type":"apiKey"}`)
+var (
+	// constSecuritySchemeAPIKey is unconditionally added to JSON.
+	constSecuritySchemeAPIKey = json.RawMessage(`{"type":"apiKey"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeAPIKey) MarshalJSON() ([]byte, error) {
@@ -4224,8 +4244,10 @@ func (s *SecuritySchemeHTTP) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constSecuritySchemeHTTP is unconditionally added to JSON.
-var constSecuritySchemeHTTP = json.RawMessage(`{"type":"http"}`)
+var (
+	// constSecuritySchemeHTTP is unconditionally added to JSON.
+	constSecuritySchemeHTTP = json.RawMessage(`{"type":"http"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeHTTP) MarshalJSON() ([]byte, error) {
@@ -4294,8 +4316,10 @@ func (s *SecuritySchemeHTTPBearer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constSecuritySchemeHTTPBearer is unconditionally added to JSON.
-var constSecuritySchemeHTTPBearer = json.RawMessage(`{"type":"http"}`)
+var (
+	// constSecuritySchemeHTTPBearer is unconditionally added to JSON.
+	constSecuritySchemeHTTPBearer = json.RawMessage(`{"type":"http"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeHTTPBearer) MarshalJSON() ([]byte, error) {
@@ -4355,8 +4379,10 @@ func (s *SecuritySchemeOauth2) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constSecuritySchemeOauth2 is unconditionally added to JSON.
-var constSecuritySchemeOauth2 = json.RawMessage(`{"type":"oauth2"}`)
+var (
+	// constSecuritySchemeOauth2 is unconditionally added to JSON.
+	constSecuritySchemeOauth2 = json.RawMessage(`{"type":"oauth2"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeOauth2) MarshalJSON() ([]byte, error) {
@@ -5109,12 +5135,50 @@ func (s *SecuritySchemeOidc) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// constSecuritySchemeOidc is unconditionally added to JSON.
-var constSecuritySchemeOidc = json.RawMessage(`{"type":"openIdConnect"}`)
+var (
+	// constSecuritySchemeOidc is unconditionally added to JSON.
+	constSecuritySchemeOidc = json.RawMessage(`{"type":"openIdConnect"}`)
+)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeOidc) MarshalJSON() ([]byte, error) {
 	return marshalUnion(constSecuritySchemeOidc, marshalSecuritySchemeOidc(s))
+}
+
+// MutualTLS structure is generated from "#/$defs/security-scheme/oneOf/5".
+//
+// mutualTLS.
+type MutualTLS struct {
+}
+
+// UnmarshalJSON decodes JSON.
+func (m *MutualTLS) UnmarshalJSON(data []byte) error {
+	var err error
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	if v, exists := rawMap["type"]; exists && string(v) != `"mutualTLS"` {
+		return fmt.Errorf(`bad const value for "type" ("mutualTLS" expected, %s received)`, v)
+	}
+
+	delete(rawMap, "type")
+
+	return nil
+}
+
+var (
+	// constMutualTLS is unconditionally added to JSON.
+	constMutualTLS = json.RawMessage(`{"type":"mutualTLS"}`)
+)
+
+// MarshalJSON encodes JSON.
+func (m MutualTLS) MarshalJSON() ([]byte, error) {
+	return marshalUnion(constMutualTLS)
 }
 
 // SecuritySchemeOrReference structure is generated from "#/$defs/security-scheme-or-reference".
@@ -5464,61 +5528,6 @@ func (i *ParameterStyle) UnmarshalJSON(data []byte) error {
 
 	default:
 		return fmt.Errorf("unexpected ParameterStyle value: %v", v)
-	}
-
-	*i = v
-
-	return nil
-}
-
-// SecuritySchemeType is an enum type.
-type SecuritySchemeType string
-
-// SecuritySchemeType values enumeration.
-const (
-	SecuritySchemeTypeAPIKey        = SecuritySchemeType("apiKey")
-	SecuritySchemeTypeHTTP          = SecuritySchemeType("http")
-	SecuritySchemeTypeMutualTLS     = SecuritySchemeType("mutualTLS")
-	SecuritySchemeTypeOauth2        = SecuritySchemeType("oauth2")
-	SecuritySchemeTypeOpenIDConnect = SecuritySchemeType("openIdConnect")
-)
-
-// MarshalJSON encodes JSON.
-func (i SecuritySchemeType) MarshalJSON() ([]byte, error) {
-	switch i {
-	case SecuritySchemeTypeAPIKey:
-	case SecuritySchemeTypeHTTP:
-	case SecuritySchemeTypeMutualTLS:
-	case SecuritySchemeTypeOauth2:
-	case SecuritySchemeTypeOpenIDConnect:
-
-	default:
-		return nil, fmt.Errorf("unexpected SecuritySchemeType value: %v", i)
-	}
-
-	return json.Marshal(string(i))
-}
-
-// UnmarshalJSON decodes JSON.
-func (i *SecuritySchemeType) UnmarshalJSON(data []byte) error {
-	var ii string
-
-	err := json.Unmarshal(data, &ii)
-	if err != nil {
-		return err
-	}
-
-	v := SecuritySchemeType(ii)
-
-	switch v {
-	case SecuritySchemeTypeAPIKey:
-	case SecuritySchemeTypeHTTP:
-	case SecuritySchemeTypeMutualTLS:
-	case SecuritySchemeTypeOauth2:
-	case SecuritySchemeTypeOpenIDConnect:
-
-	default:
-		return fmt.Errorf("unexpected SecuritySchemeType value: %v", v)
 	}
 
 	*i = v

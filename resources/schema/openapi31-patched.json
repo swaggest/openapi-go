@@ -1221,15 +1221,6 @@
       "$comment": "https://spec.openapis.org/oas/v3.1.0#security-scheme-object",
       "type": "object",
       "properties": {
-        "type": {
-          "enum": [
-            "apiKey",
-            "http",
-            "mutualTLS",
-            "oauth2",
-            "openIdConnect"
-          ]
-        },
         "description": {
           "type": "string"
         }
@@ -1255,6 +1246,14 @@
         },
         {
           "$ref": "#/$defs/security-scheme/$defs/type-oidc"
+        },
+        {
+          "title": "mutualTLS",
+          "properties": {
+            "type": {
+              "const": "mutualTLS"
+            }
+          }
         }
       ],
       "unevaluatedProperties": false,
