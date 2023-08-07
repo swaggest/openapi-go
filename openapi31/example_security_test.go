@@ -84,7 +84,7 @@ func ExampleSpec_SetAPIKeySecurity() {
 
 	// Declare security scheme.
 	reflector.SpecEns().SetAPIKeySecurity(securityName, "Authorization",
-		openapi31.SecuritySchemeAPIKeyInHeader, "API Access")
+		openapi.InHeader, "API Access")
 
 	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
 	oc.AddRespStructure(struct {
