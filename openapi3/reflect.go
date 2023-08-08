@@ -456,13 +456,12 @@ func (r *Reflector) parseParametersIn(
 		return nil
 	}
 
-	defNamePrefix := strings.Title(string(in))
-	definitionsPrefix := componentsSchemas + defNamePrefix
+	definitionsPrefix := componentsSchemas
 
 	s, err := r.Reflect(input,
 		openapi.WithOperationCtx(oc, false, in),
 		jsonschema.DefinitionsPrefix(definitionsPrefix),
-		jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
+		jsonschema.CollectDefinitions(r.collectDefinition()),
 		jsonschema.PropertyNameMapping(propertyMapping),
 		jsonschema.PropertyNameTag(string(in), additionalTags...),
 		func(rc *jsonschema.ReflectContext) {
@@ -513,7 +512,7 @@ func (r *Reflector) parseParametersIn(
 				propertySchema, err := r.Reflect(property,
 					openapi.WithOperationCtx(oc, false, in),
 					jsonschema.DefinitionsPrefix(definitionsPrefix),
-					jsonschema.CollectDefinitions(r.collectDefinition(defNamePrefix)),
+					jsonschema.CollectDefinitions(r.collectDefinition()),
 					jsonschema.RootRef,
 					sanitizeDefName,
 				)
@@ -588,10 +587,8 @@ func sanitizeDefName(rc *jsonschema.ReflectContext) {
 	})(rc)
 }
 
-func (r *Reflector) collectDefinition(namePrefix string) func(name string, schema jsonschema.Schema) {
+func (r *Reflector) collectDefinition() func(name string, schema jsonschema.Schema) {
 	return func(name string, schema jsonschema.Schema) {
-		name = namePrefix + name
-
 		if _, exists := r.SpecEns().ComponentsEns().SchemasEns().MapOfSchemaOrRefValues[name]; exists {
 			return
 		}
@@ -784,7 +781,7 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 		openapi.WithOperationCtx(oc, true, openapi.InBody),
 		jsonschema.RootRef,
 		jsonschema.DefinitionsPrefix(componentsSchemas),
-		jsonschema.CollectDefinitions(r.collectDefinition("")),
+		jsonschema.CollectDefinitions(r.collectDefinition()),
 		sanitizeDefName,
 	)
 	if err != nil {

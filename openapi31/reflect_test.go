@@ -543,8 +543,9 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 		  "post":{
 			"parameters":[
 			  {
-				"name":"in_query","in":"query","style":"deepObject","explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestLabels"}
+				"name":"in_query","in":"query",
+				"schema":{"$ref":"#/components/schemas/Openapi31TestLabels"},
+				"style":"deepObject","explode":true
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -553,12 +554,12 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi31TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
+		  "Openapi31TestLabels":{"additionalProperties":{"type":"number"},"type":"object"}
 		}
 	  }
 	}`, s)
 
-	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi31TestLabels")
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi31TestLabels")
 	assert.True(t, found)
 	assertjson.EqMarshal(t, `{"type":"object","additionalProperties":{"type":"number"}}`, js)
 }
@@ -592,17 +593,13 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 			  {
 				"name":"one","in":"query",
 				"content":{
-				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestFilter"}
-				  }
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestFilter"}}
 				}
 			  },
 			  {
 				"name":"two","in":"query",
 				"content":{
-				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestFilter"}
-				  }
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestFilter"}}
 				}
 			  },
 			  {
@@ -620,7 +617,7 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi31TestFilter":{
+		  "Openapi31TestFilter":{
 			"properties":{
 			  "labels":{"items":{"type":"string"},"type":"array"},
 			  "type":{"type":"string"}
@@ -980,18 +977,18 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 				"name":"json_filter","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestJsonFilter"}
+					"schema":{"$ref":"#/components/schemas/Openapi31TestJsonFilter"}
 				  }
 				}
 			  },
 			  {
-				"name":"deep_object_filter","in":"query","style":"deepObject",
-				"explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi31TestDeepObjectFilter"}
+				"name":"deep_object_filter","in":"query",
+				"schema":{"$ref":"#/components/schemas/Openapi31TestDeepObjectFilter"},
+				"style":"deepObject","explode":true
 			  },
 			  {
 				"name":"id","in":"path","required":true,
-				"schema":{"type":"string","examples":["XXX-XXXXX"]}
+				"schema":{"examples":["XXX-XXXXX"],"type":"string"}
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -1000,21 +997,21 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi31TestDeepObjectFilter":{
-			"type":"object",
+		  "Openapi31TestDeepObjectFilter":{
 			"properties":{
 			  "baz":{"type":"boolean"},
-			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "deeper":{"properties":{"val":{"type":"string"}},"type":"object"},
 			  "quux":{"type":"number"}
-			}
+			},
+			"type":"object"
 		  },
-		  "QueryOpenapi31TestJsonFilter":{
-			"type":"object",
+		  "Openapi31TestJsonFilter":{
 			"properties":{
 			  "bar":{"type":"integer"},
-			  "deeper":{"type":"object","properties":{"val":{"type":"string"}}},
+			  "deeper":{"properties":{"val":{"type":"string"}},"type":"object"},
 			  "foo":{"type":"string"}
-			}
+			},
+			"type":"object"
 		  }
 		}
 	  }
