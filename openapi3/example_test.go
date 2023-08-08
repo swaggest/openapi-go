@@ -555,14 +555,14 @@ func ExampleReflector_AddOperation_queryObject() {
 	//       - content:
 	//           application/json:
 	//             schema:
-	//               $ref: '#/components/schemas/QueryOpenapi3TestJsonFilter'
+	//               $ref: '#/components/schemas/Openapi3TestJsonFilter'
 	//         in: query
 	//         name: json_filter
 	//       - explode: true
 	//         in: query
 	//         name: deep_object_filter
 	//         schema:
-	//           $ref: '#/components/schemas/QueryOpenapi3TestDeepObjectFilter'
+	//           $ref: '#/components/schemas/Openapi3TestDeepObjectFilter'
 	//         style: deepObject
 	//       - in: path
 	//         name: id
@@ -575,7 +575,7 @@ func ExampleReflector_AddOperation_queryObject() {
 	//           description: No Content
 	// components:
 	//   schemas:
-	//     QueryOpenapi3TestDeepObjectFilter:
+	//     Openapi3TestDeepObjectFilter:
 	//       properties:
 	//         baz:
 	//           type: boolean
@@ -587,7 +587,7 @@ func ExampleReflector_AddOperation_queryObject() {
 	//         quux:
 	//           type: number
 	//       type: object
-	//     QueryOpenapi3TestJsonFilter:
+	//     Openapi3TestJsonFilter:
 	//       properties:
 	//         bar:
 	//           type: integer

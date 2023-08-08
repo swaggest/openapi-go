@@ -517,7 +517,7 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 			"parameters":[
 			  {
 				"name":"in_query","in":"query","style":"deepObject","explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestLabels"}
+				"schema":{"$ref":"#/components/schemas/Openapi3TestLabels"}
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
@@ -526,12 +526,12 @@ func TestReflector_AddOperation_request_queryNamedObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
+		  "Openapi3TestLabels":{"type":"object","additionalProperties":{"type":"number"}}
 		}
 	  }
 	}`, s)
 
-	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/QueryOpenapi3TestLabels")
+	js, found := reflector.ResolveJSONSchemaRef("#/components/schemas/Openapi3TestLabels")
 	assert.True(t, found)
 	assertjson.EqMarshal(t, `{"type":"object","additionalProperties":{"type":"number"}}`, js)
 }
@@ -565,17 +565,13 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 			  {
 				"name":"one","in":"query",
 				"content":{
-				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
-				  }
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
 				}
 			  },
 			  {
 				"name":"two","in":"query",
 				"content":{
-				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestFilter"}
-				  }
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestFilter"}}
 				}
 			  },
 			  {
@@ -589,7 +585,7 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestFilter":{
+		  "Openapi3TestFilter":{
 			"type":"object",
 			"properties":{
 			  "labels":{"type":"array","items":{"type":"string"}},
@@ -949,14 +945,14 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 				"name":"json_filter","in":"query",
 				"content":{
 				  "application/json":{
-					"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestJsonFilter"}
+					"schema":{"$ref":"#/components/schemas/Openapi3TestJsonFilter"}
 				  }
 				}
 			  },
 			  {
 				"name":"deep_object_filter","in":"query","style":"deepObject",
 				"explode":true,
-				"schema":{"$ref":"#/components/schemas/QueryOpenapi3TestDeepObjectFilter"}
+				"schema":{"$ref":"#/components/schemas/Openapi3TestDeepObjectFilter"}
 			  },
 			  {
 				"name":"id","in":"path","required":true,
@@ -969,7 +965,7 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "QueryOpenapi3TestDeepObjectFilter":{
+		  "Openapi3TestDeepObjectFilter":{
 			"type":"object",
 			"properties":{
 			  "baz":{"type":"boolean"},
@@ -977,7 +973,7 @@ func TestReflector_AddOperation_request_queryObject_deepObject(t *testing.T) {
 			  "quux":{"type":"number"}
 			}
 		  },
-		  "QueryOpenapi3TestJsonFilter":{
+		  "Openapi3TestJsonFilter":{
 			"type":"object",
 			"properties":{
 			  "bar":{"type":"integer"},

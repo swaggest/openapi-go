@@ -60,7 +60,7 @@
      {"name":"in_path","in":"path","required":true,"schema":{"type":"integer"}},
      {"name":"in_cookie","in":"cookie","deprecated":true,"schema":{"type":"string","deprecated":true}},
      {"name":"in_header","in":"header","schema":{"type":"number"}},
-     {"name":"uuid","in":"header","schema":{"$ref":"#/components/schemas/HeaderOpenapi3TestUUID"}}
+     {"name":"uuid","in":"header","schema":{"$ref":"#/components/schemas/Openapi3TestUUID"}}
     ],
     "requestBody":{
      "content":{
@@ -102,7 +102,6 @@
      "upload2":{"$ref":"#/components/schemas/FormDataMultipartFileHeader"}
     }
    },
-   "HeaderOpenapi3TestUUID":{"type":"array","items":{"minimum":0,"type":"integer"},"nullable":true},
    "Openapi3TestReq":{"type":"object","properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}}},
    "Openapi3TestResp":{
     "title":"Sample Response","type":"object",
