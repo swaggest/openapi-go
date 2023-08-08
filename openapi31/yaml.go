@@ -1,4 +1,4 @@
-package openapi3
+package openapi31
 
 import (
 	"bytes"

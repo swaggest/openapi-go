@@ -1,0 +1,180 @@
+{
+ "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+ "paths":{
+  "/somewhere/{in_path}":{
+   "summary":"Path Summary","description":"Path Description",
+   "get":{
+    "parameters":[
+     {
+      "name":"in_query1","in":"query","description":"Query parameter.",
+      "required":true,
+      "schema":{"description":"Query parameter.","type":"integer"}
+     },
+     {
+      "name":"in_query3","in":"query","description":"Query parameter.",
+      "required":true,
+      "schema":{"description":"Query parameter.","type":"integer"}
+     },
+     {
+      "name":"in_path","in":"path","required":true,
+      "schema":{"type":"integer"}
+     },
+     {
+      "name":"in_cookie","in":"cookie","deprecated":true,
+      "schema":{"deprecated":true,"type":"string"}
+     },
+     {"name":"in_header","in":"header","schema":{"type":"number"}}
+    ],
+    "responses":{
+     "200":{
+      "description":"This is a sample response.",
+      "headers":{
+       "X-Header-Field":{
+        "style":"simple","description":"Sample header response.",
+        "schema":{"description":"Sample header response.","type":"string"}
+       }
+      },
+      "content":{
+       "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestResp"}}
+      }
+     }
+    }
+   },
+   "post":{
+    "parameters":[
+     {
+      "name":"in_query1","in":"query","description":"Query parameter.",
+      "required":true,
+      "schema":{"description":"Query parameter.","type":"integer"}
+     },
+     {
+      "name":"in_query2","in":"query","description":"Query parameter.",
+      "required":true,
+      "schema":{"description":"Query parameter.","type":"integer"}
+     },
+     {
+      "name":"in_query3","in":"query","description":"Query parameter.",
+      "required":true,
+      "schema":{"description":"Query parameter.","type":"integer"}
+     },
+     {
+      "name":"array_csv","in":"query",
+      "schema":{"items":{"type":"string"},"type":["array","null"]},
+      "explode":false
+     },
+     {
+      "name":"array_swg2_csv","in":"query",
+      "schema":{"items":{"type":"string"},"type":["array","null"]},
+      "style":"form","explode":false
+     },
+     {
+      "name":"array_swg2_ssv","in":"query",
+      "schema":{"items":{"type":"string"},"type":["array","null"]},
+      "style":"spaceDelimited","explode":false
+     },
+     {
+      "name":"array_swg2_pipes","in":"query",
+      "schema":{"items":{"type":"string"},"type":["array","null"]},
+      "style":"pipeDelimited","explode":false
+     },
+     {
+      "name":"in_path","in":"path","required":true,
+      "schema":{"type":"integer"}
+     },
+     {
+      "name":"in_cookie","in":"cookie","deprecated":true,
+      "schema":{"deprecated":true,"type":"string"}
+     },
+     {"name":"in_header","in":"header","schema":{"type":"number"}},
+     {
+      "name":"uuid","in":"header",
+      "schema":{"$ref":"#/components/schemas/HeaderOpenapi31TestUUID"}
+     }
+    ],
+    "requestBody":{
+     "content":{
+      "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestReq"}},
+      "multipart/form-data":{
+       "schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}
+      }
+     }
+    },
+    "responses":{
+     "200":{
+      "description":"This is a sample response.",
+      "headers":{
+       "X-Header-Field":{
+        "style":"simple","description":"Sample header response.",
+        "schema":{"description":"Sample header response.","type":"string"}
+       }
+      },
+      "content":{
+       "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestResp"}}
+      }
+     },
+     "409":{
+      "description":"Conflict",
+      "content":{
+       "application/json":{
+        "schema":{
+         "items":{"$ref":"#/components/schemas/Openapi31TestResp"},
+         "type":["null","array"]
+        }
+       },
+       "text/html":{"schema":{"type":"string"}}
+      }
+     }
+    }
+   }
+  }
+ },
+ "components":{
+  "schemas":{
+   "FormDataMultipartFile":{"format":"binary","type":["null","string"]},
+   "FormDataMultipartFileHeader":{"format":"binary","type":["null","string"]},
+   "FormDataOpenapi31TestReq":{
+    "properties":{
+     "in_form1":{"type":"string"},"in_form2":{"type":"string"},
+     "upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"},
+     "upload2":{"$ref":"#/components/schemas/FormDataMultipartFileHeader"}
+    },
+    "type":"object"
+   },
+   "HeaderOpenapi31TestUUID":{"items":{"minimum":0,"type":"integer"},"type":["array","null"]},
+   "Openapi31TestReq":{
+    "properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}},
+    "type":"object"
+   },
+   "Openapi31TestResp":{
+    "description":"This is a sample response.",
+    "properties":{
+     "arrayOfAnything":{"items":{},"type":"array"},
+     "field1":{"type":"integer"},"field2":{"type":"string"},
+     "info":{
+      "properties":{
+       "bar":{"description":"This is Bar.","type":"number"},
+       "foo":{"default":"baz","pattern":"\\d+","type":"string"}
+      },
+      "required":["foo"],"type":"object"
+     },
+     "map":{"additionalProperties":{"type":"integer"},"type":"object"},
+     "mapOfAnything":{"additionalProperties":{},"type":"object"},
+     "nullableWhatever":{},
+     "parent":{"$ref":"#/components/schemas/Openapi31TestResp"},
+     "recursiveArray":{
+      "items":{"$ref":"#/components/schemas/Openapi31TestResp"},
+      "type":"array"
+     },
+     "recursiveStructArray":{
+      "items":{"$ref":"#/components/schemas/Openapi31TestResp"},
+      "type":"array"
+     },
+     "uuid":{"$ref":"#/components/schemas/Openapi31TestUUID"},
+     "whatever":{}
+    },
+    "title":"Sample Response","type":"object","x-foo":"bar"
+   },
+   "Openapi31TestUUID":{"items":{"minimum":0,"type":"integer"},"type":["array","null"]}
+  }
+ }
+}

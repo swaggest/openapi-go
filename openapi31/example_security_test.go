@@ -1,4 +1,4 @@
-package openapi3_test
+package openapi31_test
 
 import (
 	"fmt"
@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/swaggest/openapi-go"
-	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/openapi-go/openapi31"
 )
 
 func ExampleSpec_SetHTTPBasicSecurity() {
-	reflector := openapi3.Reflector{}
+	reflector := openapi31.Reflector{}
 	securityName := "admin"
 
 	// Declare security scheme.
@@ -42,7 +42,7 @@ func ExampleSpec_SetHTTPBasicSecurity() {
 	fmt.Println(string(schema))
 
 	// Output:
-	// openapi: 3.0.3
+	// openapi: 3.1.0
 	// info:
 	//   title: ""
 	//   version: ""
@@ -79,11 +79,12 @@ func ExampleSpec_SetHTTPBasicSecurity() {
 }
 
 func ExampleSpec_SetAPIKeySecurity() {
-	reflector := openapi3.Reflector{}
+	reflector := openapi31.Reflector{}
 	securityName := "api_key"
 
 	// Declare security scheme.
-	reflector.SpecEns().SetAPIKeySecurity(securityName, "Authorization", openapi.InHeader, "API Access")
+	reflector.SpecEns().SetAPIKeySecurity(securityName, "Authorization",
+		openapi.InHeader, "API Access")
 
 	oc, _ := reflector.NewOperationContext(http.MethodGet, "/secure")
 	oc.AddRespStructure(struct {
@@ -111,7 +112,7 @@ func ExampleSpec_SetAPIKeySecurity() {
 	fmt.Println(string(schema))
 
 	// Output:
-	// openapi: 3.0.3
+	// openapi: 3.1.0
 	// info:
 	//   title: ""
 	//   version: ""
@@ -149,7 +150,7 @@ func ExampleSpec_SetAPIKeySecurity() {
 }
 
 func ExampleSpec_SetHTTPBearerTokenSecurity() {
-	reflector := openapi3.Reflector{}
+	reflector := openapi31.Reflector{}
 	securityName := "bearer_token"
 
 	// Declare security scheme.
@@ -181,7 +182,7 @@ func ExampleSpec_SetHTTPBearerTokenSecurity() {
 	fmt.Println(string(schema))
 
 	// Output:
-	// openapi: 3.0.3
+	// openapi: 3.1.0
 	// info:
 	//   title: ""
 	//   version: ""

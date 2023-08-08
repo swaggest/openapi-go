@@ -28,6 +28,7 @@ ifeq ($(DEVGO_PATH),)
 endif
 
 JSON_CLI_VERSION := "v1.8.6"
+JSON_CLI_VERSION_31 := "v1.11.1"
 
 -include $(DEVGO_PATH)/makefiles/main.mk
 -include $(DEVGO_PATH)/makefiles/lint.mk
@@ -40,7 +41,14 @@ JSON_CLI_VERSION := "v1.8.6"
 test: test-unit
 
 ## Generate entities from schema
-gen:
+gen-3.0:
 	@test -s $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) || (curl -sSfL https://github.com/swaggest/json-cli/releases/download/$(JSON_CLI_VERSION)/json-cli -o $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) && chmod +x $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION))
 	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION) gen-go openapi3.json --output ../../openapi3/entities.go --package-name openapi3 --with-tests --with-zero-values --validate-required --fluent-setters --root-name Spec
 	@gofmt -w ./openapi3/entities.go ./openapi3/entities_test.go
+
+
+## Generate entities from schema
+gen-3.1:
+	@test -s $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31) || (curl -sSfL https://github.com/swaggest/json-cli/releases/download/$(JSON_CLI_VERSION_31)/json-cli -o $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31) && chmod +x $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31))
+	@cd resources/schema/ && $(GOPATH)/bin/json-cli-$(JSON_CLI_VERSION_31)  gen-go openapi31-patched.json --config openapi31-config.json --output ../../openapi31/entities.go --package-name openapi31 --def-ptr '#/$$defs' --with-zero-values --validate-required --fluent-setters --root-name Spec
+	@gofmt -w ./openapi31/entities.go

@@ -1,0 +1,6 @@
+{
+  "rewrites": {
+    "/DefsType/i":"",
+    "/Apikey/": "APIKey"
+  }
+}

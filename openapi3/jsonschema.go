@@ -25,7 +25,7 @@ func (s *SchemaOrRef) ToJSONSchema(spec *Spec) jsonschema.SchemaOrBool {
 
 	// Inline root reference without recursions.
 	if s.SchemaReference != nil {
-		dstName := strings.TrimPrefix(s.SchemaReference.Ref, "#/components/schemas/")
+		dstName := strings.TrimPrefix(s.SchemaReference.Ref, componentsSchemas)
 		if ctx.refsCount[dstName] == 1 {
 			js = ctx.refsProcessed[dstName]
 			delete(ctx.refsProcessed, dstName)
@@ -49,8 +49,8 @@ func (s *SchemaOrRef) toJSONSchema(ctx toJSONSchemaContext) jsonschema.SchemaOrB
 	if s.SchemaReference != nil {
 		jso.WithRef(s.SchemaReference.Ref)
 
-		if strings.HasPrefix(s.SchemaReference.Ref, "#/components/schemas/") {
-			dstName := strings.TrimPrefix(s.SchemaReference.Ref, "#/components/schemas/")
+		if strings.HasPrefix(s.SchemaReference.Ref, componentsSchemas) {
+			dstName := strings.TrimPrefix(s.SchemaReference.Ref, componentsSchemas)
 
 			if _, alreadyProcessed := ctx.refsProcessed[dstName]; !alreadyProcessed {
 				ctx.refsProcessed[dstName] = jsonschema.SchemaOrBool{}

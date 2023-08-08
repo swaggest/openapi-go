@@ -1,0 +1,26 @@
+{
+  "$ref":"#/components/schemas/Openapi31TestResp",
+  "components":{
+    "schemas":{
+      "Openapi31TestResp":{
+        "title":"Sample Response","description":"This is a sample response.",
+        "properties":{
+          "arrayOfAnything":{"items":{},"type":"array"},"field1":{"type":"integer"},"field2":{"type":"string"},
+          "info":{
+            "required":["foo"],
+            "properties":{"bar":{"description":"This is Bar.","type":"number"},"foo":{"default":"baz","pattern":"\\d+","type":"string"}},
+            "type":"object"
+          },
+          "map":{"additionalProperties":{"type":"integer"},"type":"object"},
+          "mapOfAnything":{"additionalProperties":{},"type":"object"},"nullableWhatever":{},
+          "parent":{"$ref":"#/components/schemas/Openapi31TestResp"},
+          "recursiveArray":{"items":{"$ref":"#/components/schemas/Openapi31TestResp"},"type":"array"},
+          "recursiveStructArray":{"items":{"$ref":"#/components/schemas/Openapi31TestResp"},"type":"array"},
+          "uuid":{"$ref":"#/components/schemas/Openapi31TestUUID"},"whatever":{}
+        },
+        "type":"object","x-foo":"bar"
+      },
+      "Openapi31TestUUID":{"items":{"minimum":0,"type":"integer"},"type":["array","null"]}
+    }
+  }
+}

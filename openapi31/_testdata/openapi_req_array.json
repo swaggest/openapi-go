@@ -1,0 +1,26 @@
+{
+ "openapi":"3.1.0","info":{"title":"SampleAPI","version":"1.2.3"},
+ "paths":{
+  "/somewhere":{
+   "post":{
+    "requestBody":{
+     "content":{
+      "application/json":{"schema":{"items":{"$ref":"#/components/schemas/Openapi31TestGetReq"},"type":["null","array"]}}
+     }
+    },
+    "responses":{"204":{"description":"No Content"}}
+   }
+  }
+ },
+ "components":{
+  "schemas":{
+   "Openapi31TestGetReq":{
+    "properties":{
+     "c":{"deprecated":true,"type":"string"},"h":{"type":"number"},"p":{"type":"integer"},
+     "q1":{"description":"Query parameter.","type":"integer"},"q3":{"description":"Query parameter.","type":"integer"}
+    },
+    "required":["q1","q3"],"type":"object"
+   }
+  }
+ }
+}
