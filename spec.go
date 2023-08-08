@@ -2,6 +2,10 @@ package openapi
 
 // SpecSchema abstracts OpenAPI schema implementation to generalize multiple revisions.
 type SpecSchema interface {
+	Title() string
+	Description() string
+	Version() string
+
 	SetTitle(t string)
 	SetDescription(d string)
 	SetVersion(v string)
