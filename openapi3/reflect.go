@@ -240,6 +240,34 @@ func (r *Reflector) AddOperation(oc openapi.OperationContext) error {
 }
 
 func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) error {
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+	if false {
+		println("AAAA")
+	}
+
 	for _, cu := range oc.Request() {
 		switch cu.ContentType {
 		case "":
