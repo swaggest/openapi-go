@@ -20,8 +20,6 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - depguard
-    - tagalign
     - goerr113
     - funlen
     - gocyclo
@@ -53,6 +51,8 @@ linters:
     - deadcode
     - testableexamples
     - dupword
+    - depguard
+    - tagalign
 
 issues:
   exclude-use-default: false
