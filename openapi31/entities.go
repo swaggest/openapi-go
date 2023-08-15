@@ -1768,10 +1768,8 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constHeader is unconditionally added to JSON.
-	constHeader = json.RawMessage(`{"style":"simple"}`)
-)
+// constHeader is unconditionally added to JSON.
+var constHeader = json.RawMessage(`{"style":"simple"}`)
 
 // MarshalJSON encodes JSON.
 func (h Header) MarshalJSON() ([]byte, error) {
@@ -4181,10 +4179,8 @@ func (s *SecuritySchemeAPIKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSecuritySchemeAPIKey is unconditionally added to JSON.
-	constSecuritySchemeAPIKey = json.RawMessage(`{"type":"apiKey"}`)
-)
+// constSecuritySchemeAPIKey is unconditionally added to JSON.
+var constSecuritySchemeAPIKey = json.RawMessage(`{"type":"apiKey"}`)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeAPIKey) MarshalJSON() ([]byte, error) {
@@ -4244,10 +4240,8 @@ func (s *SecuritySchemeHTTP) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSecuritySchemeHTTP is unconditionally added to JSON.
-	constSecuritySchemeHTTP = json.RawMessage(`{"type":"http"}`)
-)
+// constSecuritySchemeHTTP is unconditionally added to JSON.
+var constSecuritySchemeHTTP = json.RawMessage(`{"type":"http"}`)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeHTTP) MarshalJSON() ([]byte, error) {
@@ -4316,10 +4310,8 @@ func (s *SecuritySchemeHTTPBearer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSecuritySchemeHTTPBearer is unconditionally added to JSON.
-	constSecuritySchemeHTTPBearer = json.RawMessage(`{"type":"http"}`)
-)
+// constSecuritySchemeHTTPBearer is unconditionally added to JSON.
+var constSecuritySchemeHTTPBearer = json.RawMessage(`{"type":"http"}`)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeHTTPBearer) MarshalJSON() ([]byte, error) {
@@ -4379,10 +4371,8 @@ func (s *SecuritySchemeOauth2) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSecuritySchemeOauth2 is unconditionally added to JSON.
-	constSecuritySchemeOauth2 = json.RawMessage(`{"type":"oauth2"}`)
-)
+// constSecuritySchemeOauth2 is unconditionally added to JSON.
+var constSecuritySchemeOauth2 = json.RawMessage(`{"type":"oauth2"}`)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeOauth2) MarshalJSON() ([]byte, error) {
@@ -5135,10 +5125,8 @@ func (s *SecuritySchemeOidc) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constSecuritySchemeOidc is unconditionally added to JSON.
-	constSecuritySchemeOidc = json.RawMessage(`{"type":"openIdConnect"}`)
-)
+// constSecuritySchemeOidc is unconditionally added to JSON.
+var constSecuritySchemeOidc = json.RawMessage(`{"type":"openIdConnect"}`)
 
 // MarshalJSON encodes JSON.
 func (s SecuritySchemeOidc) MarshalJSON() ([]byte, error) {
@@ -5148,8 +5136,7 @@ func (s SecuritySchemeOidc) MarshalJSON() ([]byte, error) {
 // MutualTLS structure is generated from "#/$defs/security-scheme/oneOf/5".
 //
 // mutualTLS.
-type MutualTLS struct {
-}
+type MutualTLS struct{}
 
 // UnmarshalJSON decodes JSON.
 func (m *MutualTLS) UnmarshalJSON(data []byte) error {
@@ -5171,10 +5158,8 @@ func (m *MutualTLS) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-var (
-	// constMutualTLS is unconditionally added to JSON.
-	constMutualTLS = json.RawMessage(`{"type":"mutualTLS"}`)
-)
+// constMutualTLS is unconditionally added to JSON.
+var constMutualTLS = json.RawMessage(`{"type":"mutualTLS"}`)
 
 // MarshalJSON encodes JSON.
 func (m MutualTLS) MarshalJSON() ([]byte, error) {
