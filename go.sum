@@ -33,10 +33,10 @@ github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/swaggest/assertjson v1.9.0 h1:dKu0BfJkIxv/xe//mkCrK5yZbs79jL7OVf9Ija7o2xQ=
 github.com/swaggest/assertjson v1.9.0/go.mod h1:b+ZKX2VRiUjxfUIal0HDN85W0nHPAYUbYH5WkkSsFsU=
-github.com/swaggest/jsonschema-go v0.3.57 h1:n6D/2K9557Yqn/NohXoszmjuN0Lp5n0DyHlVLRZXbOM=
-github.com/swaggest/jsonschema-go v0.3.57/go.mod h1:5WFFGBBte5JAWAV8gDpNRJ/tlQnb1AHDdf/ghgsVUik=
-github.com/swaggest/refl v1.2.0 h1:Qqqhfwi7REXF6/4cwJmj3gQMzl0Q0cYquxTYdD0kvi0=
-github.com/swaggest/refl v1.2.0/go.mod h1:CkC6g7h1PW33KprTuYRSw8UUOslRUt4lF3oe7tTIgNU=
+github.com/swaggest/jsonschema-go v0.3.61 h1:46Jk7nifEDrGsPEAlWCVprqSaczETWO1LhtAKtxMM5I=
+github.com/swaggest/jsonschema-go v0.3.61/go.mod h1:FAsTxvFjOp+aS4DqXrY7MTYC2r7rrmxEzxEgbQVyR/c=
+github.com/swaggest/refl v1.2.1 h1:1meX9NaXjM5lmb4kk4RP3OZsXFRke9B1EHAP/pCEKO0=
+github.com/swaggest/refl v1.2.1/go.mod h1:CkC6g7h1PW33KprTuYRSw8UUOslRUt4lF3oe7tTIgNU=
 github.com/yudai/gojsondiff v1.0.0 h1:27cbfqXLVEJ1o8I6v3y9lg8Ydm53EKqHXAOMxEGlCOA=
 github.com/yudai/gojsondiff v1.0.0/go.mod h1:AY32+k2cwILAkW1fbgxQ5mUmMiZFgLIV+FBNExI05xg=
 github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 h1:BHyfKlQyqbsFN5p3IfnEUduWvb9is428/nNb5L3U01M=
@@ -45,8 +45,8 @@ github.com/yudai/pp v2.0.1+incompatible h1:Q4//iY4pNF6yPLZIigmvcl7k/bPgrcTPIFIcm
 golang.org/x/net v0.7.0 h1:rJrUqqhjsgNp7KqAIc25s9pZnjU7TUcSY7HcVZjdn1g=
 golang.org/x/sys v0.0.0-20191005200804-aed5e4c7ecf9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=
-golang.org/x/text v0.7.0 h1:4BRB4x83lYWy72KwLD/qYDuTu7q9PjSagHvijDw7cLo=
-golang.org/x/text v0.7.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
+golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
+golang.org/x/text v0.13.0/go.mod h1:TvPlkZtksWOMsz7fbANvkp4WM8x/WCo/om8BMLbz+aE=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
