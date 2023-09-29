@@ -1126,14 +1126,16 @@ func (p PathItem) MarshalJSON() ([]byte, error) {
 
 // Reference structure is generated from "#/$defs/reference".
 type Reference struct {
-	Ref         *string `json:"$ref,omitempty"` // Format: uri-reference.
+	// Format: uri-reference.
+	// Required.
+	Ref         string  `json:"$ref"`
 	Summary     *string `json:"summary,omitempty"`
 	Description *string `json:"description,omitempty"`
 }
 
 // WithRef sets Ref value.
 func (r *Reference) WithRef(val string) *Reference {
-	r.Ref = &val
+	r.Ref = val
 	return r
 }
 
@@ -1147,6 +1149,41 @@ func (r *Reference) WithSummary(val string) *Reference {
 func (r *Reference) WithDescription(val string) *Reference {
 	r.Description = &val
 	return r
+}
+
+type marshalReference Reference
+
+var requireKeysReference = []string{
+	"$ref",
+}
+
+// UnmarshalJSON decodes JSON.
+func (r *Reference) UnmarshalJSON(data []byte) error {
+	var err error
+
+	mr := marshalReference(*r)
+
+	err = json.Unmarshal(data, &mr)
+	if err != nil {
+		return err
+	}
+
+	var rawMap map[string]json.RawMessage
+
+	err = json.Unmarshal(data, &rawMap)
+	if err != nil {
+		rawMap = nil
+	}
+
+	for _, key := range requireKeysReference {
+		if _, found := rawMap[key]; !found {
+			return errors.New("required key missing: " + key)
+		}
+	}
+
+	*r = Reference(mr)
+
+	return nil
 }
 
 // Parameter structure is generated from "#/$defs/parameter".

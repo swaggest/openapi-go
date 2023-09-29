@@ -1,0 +1,76 @@
+openapi: 3.1.0
+info:
+  description: This services keeps track of albums.
+  title: Albums API
+  version: v1.2.3
+paths:
+  /albums:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Album'
+                type: array
+          description: OK
+      summary: List albums
+      tags:
+        - Albums
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Album'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+          description: OK
+      summary: Create an album
+      tags:
+        - Albums
+  /albums/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Album'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                type: object
+          description: Not Found
+      summary: Get album
+      tags:
+        - Albums
+components:
+  schemas:
+    Album:
+      properties:
+        artist:
+          type: string
+        id:
+          type: string
+        price:
+          type: number
+        title:
+          type: string
+      type: object

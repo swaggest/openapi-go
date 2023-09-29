@@ -1195,6 +1195,7 @@
     "reference": {
       "$comment": "https://spec.openapis.org/oas/v3.1.0#reference-object",
       "type": "object",
+      "required": ["$ref"],
       "properties": {
         "$ref": {
           "type": "string",
