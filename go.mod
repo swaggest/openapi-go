@@ -6,8 +6,8 @@ require (
 	github.com/bool64/dev v0.2.31
 	github.com/stretchr/testify v1.8.2
 	github.com/swaggest/assertjson v1.9.0
-	github.com/swaggest/jsonschema-go v0.3.61
-	github.com/swaggest/refl v1.2.1
+	github.com/swaggest/jsonschema-go v0.3.62
+	github.com/swaggest/refl v1.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

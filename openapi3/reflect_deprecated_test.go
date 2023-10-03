@@ -31,9 +31,9 @@ func TestReflector_SetRequest_array(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/openapi_req_array_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("testdata/openapi_req_array_last_run.json", b, 0o600))
 
-	expected, err := os.ReadFile("_testdata/openapi_req_array.json")
+	expected, err := os.ReadFile("testdata/openapi_req_array.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
@@ -69,11 +69,11 @@ func TestReflector_SetRequest_uploadInterface(t *testing.T) {
 	  },
 	  "components":{
 		"schemas":{
-		  "FormDataMultipartFile":{"type":"string","format":"binary","nullable":true},
 		  "FormDataOpenapi3TestReq":{
 			"type":"object",
-			"properties":{"upload1":{"$ref":"#/components/schemas/FormDataMultipartFile"}}
-		  }
+			"properties":{"upload1":{"$ref":"#/components/schemas/MultipartFile"}}
+		  },
+		  "MultipartFile":{"type":"string","format":"binary","nullable":true}
 		}
 	  }
 	}`, s)
@@ -97,9 +97,9 @@ func TestReflector_SetRequest(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/openapi_req2_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("testdata/openapi_req2_last_run.json", b, 0o600))
 
-	expected, err := os.ReadFile("_testdata/openapi_req2.json")
+	expected, err := os.ReadFile("testdata/openapi_req2.json")
 	require.NoError(t, err)
 
 	assertjson.Equal(t, expected, b)
@@ -128,7 +128,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	s.Paths.WithMapOfPathItemValuesItem("/somewhere/{in_path}", pathItem)
 
 	js := op.RequestBody.RequestBody.Content["multipart/form-data"].Schema.ToJSONSchema(s)
-	expected, err := os.ReadFile("_testdata/req_schema.json")
+	expected, err := os.ReadFile("testdata/req_schema.json")
 	require.NoError(t, err)
 	assertjson.EqualMarshal(t, expected, js)
 
@@ -145,9 +145,9 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	jsb, err := assertjson.MarshalIndentCompact(js, "", " ", 120)
 	require.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/resp_schema_last_run.json", jsb, 0o600))
+	require.NoError(t, os.WriteFile("testdata/resp_schema_last_run.json", jsb, 0o600))
 
-	expected, err = os.ReadFile("_testdata/resp_schema.json")
+	expected, err = os.ReadFile("testdata/resp_schema.json")
 	require.NoError(t, err)
 	assertjson.EqualMarshal(t, expected, js)
 
@@ -162,9 +162,9 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
 	assert.NoError(t, err)
 
-	require.NoError(t, os.WriteFile("_testdata/openapi_last_run.json", b, 0o600))
+	require.NoError(t, os.WriteFile("testdata/openapi_last_run.json", b, 0o600))
 
-	expected, err = os.ReadFile("_testdata/openapi.json")
+	expected, err = os.ReadFile("testdata/openapi.json")
 	require.NoError(t, err)
 
 	assertjson.EqualMarshal(t, expected, s)
@@ -311,31 +311,39 @@ func TestReflector_SetupRequest(t *testing.T) {
 	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{value-4}", op))
 
 	assertjson.EqMarshal(t, `{
-	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
-	 "paths":{
-	  "/somewhere/{value-4}":{
-	   "post":{
-		"parameters":[
-		 {"name":"value_2","in":"query","schema":{"type":"string"}},
-		 {"name":"value-4","in":"path","required":true,"schema":{"type":"boolean"}},
-		 {"name":"value_5","in":"cookie","schema":{"type":"string"}},
-		 {"name":"X-Value-1","in":"header","schema":{"type":"integer"}}
-		],
-		"requestBody":{
-		 "content":{
-		  "multipart/form-data":{
-		   "schema":{
-			"type":"object",
-			"properties":{"upload6":{"$ref":"#/components/schemas/FormDataMultipartFile"},"value3":{"type":"number"}}
-		   }
+	  "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
+	  "paths":{
+		"/somewhere/{value-4}":{
+		  "post":{
+			"parameters":[
+			  {"name":"value_2","in":"query","schema":{"type":"string"}},
+			  {
+				"name":"value-4","in":"path","required":true,
+				"schema":{"type":"boolean"}
+			  },
+			  {"name":"value_5","in":"cookie","schema":{"type":"string"}},
+			  {"name":"X-Value-1","in":"header","schema":{"type":"integer"}}
+			],
+			"requestBody":{
+			  "content":{
+				"multipart/form-data":{
+				  "schema":{
+					"type":"object",
+					"properties":{
+					  "upload6":{"$ref":"#/components/schemas/MultipartFile"},
+					  "value3":{"type":"number"}
+					}
+				  }
+				}
+			  }
+			},
+			"responses":{"204":{"description":"No Content"}}
 		  }
-		 }
-		},
-		"responses":{"204":{"description":"No Content"}}
-	   }
+		}
+	  },
+	  "components":{
+		"schemas":{"MultipartFile":{"type":"string","format":"binary","nullable":true}}
 	  }
-	 },
-	 "components":{"schemas":{"FormDataMultipartFile":{"type":"string","format":"binary","nullable":true}}}
 	}`, s)
 }
 

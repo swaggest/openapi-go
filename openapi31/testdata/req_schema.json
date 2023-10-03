@@ -1,0 +1,14 @@
+{
+  "properties":{
+    "in_form1":{"type":"string"},"in_form2":{"type":"string"},
+    "upload1":{"$ref":"#/components/schemas/MultipartFile"},
+    "upload2":{"$ref":"#/components/schemas/MultipartFileHeader"}
+  },
+  "type":"object",
+  "components":{
+    "schemas":{
+      "MultipartFile":{"type":["null","string"],"format":"binary"},
+      "MultipartFileHeader":{"type":["null","string"],"format":"binary"}
+    }
+  }
+}

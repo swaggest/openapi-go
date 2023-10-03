@@ -191,9 +191,9 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 		switch cu.ContentType {
 		case "":
 			if err := joinErrors(
+				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
-				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
 			); err != nil {
 				return err
 			}
@@ -206,8 +206,8 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 			}
 		case mimeFormUrlencoded, mimeMultipart:
 			if err := joinErrors(
-				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
+				r.parseParameters(o, oc, cu),
 			); err != nil {
 				return err
 			}
@@ -300,7 +300,9 @@ func (r *Reflector) parseRequestBody(
 	}
 
 	// If `formData` is defined on a request body `json` is ignored.
-	if tag == tagJSON && refl.HasTaggedFields(input, tagFormData) && !forceJSONRequestBody {
+	if tag == tagJSON &&
+		(refl.HasTaggedFields(input, tagFormData) || refl.HasTaggedFields(input, tagForm)) &&
+		!forceJSONRequestBody {
 		return nil
 	}
 
@@ -318,7 +320,24 @@ func (r *Reflector) parseRequestBody(
 
 	schema, err := r.Reflect(input,
 		openapi.WithOperationCtx(oc, false, "body"),
-		jsonschema.DefinitionsPrefix(componentsSchemas+definitionPrefix),
+		jsonschema.DefinitionsPrefix(componentsSchemas),
+		jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
+			if tag != tagJSON {
+				v := reflect.New(t).Interface()
+
+				if refl.HasTaggedFields(v, tag) {
+					return definitionPrefix + defaultDefName
+				}
+
+				for _, at := range additionalTags {
+					if refl.HasTaggedFields(v, at) {
+						return definitionPrefix + defaultDefName
+					}
+				}
+			}
+
+			return defaultDefName
+		}),
 		jsonschema.RootRef,
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tag, additionalTags...),
@@ -369,7 +388,7 @@ func (r *Reflector) parseRequestBody(
 			return err
 		}
 
-		r.SpecEns().ComponentsEns().WithSchemasItem(definitionPrefix+name, sm)
+		r.SpecEns().ComponentsEns().WithSchemasItem(name, sm)
 	}
 
 	if mime == mimeFormUrlencoded && hasFileUpload {
