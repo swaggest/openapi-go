@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -323,102 +322,19 @@ func (r *Reflector) parseRequestBody(
 	tag string,
 	additionalTags ...string,
 ) error {
-	input := cu.Structure
-
-	httpMethod = strings.ToUpper(httpMethod)
-	_, forceRequestBody := input.(openapi.RequestBodyEnforcer)
-	_, forceJSONRequestBody := input.(openapi.RequestJSONBodyEnforcer)
-
-	// GET, HEAD, DELETE and TRACE requests should not have body.
-	switch httpMethod {
-	case http.MethodGet, http.MethodHead, http.MethodDelete, http.MethodTrace:
-		if !forceRequestBody {
-			return nil
-		}
-	}
-
-	hasTaggedFields := refl.HasTaggedFields(input, tag)
-	for _, t := range additionalTags {
-		if hasTaggedFields {
-			break
-		}
-
-		hasTaggedFields = refl.HasTaggedFields(input, t)
-	}
-
-	// Form data can not have map or array as body.
-	if !hasTaggedFields && len(mapping) == 0 && tag != tagJSON {
-		return nil
-	}
-
-	// If `formData` is defined on a request body `json` is ignored.
-	if tag == tagJSON &&
-		(refl.HasTaggedFields(input, tagFormData) || refl.HasTaggedFields(input, tagForm)) &&
-		!forceJSONRequestBody {
-		return nil
-	}
-
-	// JSON can be a map or array without field tags.
-	if !hasTaggedFields && len(mapping) == 0 && !refl.IsSliceOrMap(input) && refl.FindEmbeddedSliceOrMap(input) == nil {
-		return nil
-	}
-
-	hasFileUpload := false
-	definitionPrefix := ""
-
-	if tag != tagJSON {
-		definitionPrefix += strings.Title(tag)
-	}
-
-	schema, err := r.Reflect(input,
-		openapi.WithOperationCtx(oc, false, "body"),
-		jsonschema.DefinitionsPrefix(componentsSchemas),
-		jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
-			if tag != tagJSON {
-				v := reflect.New(t).Interface()
-
-				if refl.HasTaggedFields(v, tag) {
-					return definitionPrefix + defaultDefName
-				}
-
-				for _, at := range additionalTags {
-					if refl.HasTaggedFields(v, at) {
-						return definitionPrefix + defaultDefName
-					}
-				}
-			}
-
-			return defaultDefName
-		}),
-		jsonschema.RootRef,
-		jsonschema.PropertyNameMapping(mapping),
-		jsonschema.PropertyNameTag(tag, additionalTags...),
-		sanitizeDefName,
-		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
-			vv := params.Value.Interface()
-
-			found := false
-			if _, ok := vv.(*multipart.File); ok {
-				found = true
-			}
-
-			if _, ok := vv.(*multipart.FileHeader); ok {
-				found = true
-			}
-
-			if found {
-				params.Schema.AddType(jsonschema.String)
-				params.Schema.WithFormat("binary")
-
-				hasFileUpload = true
-
-				return true, nil
-			}
-
-			return false, nil
-		}),
+	schema, hasFileUpload, err := internal.ReflectRequestBody(
+		r.JSONSchemaReflector(),
+		func(rc *jsonschema.ReflectContext) {
+			openapi.WithOperationCtx(oc, false, "body")(rc)
+			jsonschema.DefinitionsPrefix(componentsSchemas)(rc)
+		},
+		cu,
+		httpMethod,
+		mapping,
+		tag,
+		additionalTags...,
 	)
-	if err != nil {
+	if err != nil || schema == nil {
 		return err
 	}
 
