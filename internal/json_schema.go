@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"bytes"
+	"encoding/json"
 	"mime/multipart"
 	"net/http"
 	"reflect"
@@ -138,4 +140,64 @@ func ReflectRequestBody(
 	}
 
 	return &sch, hasFileUpload, nil
+}
+
+// ReflectJSONResponse reflects JSON schema of response.
+func ReflectJSONResponse(
+	r *jsonschema.Reflector,
+	reflOption func(rc *jsonschema.ReflectContext),
+	output interface{},
+) (schema *jsonschema.Schema, err error) {
+	if output == nil {
+		return nil, nil
+	}
+
+	// Check if output structure exposes meaningful schema.
+	if hasJSONBody, err := hasJSONBody(r, output); err == nil && !hasJSONBody {
+		return nil, nil
+	}
+
+	if reflOption == nil {
+		reflOption = func(rc *jsonschema.ReflectContext) {}
+	}
+
+	sch, err := r.Reflect(output,
+		reflOption,
+		// openapi.WithOperationCtx(oc, true, openapi.InBody),
+		jsonschema.RootRef,
+		// jsonschema.DefinitionsPrefix(componentsSchemas),
+		// jsonschema.CollectDefinitions(r.collectDefinition()),
+		sanitizeDefName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sch, nil
+}
+
+func hasJSONBody(r *jsonschema.Reflector, output interface{}) (bool, error) {
+	schema, err := r.Reflect(output, sanitizeDefName)
+	if err != nil {
+		return false, err
+	}
+
+	// Remove non-constraining fields to prepare for marshaling.
+	schema.Title = nil
+	schema.Description = nil
+	schema.Comment = nil
+	schema.ExtraProperties = nil
+	schema.ID = nil
+	schema.Examples = nil
+
+	j, err := json.Marshal(schema)
+	if err != nil {
+		return false, err
+	}
+
+	if !bytes.Equal([]byte("{}"), j) && !bytes.Equal([]byte(`{"type":"object"}`), j) {
+		return true, nil
+	}
+
+	return false, nil
 }

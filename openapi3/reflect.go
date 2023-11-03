@@ -1,8 +1,6 @@
 package openapi3
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -598,32 +596,6 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 	return nil
 }
 
-func (r *Reflector) hasJSONBody(output interface{}) (bool, error) {
-	schema, err := r.Reflect(output, sanitizeDefName)
-	if err != nil {
-		return false, err
-	}
-
-	// Remove non-constraining fields to prepare for marshaling.
-	schema.Title = nil
-	schema.Description = nil
-	schema.Comment = nil
-	schema.ExtraProperties = nil
-	schema.ID = nil
-	schema.Examples = nil
-
-	j, err := json.Marshal(schema)
-	if err != nil {
-		return false, err
-	}
-
-	if !bytes.Equal([]byte("{}"), j) && !bytes.Equal([]byte(`{"type":"object"}`), j) {
-		return true, nil
-	}
-
-	return false, nil
-}
-
 func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) error {
 	for _, cu := range oc.Response() {
 		if cu.HTTPStatus == 0 && !cu.IsDefault {
@@ -700,31 +672,18 @@ func (r *Reflector) ensureResponseContentType(resp *Response, contentType string
 }
 
 func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
-	output := cu.Structure
-	contentType := cu.ContentType
+	sch, err := internal.ReflectJSONResponse(r.JSONSchemaReflector(), func(rc *jsonschema.ReflectContext) {
+		openapi.WithOperationCtx(oc, true, openapi.InBody)(rc)
+		jsonschema.DefinitionsPrefix(componentsSchemas)(rc)
+		jsonschema.CollectDefinitions(r.collectDefinition())(rc)
+	}, cu.Structure)
 
-	if output == nil {
-		return nil
-	}
-
-	// Check if output structure exposes meaningful schema.
-	if hasJSONBody, err := r.hasJSONBody(output); err == nil && !hasJSONBody {
-		return nil
-	}
-
-	schema, err := r.Reflect(output,
-		openapi.WithOperationCtx(oc, true, openapi.InBody),
-		jsonschema.RootRef,
-		jsonschema.DefinitionsPrefix(componentsSchemas),
-		jsonschema.CollectDefinitions(r.collectDefinition()),
-		sanitizeDefName,
-	)
-	if err != nil {
+	if err != nil || sch == nil {
 		return err
 	}
 
 	oaiSchema := SchemaOrRef{}
-	oaiSchema.FromJSONSchema(schema.ToSchemaOrBool())
+	oaiSchema.FromJSONSchema(sch.ToSchemaOrBool())
 
 	if oaiSchema.Schema != nil {
 		oaiSchema.Schema.Nullable = nil
@@ -734,6 +693,7 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 		resp.Content = map[string]MediaType{}
 	}
 
+	contentType := cu.ContentType
 	if contentType == "" {
 		contentType = mimeJSON
 	}
@@ -746,8 +706,8 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 		MapOfAnything: nil,
 	}
 
-	if schema.Description != nil && resp.Description == "" {
-		resp.Description = *schema.Description
+	if sch.Description != nil && resp.Description == "" {
+		resp.Description = *sch.Description
 	}
 
 	return nil
