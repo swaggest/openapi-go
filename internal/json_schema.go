@@ -142,8 +142,8 @@ func ReflectRequestBody(
 // ReflectJSONResponse reflects JSON schema of response.
 func ReflectJSONResponse(
 	r *jsonschema.Reflector,
-	reflOption func(rc *jsonschema.ReflectContext),
 	output interface{},
+	reflOptions ...func(rc *jsonschema.ReflectContext),
 ) (schema *jsonschema.Schema, err error) {
 	if output == nil {
 		return nil, nil
@@ -154,18 +154,12 @@ func ReflectJSONResponse(
 		return nil, nil
 	}
 
-	if reflOption == nil {
-		reflOption = func(rc *jsonschema.ReflectContext) {}
-	}
-
-	sch, err := r.Reflect(output,
-		reflOption,
-		// openapi.WithOperationCtx(oc, true, openapi.InBody),
+	reflOptions = append(reflOptions,
 		jsonschema.RootRef,
-		// jsonschema.DefinitionsPrefix(componentsSchemas),
-		// jsonschema.CollectDefinitions(r.collectDefinition()),
 		sanitizeDefName,
 	)
+
+	sch, err := r.Reflect(output, reflOptions...)
 	if err != nil {
 		return nil, err
 	}

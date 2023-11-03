@@ -630,12 +630,10 @@ func (r *Reflector) ensureResponseContentType(resp *Response, contentType string
 func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
 	sch, err := internal.ReflectJSONResponse(
 		r.JSONSchemaReflector(),
-		func(rc *jsonschema.ReflectContext) {
-			openapi.WithOperationCtx(oc, true, openapi.InBody)(rc)
-			jsonschema.DefinitionsPrefix(componentsSchemas)(rc)
-			jsonschema.CollectDefinitions(r.collectDefinition())(rc)
-		},
 		cu.Structure,
+		openapi.WithOperationCtx(oc, true, openapi.InBody),
+		jsonschema.DefinitionsPrefix(componentsSchemas),
+		jsonschema.CollectDefinitions(r.collectDefinition()),
 	)
 
 	if err != nil || sch == nil {
