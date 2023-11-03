@@ -24,12 +24,12 @@ func TestReflector_SetRequest_array(t *testing.T) {
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new([]GetReq), http.MethodPost)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_req_array_last_run.json", b, 0o600))
 
@@ -49,7 +49,7 @@ func TestReflector_SetRequest_uploadInterface(t *testing.T) {
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new(req), http.MethodPost)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere", op))
 
@@ -90,12 +90,12 @@ func TestReflector_SetRequest(t *testing.T) {
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new(GetReq), http.MethodGet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_req2_last_run.json", b, 0o600))
 
@@ -116,10 +116,10 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 
 	op := openapi3.Operation{}
 
-	assert.NoError(t, reflector.SetRequest(&op, new(Req), http.MethodPost))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict))
-	assert.NoError(t, reflector.SetStringResponse(&op, http.StatusConflict, "text/html"))
+	require.NoError(t, reflector.SetRequest(&op, new(Req), http.MethodPost))
+	require.NoError(t, reflector.SetJSONResponse(&op, new(WeirdResp), http.StatusOK))
+	require.NoError(t, reflector.SetJSONResponse(&op, new([]WeirdResp), http.StatusConflict))
+	require.NoError(t, reflector.SetStringResponse(&op, http.StatusConflict, "text/html"))
 
 	pathItem := openapi3.PathItem{}
 	pathItem.
@@ -132,13 +132,13 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 	require.NoError(t, err)
 	assertjson.EqualMarshal(t, expected, js)
 
-	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{in_path}", op))
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{in_path}", op))
 
 	op = openapi3.Operation{}
 
-	assert.NoError(t, reflector.SetRequest(&op, new(GetReq), http.MethodGet))
-	assert.NoError(t, reflector.SetJSONResponse(&op, new(Resp), http.StatusOK))
-	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
+	require.NoError(t, reflector.SetRequest(&op, new(GetReq), http.MethodGet))
+	require.NoError(t, reflector.SetJSONResponse(&op, new(Resp), http.StatusOK))
+	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{in_path}", op))
 
 	js = op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
 		Schema.ToJSONSchema(s)
@@ -160,7 +160,7 @@ func TestReflector_SetJSONResponse(t *testing.T) {
 		op.Parameters[0].Parameter.Schema.ToJSONSchema(s))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_last_run.json", b, 0o600))
 
@@ -175,12 +175,12 @@ func TestReflector_SetRequest_pathParamAndBody(t *testing.T) {
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new(PathParamAndBody), http.MethodPost)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
-	assert.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{id}", op))
+	require.NoError(t, s.AddOperation(http.MethodPost, "/somewhere/{id}", op))
 
 	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},
@@ -206,12 +206,12 @@ func TestRequestBodyEnforcer(t *testing.T) {
 	op := openapi3.Operation{}
 
 	err := reflector.SetRequest(&op, new(WithReqBody), http.MethodGet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
-	assert.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{id}", op))
+	require.NoError(t, s.AddOperation(http.MethodGet, "/somewhere/{id}", op))
 
 	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},

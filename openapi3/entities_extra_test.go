@@ -3,7 +3,7 @@ package openapi3_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/swaggest/openapi-go/openapi3"
 )
 
@@ -46,5 +46,5 @@ components:
       scheme: bearer
       bearerFormat: JWT`
 
-	assert.NoError(t, s.UnmarshalYAML([]byte(spec)))
+	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
 }

@@ -110,7 +110,7 @@ func TestReflector_AddOperation_request_array(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_req_array_last_run.json", b, 0o600))
 
@@ -178,7 +178,7 @@ func TestReflector_AddOperation_request(t *testing.T) {
 	require.NoError(t, reflector.AddOperation(oc))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_req_last_run.json", b, 0o600))
 
@@ -235,7 +235,7 @@ func TestReflector_AddOperation_JSON_response(t *testing.T) {
 	oc.AddReqStructure(new(GetReq))
 	oc.AddRespStructure(new(Resp))
 
-	assert.NoError(t, reflector.AddOperation(oc))
+	require.NoError(t, reflector.AddOperation(oc))
 
 	require.NoError(t, s.SetupOperation(http.MethodGet, "/somewhere/{in_path}", func(op *openapi3.Operation) error {
 		js := op.Responses.MapOfResponseOrRefValues[strconv.Itoa(http.StatusOK)].Response.Content["application/json"].
@@ -261,7 +261,7 @@ func TestReflector_AddOperation_JSON_response(t *testing.T) {
 	}))
 
 	b, err := assertjson.MarshalIndentCompact(s, "", " ", 120)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile("testdata/openapi_last_run.json", b, 0o600))
 
@@ -290,7 +290,7 @@ func TestReflector_AddOperation_pathParamAndBody(t *testing.T) {
 
 	oc.AddReqStructure(new(PathParamAndBody))
 
-	assert.NoError(t, reflector.AddOperation(oc))
+	require.NoError(t, reflector.AddOperation(oc))
 
 	s := reflector.SpecEns()
 	s.Info.Title = apiName
@@ -330,7 +330,7 @@ func TestReflector_AddOperation_RequestBodyEnforcer(t *testing.T) {
 	s.Info.Title = apiName
 	s.Info.Version = apiVersion
 
-	assert.NoError(t, reflector.AddOperation(oc))
+	require.NoError(t, reflector.AddOperation(oc))
 
 	assertjson.EqMarshal(t, `{
 	 "openapi":"3.0.3","info":{"title":"SampleAPI","version":"1.2.3"},

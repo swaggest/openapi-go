@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/swaggest/assertjson"
 	jsonschema "github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
@@ -51,7 +52,7 @@ func TestReflector_WalkRequestJSONSchemas(t *testing.T) {
 	schemas := map[string]*jsonschema.SchemaOrBool{}
 	doneCalled := 0
 
-	assert.NoError(t, r.WalkRequestJSONSchemas(http.MethodPost, cu,
+	require.NoError(t, r.WalkRequestJSONSchemas(http.MethodPost, cu,
 		func(in openapi.In, paramName string, schema *jsonschema.SchemaOrBool, required bool) error {
 			schemas[string(in)+"-"+paramName+"-"+strconv.FormatBool(required)+"-"+
 				strconv.FormatBool(schema.IsTrivial(r.ResolveJSONSchemaRef))] = schema
@@ -141,7 +142,7 @@ func TestReflector_WalkRequestJSONSchemas_jsonBody(t *testing.T) {
 	schemas := map[string]*jsonschema.SchemaOrBool{}
 	doneCalled := 0
 
-	assert.NoError(t, r.WalkRequestJSONSchemas(http.MethodPost, cu,
+	require.NoError(t, r.WalkRequestJSONSchemas(http.MethodPost, cu,
 		func(in openapi.In, paramName string, schema *jsonschema.SchemaOrBool, required bool) error {
 			schemas[string(in)+"-"+paramName+"-"+strconv.FormatBool(required)+"-"+
 				strconv.FormatBool(schema.IsTrivial(r.ResolveJSONSchemaRef))] = schema
@@ -223,7 +224,7 @@ func TestReflector_WalkResponseJSONSchemas(t *testing.T) {
 	schemas := map[string]*jsonschema.SchemaOrBool{}
 	doneCalled := 0
 
-	assert.NoError(t, r.WalkResponseJSONSchemas(cu,
+	require.NoError(t, r.WalkResponseJSONSchemas(cu,
 		func(in openapi.In, paramName string, schema *jsonschema.SchemaOrBool, required bool) error {
 			schemas[string(in)+"-"+paramName+"-"+strconv.FormatBool(required)+"-"+
 				strconv.FormatBool(schema.IsTrivial(r.ResolveJSONSchemaRef))] = schema

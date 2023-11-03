@@ -111,7 +111,7 @@ type OperationState interface {
 	IsProcessingResponse() bool
 	ProcessingIn() In
 
-	SetIsProcessingResponse(bool)
+	SetIsProcessingResponse(isProcessingResponse bool)
 	SetProcessingIn(in In)
 }
 
