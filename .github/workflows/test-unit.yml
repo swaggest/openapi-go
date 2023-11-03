@@ -88,9 +88,9 @@ jobs:
         id: annotate
         if: matrix.go-version == env.COV_GO_VERSION && github.event.pull_request.base.sha != ''
         run: |
-          curl -sLO https://github.com/vearutop/gocovdiff/releases/download/v1.4.1/linux_amd64.tar.gz && tar xf linux_amd64.tar.gz && rm linux_amd64.tar.gz
+          curl -sLO https://github.com/vearutop/gocovdiff/releases/download/v1.4.2/linux_amd64.tar.gz && tar xf linux_amd64.tar.gz && rm linux_amd64.tar.gz
           gocovdiff_hash=$(git hash-object ./gocovdiff)
-          [ "$gocovdiff_hash" == "28794c48b5dd512e65a97c6c9b6a2e36097e7703" ] || (echo "::error::unexpected hash for gocovdiff, possible tampering: $gocovdiff_hash" && exit 1)
+          [ "$gocovdiff_hash" == "c37862c73a677e5a9c069470287823ab5bbf0244" ] || (echo "::error::unexpected hash for gocovdiff, possible tampering: $gocovdiff_hash" && exit 1)
           git fetch origin master ${{ github.event.pull_request.base.sha }}
           REP=$(./gocovdiff -mod github.com/$GITHUB_REPOSITORY -cov unit.coverprofile -gha-annotations gha-unit.txt -delta-cov-file delta-cov-unit.txt -target-delta-cov ${TARGET_DELTA_COV})
           echo "${REP}"
