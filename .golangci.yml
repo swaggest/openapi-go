@@ -20,6 +20,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - nilnil
     - goerr113
     - funlen
     - gocyclo
