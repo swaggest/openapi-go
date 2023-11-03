@@ -322,15 +322,13 @@ func (r *Reflector) parseRequestBody(
 ) error {
 	schema, hasFileUpload, err := internal.ReflectRequestBody(
 		r.JSONSchemaReflector(),
-		func(rc *jsonschema.ReflectContext) {
-			openapi.WithOperationCtx(oc, false, "body")(rc)
-			jsonschema.DefinitionsPrefix(componentsSchemas)(rc)
-		},
 		cu,
 		httpMethod,
 		mapping,
 		tag,
-		additionalTags...,
+		additionalTags,
+		openapi.WithOperationCtx(oc, false, "body"),
+		jsonschema.DefinitionsPrefix(componentsSchemas),
 	)
 	if err != nil || schema == nil {
 		return err

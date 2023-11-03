@@ -31,12 +31,12 @@ func sanitizeDefName(rc *jsonschema.ReflectContext) {
 // ReflectRequestBody reflects JSON schema of request body.
 func ReflectRequestBody(
 	r *jsonschema.Reflector,
-	reflOption func(rc *jsonschema.ReflectContext),
 	cu openapi.ContentUnit,
 	httpMethod string,
 	mapping map[string]string,
 	tag string,
-	additionalTags ...string,
+	additionalTags []string,
+	reflOptions ...func(rc *jsonschema.ReflectContext),
 ) (schema *jsonschema.Schema, hasFileUpload bool, err error) {
 	input := cu.Structure
 
@@ -84,12 +84,7 @@ func ReflectRequestBody(
 		definitionPrefix += strings.Title(tag)
 	}
 
-	if reflOption == nil {
-		reflOption = func(rc *jsonschema.ReflectContext) {}
-	}
-
-	sch, err := r.Reflect(input,
-		reflOption,
+	reflOptions = append(reflOptions,
 		jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
 			if tag != tagJSON {
 				v := reflect.New(t).Interface()
@@ -135,6 +130,8 @@ func ReflectRequestBody(
 			return false, nil
 		}),
 	)
+
+	sch, err := r.Reflect(input, reflOptions...)
 	if err != nil {
 		return nil, false, err
 	}
