@@ -77,8 +77,31 @@ jobs:
 
       - name: Test
         id: test
+        continue-on-error: true
         run: |
-          make test-unit
+          curl -sLO https://github.com/vearutop/teststat/releases/download/v0.1.22/linux_amd64.tar.gz && tar xf linux_amd64.tar.gz && rm linux_amd64.tar.gz
+          teststat_hash=$(git hash-object ./teststat)
+          [ "$teststat_hash" == "5f76f19f23958fdd71ba8bd2f066b3b4b87f5080" ] || (echo "::error::unexpected hash for teststat, possible tampering: $teststat_hash" && exit 1)
+          
+          # First run.
+          go test -short -coverprofile=unit.coverprofile -covermode=atomic -race -json ./... |& ./teststat -progress -store test-report0.jsonl -skip-report -failed-tests failed.txt -failed-builds errors.txt -
+
+          # Retries.
+          for i in {1..3}
+          do
+          test ! -f failed.txt || (export FAILED=$(cat failed.txt) && rm failed.txt && echo "Retry $i: $FAILED" && go test -short -race -run $FAILED -json ./... |& ./teststat -progress -store test-report${i}.jsonl -skip-report -failed-tests failed.txt -)
+          done
+
+          # Reporting.
+          REPORT=$(./teststat -failure-stats failure-stats.txt -markdown test-report*.jsonl)
+          echo "${REPORT}"
+          
+          test ! -f failed.txt || echo "Tests failed after retries: $(cat failed.txt)" 1>&2
+          test ! -f failed.txt || (echo "failed=true" >> $GITHUB_OUTPUT)
+          test ! -f errors.txt || (echo "failed=true" >> $GITHUB_OUTPUT)
+
+          echo "failure-stats<<EOF" >> $GITHUB_OUTPUT && cat failure-stats.txt >> $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
+          echo "report<<EOF" >> $GITHUB_OUTPUT && echo "$REPORT" >> $GITHUB_OUTPUT && echo "EOF" >> $GITHUB_OUTPUT
           go tool cover -func=./unit.coverprofile > unit.txt
           TOTAL=$(grep 'total:' unit.txt)
           echo "${TOTAL}"
@@ -115,12 +138,18 @@ jobs:
             <details><summary>Coverage of changed lines</summary>
             
             ${{ steps.annotate.outputs.rep }}
-
+            
             </details>
 
             <details><summary>Coverage diff with base branch</summary>
-
+            
             ${{ steps.annotate.outputs.diff }}
+            
+            </details>
+            
+            <details><summary>Test stats: ${{ steps.test.outputs.failure-stats }}</summary>
+            
+            ${{ steps.test.outputs.report }}
             
             </details>
 
@@ -134,3 +163,9 @@ jobs:
         with:
           file: ./unit.coverprofile
           flags: unittests
+
+      - name: Check test result
+        if: steps.test.outputs.failed == 'true'
+        run: |
+          echo "::error ::Test failed, see Test step for details"
+          exit 1
