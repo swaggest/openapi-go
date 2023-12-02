@@ -1135,3 +1135,56 @@ func TestReflector_AddOperation_defName(t *testing.T) {
 	  }
 	}`, r.Spec)
 }
+
+func Test_Repro2(t *testing.T) {
+	oarefl := openapi31.NewReflector()
+	oarefl.JSONSchemaReflector().DefaultOptions = append(oarefl.JSONSchemaReflector().DefaultOptions, jsonschema.ProcessWithoutTags)
+
+	{
+		var dummyIn struct {
+			ID int
+		}
+
+		var dummyOut struct {
+			Done bool
+		}
+
+		op, err := oarefl.NewOperationContext(http.MethodPost, "/postDelete")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		op.AddReqStructure(dummyIn, openapi.WithContentType("application/json"))
+		op.AddRespStructure(dummyOut, openapi.WithHTTPStatus(200))
+		if err = oarefl.AddOperation(op); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.1.0","info":{"title":"","version":""},
+	  "paths":{
+		"/postDelete":{
+		  "post":{
+			"requestBody":{
+			  "content":{
+				"application/json":{
+				  "schema":{"properties":{"ID":{"type":"integer"}},"type":"object"}
+				}
+			  }
+			},
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "application/json":{
+					"schema":{"properties":{"Done":{"type":"boolean"}},"type":"object"}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  }
+	}`, oarefl.SpecSchema())
+}
