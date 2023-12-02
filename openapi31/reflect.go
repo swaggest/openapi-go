@@ -224,7 +224,6 @@ const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
 	tagForm            = "form"
-	tagHeader          = "header"
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
@@ -333,27 +332,12 @@ func (r *Reflector) parseParametersIn(
 	in openapi.In,
 	additionalTags ...string,
 ) error {
-	input := c.Structure
-	propertyMapping := c.FieldMapping(in)
-
-	if refl.IsSliceOrMap(input) {
+	if refl.IsSliceOrMap(c.Structure) {
 		return nil
 	}
 
-	definitionsPrefix := componentsSchemas
-
-	s, err := r.Reflect(input,
-		openapi.WithOperationCtx(oc, false, in),
-		jsonschema.DefinitionsPrefix(definitionsPrefix),
-		jsonschema.CollectDefinitions(r.collectDefinition()),
-		jsonschema.PropertyNameMapping(propertyMapping),
-		jsonschema.PropertyNameTag(string(in), additionalTags...),
-		func(rc *jsonschema.ReflectContext) {
-			rc.UnnamedFieldWithTag = true
-		},
-		sanitizeDefName,
-		jsonschema.SkipEmbeddedMapsSlices,
-		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
+	s, err := internal.ReflectParametersIn(
+		r.JSONSchemaReflector(), oc, c, in, r.collectDefinition(), func(params jsonschema.InterceptPropParams) error {
 			if !params.Processed || len(params.Path) > 1 {
 				return nil
 			}
@@ -393,7 +377,7 @@ func (r *Reflector) parseParametersIn(
 			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) { //nolint:nestif
 				propertySchema, err := r.Reflect(property,
 					openapi.WithOperationCtx(oc, false, in),
-					jsonschema.DefinitionsPrefix(definitionsPrefix),
+					jsonschema.DefinitionsPrefix(componentsSchemas),
 					jsonschema.CollectDefinitions(r.collectDefinition()),
 					jsonschema.RootRef,
 					sanitizeDefName,
@@ -449,7 +433,7 @@ func (r *Reflector) parseParametersIn(
 			o.Parameters = append(o.Parameters, ParameterOrReference{Parameter: &p})
 
 			return nil
-		}),
+		}, additionalTags...,
 	)
 	if err != nil {
 		return err
@@ -488,22 +472,14 @@ func (r *Reflector) collectDefinition() func(name string, schema jsonschema.Sche
 }
 
 func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
-	output := cu.Structure
-	mapping := cu.FieldMapping(openapi.InHeader)
-
-	if output == nil {
+	if cu.Structure == nil {
 		return nil
 	}
 
 	res := make(map[string]HeaderOrReference)
 
-	schema, err := r.Reflect(output,
-		openapi.WithOperationCtx(oc, true, openapi.InHeader),
-		jsonschema.InlineRefs,
-		jsonschema.PropertyNameMapping(mapping),
-		jsonschema.PropertyNameTag(tagHeader),
-		sanitizeDefName,
-		jsonschema.InterceptProp(func(params jsonschema.InterceptPropParams) error {
+	schema, err := internal.ReflectResponseHeader(r.JSONSchemaReflector(), oc, cu,
+		func(params jsonschema.InterceptPropParams) error {
 			if !params.Processed || len(params.Path) > 1 { // only top-level fields (including embedded).
 				return nil
 			}
@@ -537,7 +513,7 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 			}
 
 			return nil
-		}),
+		},
 	)
 	if err != nil {
 		return err

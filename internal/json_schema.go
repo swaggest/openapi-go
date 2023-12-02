@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"reflect"
@@ -18,6 +19,9 @@ const (
 	tagJSON     = "json"
 	tagFormData = "formData"
 	tagForm     = "form"
+	tagHeader   = "header"
+
+	componentsSchemas = "#/components/schemas/"
 )
 
 var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
@@ -73,8 +77,19 @@ func ReflectRequestBody(
 		return nil, false, nil
 	}
 
+	// Checking for default options that allow tag-less JSON.
+	isProcessWithoutTags := false
+	_, err = r.Reflect("", func(rc *jsonschema.ReflectContext) {
+		isProcessWithoutTags = rc.ProcessWithoutTags
+	})
+
+	if err != nil {
+		return nil, false, fmt.Errorf("BUG: %w", err)
+	}
+
 	// JSON can be a map or array without field tags.
-	if !hasTaggedFields && len(mapping) == 0 && !refl.IsSliceOrMap(input) && refl.FindEmbeddedSliceOrMap(input) == nil {
+	if !hasTaggedFields && len(mapping) == 0 && !refl.IsSliceOrMap(input) &&
+		refl.FindEmbeddedSliceOrMap(input) == nil && !isProcessWithoutTags {
 		return nil, false, nil
 	}
 
@@ -191,4 +206,66 @@ func hasJSONBody(r *jsonschema.Reflector, output interface{}) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// ReflectResponseHeader reflects response headers from content unit.
+func ReflectResponseHeader(
+	r *jsonschema.Reflector,
+	oc openapi.OperationContext,
+	cu openapi.ContentUnit,
+	interceptProp jsonschema.InterceptPropFunc,
+) (jsonschema.Schema, error) {
+	output := cu.Structure
+	mapping := cu.FieldMapping(openapi.InHeader)
+
+	if output == nil {
+		return jsonschema.Schema{}, nil
+	}
+
+	return r.Reflect(output,
+		func(rc *jsonschema.ReflectContext) {
+			rc.ProcessWithoutTags = false
+		},
+		openapi.WithOperationCtx(oc, true, openapi.InHeader),
+		jsonschema.InlineRefs,
+		jsonschema.PropertyNameMapping(mapping),
+		jsonschema.PropertyNameTag(tagHeader),
+		sanitizeDefName,
+		jsonschema.InterceptProp(interceptProp),
+	)
+}
+
+// ReflectParametersIn reflects JSON schema of request parameters.
+func ReflectParametersIn(
+	r *jsonschema.Reflector,
+	oc openapi.OperationContext,
+	c openapi.ContentUnit,
+	in openapi.In,
+	collectDefinitions func(name string, schema jsonschema.Schema),
+	interceptProp jsonschema.InterceptPropFunc,
+	additionalTags ...string,
+) (jsonschema.Schema, error) {
+	input := c.Structure
+	propertyMapping := c.FieldMapping(in)
+
+	if refl.IsSliceOrMap(input) {
+		return jsonschema.Schema{}, nil
+	}
+
+	return r.Reflect(input,
+		func(rc *jsonschema.ReflectContext) {
+			rc.ProcessWithoutTags = false
+		},
+		openapi.WithOperationCtx(oc, false, in),
+		jsonschema.DefinitionsPrefix(componentsSchemas),
+		jsonschema.CollectDefinitions(collectDefinitions),
+		jsonschema.PropertyNameMapping(propertyMapping),
+		jsonschema.PropertyNameTag(string(in), additionalTags...),
+		func(rc *jsonschema.ReflectContext) {
+			rc.UnnamedFieldWithTag = true
+		},
+		sanitizeDefName,
+		jsonschema.SkipEmbeddedMapsSlices,
+		jsonschema.InterceptProp(interceptProp),
+	)
 }
