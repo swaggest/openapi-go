@@ -34,6 +34,7 @@ func sanitizeDefName(rc *jsonschema.ReflectContext) {
 
 // ReflectRequestBody reflects JSON schema of request body.
 func ReflectRequestBody(
+	is31 bool, // True if OpenAPI 3.1
 	r *jsonschema.Reflector,
 	cu openapi.ContentUnit,
 	httpMethod string,
@@ -121,21 +122,43 @@ func ReflectRequestBody(
 		jsonschema.PropertyNameMapping(mapping),
 		jsonschema.PropertyNameTag(tag, additionalTags...),
 		sanitizeDefName,
+		jsonschema.InterceptNullability(func(params jsonschema.InterceptNullabilityParams) {
+			if params.NullAdded {
+				vv := reflect.Zero(params.Schema.ReflectType).Interface()
+
+				foundFiles := false
+				if _, ok := vv.([]multipart.File); ok {
+					foundFiles = true
+				}
+
+				if _, ok := vv.([]*multipart.FileHeader); ok {
+					foundFiles = true
+				}
+
+				if foundFiles {
+					params.Schema.RemoveType(jsonschema.Null)
+				}
+			}
+		}),
 		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
 			vv := params.Value.Interface()
 
-			found := false
+			foundFile := false
 			if _, ok := vv.(*multipart.File); ok {
-				found = true
+				foundFile = true
 			}
 
 			if _, ok := vv.(*multipart.FileHeader); ok {
-				found = true
+				foundFile = true
 			}
 
-			if found {
+			if foundFile {
 				params.Schema.AddType(jsonschema.String)
+				params.Schema.RemoveType(jsonschema.Null)
 				params.Schema.WithFormat("binary")
+				if is31 {
+					params.Schema.WithExtraPropertiesItem("contentMediaType", "application/octet-stream")
+				}
 
 				hasFileUpload = true
 

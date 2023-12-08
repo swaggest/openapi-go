@@ -1,0 +1,26 @@
+{
+ "openapi":"3.1.0","info":{"title":"","version":""},
+ "paths":{
+  "/upload":{
+   "post":{
+    "requestBody":{"content":{"multipart/form-data":{"schema":{"$ref":"#/components/schemas/FormDataOpenapi31TestReq"}}}},
+    "responses":{"204":{"description":"No Content"}}
+   }
+  }
+ },
+ "components":{
+  "schemas":{
+   "FormDataOpenapi31TestReq":{
+    "properties":{
+     "upload1":{"$ref":"#/components/schemas/MultipartFile"},
+     "upload2":{"$ref":"#/components/schemas/MultipartFileHeader"},
+     "uploads3":{"items":{"$ref":"#/components/schemas/MultipartFile"},"type":"array"},
+     "uploads4":{"items":{"$ref":"#/components/schemas/MultipartFileHeader"},"type":"array"}
+    },
+    "type":"object"
+   },
+   "MultipartFile":{"contentMediaType":"application/octet-stream","format":"binary","type":"string"},
+   "MultipartFileHeader":{"contentMediaType":"application/octet-stream","format":"binary","type":"string"}
+  }
+ }
+}

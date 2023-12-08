@@ -155,7 +155,7 @@ func TestReflector_AddOperation_uploadInterface(t *testing.T) {
 			"properties":{"upload1":{"$ref":"#/components/schemas/MultipartFile"}},
 			"type":"object"
 		  },
-		  "MultipartFile":{"format":"binary","type":["null","string"]}
+		  "MultipartFile":{"format":"binary","type":"string","contentMediaType": "application/octet-stream"}
 		}
 	  }
 	}`, reflector.Spec)
@@ -477,7 +477,7 @@ func TestReflector_AddOperation_setup_request(t *testing.T) {
 		  }
 		}
 	  },
-	  "components":{"schemas":{"MultipartFile":{"format":"binary","type":["null","string"]}}}
+	  "components":{"schemas":{"MultipartFile":{"format":"binary","type":"string", "contentMediaType": "application/octet-stream"}}}
 	}`, s)
 }
 

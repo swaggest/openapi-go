@@ -99,8 +99,8 @@
     },
     "type":"object"
    },
-   "MultipartFile":{"format":"binary","type":["null","string"]},
-   "MultipartFileHeader":{"format":"binary","type":["null","string"]},
+   "MultipartFile":{"contentMediaType":"application/octet-stream","format":"binary","type":"string"},
+   "MultipartFileHeader":{"contentMediaType":"application/octet-stream","format":"binary","type":"string"},
    "Openapi31TestReq":{"properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}},"type":"object"},
    "Openapi31TestResp":{
     "description":"This is a sample response.",
