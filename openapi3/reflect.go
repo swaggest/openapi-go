@@ -321,6 +321,7 @@ func (r *Reflector) parseRequestBody(
 	additionalTags ...string,
 ) error {
 	schema, hasFileUpload, err := internal.ReflectRequestBody(
+		false,
 		r.JSONSchemaReflector(),
 		cu,
 		httpMethod,

@@ -7,8 +7,8 @@
   "type":"object",
   "components":{
     "schemas":{
-      "MultipartFile":{"type":["null","string"],"format":"binary"},
-      "MultipartFileHeader":{"type":["null","string"],"format":"binary"}
+      "MultipartFile":{"type":"string","format":"binary","contentMediaType": "application/octet-stream"},
+      "MultipartFileHeader":{"type":"string","format":"binary","contentMediaType": "application/octet-stream"}
     }
   }
 }

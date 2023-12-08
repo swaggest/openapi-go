@@ -99,8 +99,8 @@
      "upload2":{"$ref":"#/components/schemas/MultipartFileHeader"}
     }
    },
-   "MultipartFile":{"type":"string","format":"binary","nullable":true},
-   "MultipartFileHeader":{"type":"string","format":"binary","nullable":true},
+   "MultipartFile":{"type":"string","format":"binary"},
+   "MultipartFileHeader":{"type":"string","format":"binary"},
    "Openapi3TestReq":{"type":"object","properties":{"in_body1":{"type":"integer"},"in_body2":{"type":"string"}}},
    "Openapi3TestResp":{
     "title":"Sample Response","type":"object",
