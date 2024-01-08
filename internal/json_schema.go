@@ -124,6 +124,10 @@ func ReflectRequestBody(
 		sanitizeDefName,
 		jsonschema.InterceptNullability(func(params jsonschema.InterceptNullabilityParams) {
 			if params.NullAdded {
+				if params.Schema.ReflectType == nil {
+					return
+				}
+
 				vv := reflect.Zero(params.Schema.ReflectType).Interface()
 
 				foundFiles := false
