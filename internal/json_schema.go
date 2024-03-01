@@ -27,7 +27,7 @@ const (
 var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
 
 func sanitizeDefName(rc *jsonschema.ReflectContext) {
-	jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
+	jsonschema.InterceptDefName(func(_ reflect.Type, defaultDefName string) string {
 		return defNameSanitizer.ReplaceAllString(defaultDefName, "")
 	})(rc)
 }
@@ -80,10 +80,10 @@ func ReflectRequestBody(
 
 	// Checking for default options that allow tag-less JSON.
 	isProcessWithoutTags := false
+
 	_, err = r.Reflect("", func(rc *jsonschema.ReflectContext) {
 		isProcessWithoutTags = rc.ProcessWithoutTags
 	})
-
 	if err != nil {
 		return nil, false, fmt.Errorf("BUG: %w", err)
 	}
@@ -160,6 +160,7 @@ func ReflectRequestBody(
 				params.Schema.AddType(jsonschema.String)
 				params.Schema.RemoveType(jsonschema.Null)
 				params.Schema.WithFormat("binary")
+
 				if is31 {
 					params.Schema.WithExtraPropertiesItem("contentMediaType", "application/octet-stream")
 				}

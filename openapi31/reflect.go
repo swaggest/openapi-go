@@ -394,6 +394,7 @@ func (r *Reflector) parseParametersIn(
 
 			swg2CollectionFormat := ""
 			refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
+
 			switch swg2CollectionFormat {
 			case "csv":
 				p.WithStyle(ParameterStyleForm).WithExplode(false)
@@ -451,6 +452,7 @@ func (r *Reflector) parseParametersIn(
 			}
 
 			alreadyExists := false
+
 			for _, ep := range o.Parameters {
 				if ep.Parameter != nil && ep.Parameter.In == p.In && ep.Parameter.Name == p.Name {
 					alreadyExists = true
@@ -484,7 +486,7 @@ func (r *Reflector) parseParametersIn(
 var defNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9.\-_]+`)
 
 func sanitizeDefName(rc *jsonschema.ReflectContext) {
-	jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
+	jsonschema.InterceptDefName(func(_ reflect.Type, defaultDefName string) string {
 		return defNameSanitizer.ReplaceAllString(defaultDefName, "")
 	})(rc)
 }

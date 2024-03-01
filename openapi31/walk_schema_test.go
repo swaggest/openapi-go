@@ -59,7 +59,7 @@ func TestReflector_WalkRequestJSONSchemas(t *testing.T) {
 
 			return nil
 		},
-		func(oc openapi.OperationContext) {
+		func(_ openapi.OperationContext) {
 			doneCalled++
 		},
 	))
@@ -149,7 +149,7 @@ func TestReflector_WalkRequestJSONSchemas_jsonBody(t *testing.T) {
 
 			return nil
 		},
-		func(oc openapi.OperationContext) {
+		func(_ openapi.OperationContext) {
 			doneCalled++
 		},
 	))
@@ -231,7 +231,7 @@ func TestReflector_WalkResponseJSONSchemas(t *testing.T) {
 
 			return nil
 		},
-		func(oc openapi.OperationContext) {
+		func(_ openapi.OperationContext) {
 			doneCalled++
 		},
 	))
