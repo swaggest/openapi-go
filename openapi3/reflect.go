@@ -128,20 +128,52 @@ func (o operationContext) SetTags(tags ...string) {
 	o.op.WithTags(tags...)
 }
 
+func (o operationContext) Tags() []string {
+	return o.op.Tags
+}
+
 func (o operationContext) SetIsDeprecated(isDeprecated bool) {
 	o.op.WithDeprecated(isDeprecated)
+}
+
+func (o operationContext) IsDeprecated() bool {
+	return o.op.Deprecated != nil && *o.op.Deprecated
 }
 
 func (o operationContext) SetSummary(summary string) {
 	o.op.WithSummary(summary)
 }
 
+func (o operationContext) Summary() string {
+	if o.op.Summary == nil {
+		return ""
+	}
+
+	return *o.op.Summary
+}
+
 func (o operationContext) SetDescription(description string) {
 	o.op.WithDescription(description)
 }
 
+func (o operationContext) Description() string {
+	if o.op.Description == nil {
+		return ""
+	}
+
+	return *o.op.Description
+}
+
 func (o operationContext) SetID(operationID string) {
 	o.op.WithID(operationID)
+}
+
+func (o operationContext) ID() string {
+	if o.op.ID == nil {
+		return ""
+	}
+
+	return *o.op.ID
 }
 
 func (o operationContext) UnknownParamsAreForbidden(in openapi.In) bool {

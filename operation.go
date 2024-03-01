@@ -81,6 +81,7 @@ func (c ContentUnit) FieldMapping(in In) map[string]string {
 // OperationContext defines operation and processing state.
 type OperationContext interface {
 	OperationInfo
+	OperationInfoReader
 	OperationState
 
 	Method() string
@@ -104,6 +105,15 @@ type OperationInfo interface {
 	SetID(operationID string)
 
 	AddSecurity(securityName string, scopes ...string)
+}
+
+// OperationInfoReader exposes current state of operation context.
+type OperationInfoReader interface {
+	Tags() []string
+	IsDeprecated() bool
+	Summary() string
+	Description() string
+	ID() string
 }
 
 // OperationState extends OperationContext with processing state information.
