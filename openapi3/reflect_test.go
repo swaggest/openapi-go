@@ -731,7 +731,7 @@ func TestReflector_AddOperation_OperationCtx(t *testing.T) {
 		func(rc *jsonschema.ReflectContext) {
 			currentRC = rc
 		},
-		jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
+		jsonschema.InterceptSchema(func(_ jsonschema.InterceptSchemaParams) (stop bool, err error) {
 			if occ, ok := openapi.OperationCtx(currentRC); ok {
 				if occ.IsProcessingResponse() {
 					visited["resp:"+string(occ.ProcessingIn())] = true
