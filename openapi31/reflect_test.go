@@ -574,6 +574,7 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 		One   filter         `query:"one"`
 		Two   filter         `query:"two"`
 		Three map[string]int `query:"three"`
+		Four  map[string]int `query:"four" collectionFormat:"json"`
 	}
 
 	r := openapi31.Reflector{}
@@ -609,6 +610,17 @@ func TestReflector_AddOperation_request_jsonQuery(t *testing.T) {
 				  "type":["object","null"]
 				},
 				"style":"deepObject","explode":true
+			  },
+			  {
+				"name":"four","in":"query",
+				"content":{
+				  "application/json":{
+					"schema":{
+					  "additionalProperties":{"type":"integer"},
+					  "type":["null","object"]
+					}
+				  }
+				}
 			  }
 			],
 			"responses":{"204":{"description":"No Content"}}
