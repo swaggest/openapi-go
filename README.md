@@ -27,7 +27,8 @@ For automated HTTP REST service framework built with this library please check [
         * `csv` comma-separated values,
         * `ssv` space-separated values,
         * `pipes` pipe-separated values (`|`),
-        * `multi` ampersand-separated values (`&`), 
+        * `multi` ampersand-separated values (`&`),
+        * `json` additionally to slices unpacks maps and structs,
 * Flexible schema control with [`jsonschema-go`](https://github.com/swaggest/jsonschema-go#implementing-interfaces-on-a-type)
 
 ## Example

@@ -392,10 +392,10 @@ func (r *Reflector) parseParametersIn(
 				Content:     nil,
 			}
 
-			swg2CollectionFormat := ""
-			refl.ReadStringTag(field.Tag, "collectionFormat", &swg2CollectionFormat)
+			collectionFormat := ""
+			refl.ReadStringTag(field.Tag, "collectionFormat", &collectionFormat)
 
-			switch swg2CollectionFormat {
+			switch collectionFormat {
 			case "csv":
 				p.WithStyle(ParameterStyleForm).WithExplode(false)
 			case "ssv":
@@ -408,7 +408,8 @@ func (r *Reflector) parseParametersIn(
 
 			// Check if parameter is an JSON encoded object.
 			property := reflect.New(field.Type).Interface()
-			if refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in)) { //nolint:nestif
+			if collectionFormat == "json" || //nolint:nestif
+				(refl.HasTaggedFields(property, tagJSON) && !refl.HasTaggedFields(property, string(in))) {
 				propertySchema, err := r.Reflect(property,
 					openapi.WithOperationCtx(oc, false, in),
 					jsonschema.DefinitionsPrefix(componentsSchemas),
