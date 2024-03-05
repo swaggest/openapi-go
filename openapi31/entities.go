@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // Spec structure is generated from "#".
@@ -4271,6 +4272,10 @@ func (s *SecuritySchemeHTTP) UnmarshalJSON(data []byte) error {
 	}
 
 	delete(rawMap, "type")
+
+	if strings.ToLower(ms.Scheme) == "bearer" {
+		return errors.New("use SecuritySchemeHTTPBearer for bearer scheme")
+	}
 
 	*s = SecuritySchemeHTTP(ms)
 

@@ -1,16 +1,16 @@
-package openapi3_test
+package openapi31_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/openapi-go/openapi31"
 )
 
 func TestSpec_MarshalYAML(t *testing.T) {
-	var s openapi3.Spec
+	var s openapi31.Spec
 
-	spec := `openapi: 3.0.3
+	spec := `openapi: 3.1.0
 info:
   description: description
   license:
@@ -50,9 +50,9 @@ components:
 }
 
 func TestSpec_MarshalYAML_2(t *testing.T) {
-	var s openapi3.Spec
+	var s openapi31.Spec
 
-	spec := `openapi: 3.0.0
+	spec := `openapi: 3.1.0
 info:
   title: MyProject
   description: "My Project Description"
