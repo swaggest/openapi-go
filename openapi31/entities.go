@@ -4345,6 +4345,10 @@ func (s *SecuritySchemeHTTPBearer) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf(`bad const value for "type" ("http" expected, %s received)`, v)
 	}
 
+	if strings.ToLower(ms.Scheme) != "bearer" {
+		return errors.New("bearer scheme required")
+	}
+
 	delete(rawMap, "type")
 
 	*s = SecuritySchemeHTTPBearer(ms)

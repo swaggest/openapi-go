@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/openapi-go/openapi3"
+	"github.com/swaggest/openapi-go/openapi31"
 )
 
 func TestSpec_MarshalYAML(t *testing.T) {
@@ -67,6 +68,27 @@ components:
 # 2) Apply the security globally to all operations
 security:
   - bearerAuth: [] # use the same name as above
+paths:
+`
+
+	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
+}
+
+func TestSpec_MarshalYAML_3(t *testing.T) {
+	var s openapi31.Spec
+
+	spec := `openapi: 3.0.3
+info:
+  title: MyProject
+  description: "My Project Description"
+  version: v1.0.0
+components:
+  securitySchemes:
+    basicAuth: # <-- arbitrary name for the security scheme
+      type: http
+      scheme: basic
+security:
+  - basicAuth: [] # <-- use the same name here  
 paths:
 `
 

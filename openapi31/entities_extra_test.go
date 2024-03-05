@@ -72,3 +72,24 @@ paths:
 
 	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
 }
+
+func TestSpec_MarshalYAML_3(t *testing.T) {
+	var s openapi31.Spec
+
+	spec := `openapi: 3.1.0
+info:
+  title: MyProject
+  description: "My Project Description"
+  version: v1.0.0
+components:
+  securitySchemes:
+    basicAuth: # <-- arbitrary name for the security scheme
+      type: http
+      scheme: basic
+security:
+  - basicAuth: [] # <-- use the same name here  
+paths:
+`
+
+	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
+}
