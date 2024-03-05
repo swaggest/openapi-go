@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/openapi-go/openapi3"
-	"github.com/swaggest/openapi-go/openapi31"
 )
 
 func TestSpec_MarshalYAML(t *testing.T) {
@@ -75,7 +74,7 @@ paths:
 }
 
 func TestSpec_MarshalYAML_3(t *testing.T) {
-	var s openapi31.Spec
+	var s openapi3.Spec
 
 	spec := `openapi: 3.0.3
 info:
