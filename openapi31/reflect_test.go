@@ -1201,3 +1201,53 @@ func Test_Repro2(t *testing.T) {
 	  }
 	}`, oarefl.SpecSchema())
 }
+
+type rawExposer func() ([]byte, error)
+
+func (r rawExposer) JSONSchemaBytes() ([]byte, error) {
+	return r()
+}
+
+func TestReflector_AddOperation_rawSchema(t *testing.T) {
+	r := openapi31.NewReflector()
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo")
+	require.NoError(t, err)
+
+	oc.AddRespStructure(rawExposer(func() ([]byte, error) {
+		return []byte(`{"type":"object","properties":{"foo":{"type":"integer"}}}`), nil
+	}), openapi.WithHTTPStatus(http.StatusAccepted))
+
+	oc.AddRespStructure(rawExposer(func() ([]byte, error) {
+		return []byte(`{"type":"object","properties":{"bar":{"type":"integer"}}}`), nil
+	}), openapi.WithHTTPStatus(http.StatusConflict))
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.1.0","info":{"title":"","version":""},
+	  "paths":{
+		"/foo":{
+		  "post":{
+			"responses":{
+			  "202":{
+				"description":"Accepted",
+				"content":{
+				  "application/json":{
+					"schema":{"properties":{"foo":{"type":"integer"}},"type":"object"}
+				  }
+				}
+			  },
+			  "409":{
+				"description":"Conflict",
+				"content":{
+				  "application/json":{
+					"schema":{"properties":{"bar":{"type":"integer"}},"type":"object"}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
+}
