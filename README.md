@@ -64,18 +64,22 @@ type resp struct {
     UpdatedAt time.Time `json:"updated_at"`
 }
 
-putOp := openapi3.Operation{}
+putOp, err := reflector.NewOperationContext(http.MethodPut, "/things/{id}")
+handleError(err)
 
-handleError(reflector.SetRequest(&putOp, new(req), http.MethodPut))
-handleError(reflector.SetJSONResponse(&putOp, new(resp), http.StatusOK))
-handleError(reflector.SetJSONResponse(&putOp, new([]resp), http.StatusConflict))
-handleError(reflector.Spec.AddOperation(http.MethodPut, "/things/{id}", putOp))
+putOp.AddReqStructure(new(req))
+putOp.AddRespStructure(new(resp), func(cu *openapi.ContentUnit) { cu.HTTPStatus = http.StatusOK })
+putOp.AddRespStructure(new([]resp), func(cu *openapi.ContentUnit) { cu.HTTPStatus = http.StatusConflict })
 
-getOp := openapi3.Operation{}
+reflector.AddOperation(putOp)
 
-handleError(reflector.SetRequest(&getOp, new(req), http.MethodGet))
-handleError(reflector.SetJSONResponse(&getOp, new(resp), http.StatusOK))
-handleError(reflector.Spec.AddOperation(http.MethodGet, "/things/{id}", getOp))
+getOp, err := reflector.NewOperationContext(http.MethodGet, "/things/{id}")
+handleError(err)
+
+getOp.AddReqStructure(new(req))
+getOp.AddRespStructure(new(resp), func(cu *openapi.ContentUnit) { cu.HTTPStatus = http.StatusOK })
+
+reflector.AddOperation(getOp)
 
 schema, err := reflector.Spec.MarshalYAML()
 if err != nil {
@@ -113,7 +117,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Openapi3TestResp'
+                $ref: '#/components/schemas/Resp'
           description: OK
     put:
       parameters:
@@ -132,25 +136,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Openapi3TestReq'
+              $ref: '#/components/schemas/Req'
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Openapi3TestResp'
+                $ref: '#/components/schemas/Resp'
           description: OK
         "409":
           content:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/Openapi3TestResp'
+                  $ref: '#/components/schemas/Resp'
                 type: array
           description: Conflict
 components:
   schemas:
-    Openapi3TestReq:
+    Req:
       properties:
         amount:
           minimum: 0
@@ -164,11 +168,12 @@ components:
               name:
                 type: string
             type: object
+          nullable: true
           type: array
         string:
           type: string
       type: object
-    Openapi3TestResp:
+    Resp:
       properties:
         amount:
           minimum: 0
@@ -185,6 +190,7 @@ components:
               name:
                 type: string
             type: object
+          nullable: true
           type: array
         updated_at:
           format: date-time
