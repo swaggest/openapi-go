@@ -66,6 +66,13 @@ func ReflectRequestBody(
 		hasTaggedFields = refl.HasTaggedFields(input, t)
 	}
 
+	hasJSONSchemaStruct := false
+	refl.WalkFieldsRecursively(reflect.ValueOf(input), func(v reflect.Value, sf reflect.StructField, path []reflect.StructField) {
+		if v.Type() == reflect.TypeOf(jsonschema.Struct{}) {
+			hasJSONSchemaStruct = true
+		}
+	})
+
 	// Form data can not have map or array as body.
 	if !hasTaggedFields && len(mapping) == 0 && tag != tagJSON {
 		return nil, false, nil
@@ -74,7 +81,7 @@ func ReflectRequestBody(
 	// If `formData` is defined on a request body `json` is ignored.
 	if tag == tagJSON &&
 		(refl.HasTaggedFields(input, tagFormData) || refl.HasTaggedFields(input, tagForm)) &&
-		!forceJSONRequestBody {
+		!forceJSONRequestBody && !hasJSONSchemaStruct {
 		return nil, false, nil
 	}
 
@@ -89,7 +96,7 @@ func ReflectRequestBody(
 	}
 
 	// JSON can be a map or array without field tags.
-	if !hasTaggedFields && len(mapping) == 0 && !refl.IsSliceOrMap(input) &&
+	if !hasTaggedFields && !hasJSONSchemaStruct && len(mapping) == 0 && !refl.IsSliceOrMap(input) &&
 		refl.FindEmbeddedSliceOrMap(input) == nil && !isProcessWithoutTags {
 		return nil, false, nil
 	}

@@ -1123,3 +1123,88 @@ func TestReflector_AddOperation_defName(t *testing.T) {
 	  }
 	}`, r.Spec)
 }
+
+func TestReflector_AddOperation_jsonschemaStruct(t *testing.T) {
+	r := openapi3.NewReflector()
+
+	oc, err := r.NewOperationContext(http.MethodPost, "/foo/{id}")
+	require.NoError(t, err)
+
+	type Req struct {
+		ID int `path:"id"`
+		jsonschema.Struct
+	}
+
+	req := Req{}
+	req.DefName = "FooStruct"
+	req.Fields = append(req.Fields, jsonschema.Field{
+		Name:  "Foo",
+		Value: "abc",
+		Tag:   `json:"foo" minLength:"3"`,
+	})
+
+	type Resp struct {
+		ID int `json:"id"`
+		jsonschema.Struct
+		Nested jsonschema.Struct `json:"nested"`
+	}
+	resp := Resp{}
+	resp.DefName = "BarStruct"
+	resp.Fields = append(resp.Fields, jsonschema.Field{
+		Name:  "Bar",
+		Value: "cba",
+		Tag:   `json:"bar" maxLength:"3"`,
+	})
+	resp.Nested.DefName = "BazStruct"
+	resp.Nested.Fields = append(resp.Nested.Fields, jsonschema.Field{
+		Name:  "Baz",
+		Value: "def",
+		Tag:   `json:"baz" maxLength:"5"`,
+	})
+
+	oc.AddReqStructure(req)
+	oc.AddRespStructure(resp)
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/foo/{id}":{
+		  "post":{
+			"parameters":[
+			  {
+				"name":"id","in":"path","required":true,"schema":{"type":"integer"}
+			  }
+			],
+			"requestBody":{
+			  "content":{
+				"application/json":{"schema":{"$ref":"#/components/schemas/FooStruct"}}
+			  }
+			},
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/BarStruct"}}
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "BarStruct":{
+			"properties":{
+			  "bar":{"maxLength":3,"type":"string"},"id":{"type":"integer"},
+			  "nested":{"$ref":"#/components/schemas/BazStruct"}
+			},
+			"type":"object"
+		  },
+		  "BazStruct":{"properties":{"baz":{"maxLength":5,"type":"string"}},"type":"object"},
+		  "FooStruct":{"properties":{"foo":{"minLength":3,"type":"string"}},"type":"object"}
+		}
+	  }
+	}`, r.SpecSchema())
+}
