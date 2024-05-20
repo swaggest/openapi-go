@@ -1148,6 +1148,7 @@ func TestReflector_AddOperation_jsonschemaStruct(t *testing.T) {
 		jsonschema.Struct
 		Nested jsonschema.Struct `json:"nested"`
 	}
+
 	resp := Resp{}
 	resp.DefName = "BarStruct"
 	resp.Fields = append(resp.Fields, jsonschema.Field{

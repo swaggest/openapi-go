@@ -67,7 +67,8 @@ func ReflectRequestBody(
 	}
 
 	hasJSONSchemaStruct := false
-	refl.WalkFieldsRecursively(reflect.ValueOf(input), func(v reflect.Value, sf reflect.StructField, path []reflect.StructField) {
+
+	refl.WalkFieldsRecursively(reflect.ValueOf(input), func(v reflect.Value, _ reflect.StructField, _ []reflect.StructField) {
 		if v.Type() == reflect.TypeOf(jsonschema.Struct{}) {
 			hasJSONSchemaStruct = true
 		}
