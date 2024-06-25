@@ -15,3 +15,44 @@ func TestSpec_UnmarshalYAML(t *testing.T) {
 	refl := openapi31.NewReflector()
 	require.NoError(t, refl.Spec.UnmarshalYAML(bytes))
 }
+
+func TestSpec_UnmarshalYAML_refsInResponseHeaders(t *testing.T) {
+	var s openapi31.Spec
+
+	spec := `openapi: 3.1.0f
+info:
+  description: description
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: title
+  version: 2.0.0
+servers:
+  - url: /v2
+paths:
+  /user:
+    put:
+      summary: updates the user by id
+      operationId: UpdateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: Updated user object
+        required: true
+      responses:
+        "404":
+          description: User not found
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+components:
+  headers:
+    CacheControl:
+      schema:
+        type: string
+`
+
+	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
+}
