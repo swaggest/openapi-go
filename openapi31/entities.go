@@ -1187,13 +1187,6 @@ func (r *Reference) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// IsZero tells if the object has no value set.
-func (h *Reference) IsZero() bool {
-	return h.Ref == "" &&
-		(h.Summary == nil || *h.Summary == "") &&
-		(h.Description == nil || *h.Description == "")
-}
-
 // Parameter structure is generated from "#/$defs/parameter".
 type Parameter struct {
 	Name          string                        `json:"name"` // Required.
@@ -1734,19 +1727,6 @@ func (h *Header) WithMapOfAnythingItem(key string, val interface{}) *Header {
 	return h
 }
 
-// IsZero tells if the object has no value set.
-func (h *Header) IsZero() bool {
-	return (h.Description == nil || *h.Description == "") &&
-		h.Required == nil &&
-		h.Deprecated == nil &&
-		(h.Schema == nil || len(h.Schema) == 0) &&
-		(h.Content == nil || len(h.Content) == 0) &&
-		(h.Example == nil) &&
-		(h.Examples == nil || len(h.Examples) == 0) &&
-		h.Explode == nil &&
-		(h.MapOfAnything == nil || len(h.MapOfAnything) == 0)
-}
-
 type marshalHeader Header
 
 var knownKeysHeader = []string{
@@ -1777,6 +1757,14 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	err = json.Unmarshal(data, &rawMap)
 	if err != nil {
 		rawMap = nil
+	}
+
+	_, schemaExists := rawMap["schema"]
+	_, contentExists := rawMap["content"]
+	if schemaExists && contentExists {
+		return fmt.Errorf("both schema and content are set, only one of them is allowed")
+	} else if !schemaExists && !contentExists {
+		return fmt.Errorf("schema or content are expected")
 	}
 
 	if v, exists := rawMap["style"]; exists && string(v) != `"simple"` {
@@ -2081,7 +2069,7 @@ func (h *HeaderOrReference) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		oneOfErrors["Reference"] = err
 		h.Reference = nil
-	} else if !h.Reference.IsZero() {
+	} else {
 		oneOfValid++
 	}
 
@@ -2089,7 +2077,7 @@ func (h *HeaderOrReference) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		oneOfErrors["Header"] = err
 		h.Header = nil
-	} else if !h.Header.IsZero() {
+	} else {
 		oneOfValid++
 	}
 

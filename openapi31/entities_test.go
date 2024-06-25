@@ -19,7 +19,7 @@ func TestSpec_UnmarshalYAML(t *testing.T) {
 func TestSpec_UnmarshalYAML_refsInResponseHeaders(t *testing.T) {
 	var s openapi31.Spec
 
-	spec := `openapi: 3.1.0f
+	spec := `openapi: 3.1.0
 info:
   description: description
   license:
@@ -47,6 +47,15 @@ paths:
           headers:
             Cache-Control:
               $ref: '#/components/headers/CacheControl'
+            Authorisation:
+              schema:
+                type: string
+            Custom:
+              content:
+                "text/plain":
+                  schema:
+                  type: string
+
 components:
   headers:
     CacheControl:
