@@ -717,13 +717,10 @@ func (r *Reflector) parseJSONResponse(resp *Response, oc openapi.OperationContex
 		contentType = mimeJSON
 	}
 
-	resp.Content[contentType] = MediaType{
-		Schema:        &oaiSchema,
-		Example:       nil,
-		Examples:      nil,
-		Encoding:      nil,
-		MapOfAnything: nil,
-	}
+	mt := resp.Content[contentType]
+	mt.Schema = &oaiSchema
+
+	resp.Content[contentType] = mt
 
 	if sch.Description != nil && resp.Description == "" {
 		resp.Description = *sch.Description
