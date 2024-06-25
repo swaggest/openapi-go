@@ -1209,3 +1209,92 @@ func TestReflector_AddOperation_jsonschemaStruct(t *testing.T) {
 	  }
 	}`, r.SpecSchema())
 }
+
+func TestNewReflector_examples(t *testing.T) {
+	r := openapi3.NewReflector()
+
+	op, err := r.NewOperationContext(http.MethodGet, "/")
+	require.NoError(t, err)
+
+	type O1 struct {
+		F1   int    `json:"f1,omitempty"`
+		Code string `json:"code"`
+	}
+
+	type O2 struct {
+		F2   int    `json:"f2,omitempty"`
+		Code string `json:"code"`
+	}
+
+	st := http.StatusCreated
+
+	op.AddRespStructure(jsonschema.OneOf(O1{}, O2{}), func(cu *openapi.ContentUnit) {
+		cu.HTTPStatus = st
+	})
+
+	if o3, ok := op.(openapi3.OperationExposer); ok {
+		c := openapi3.MediaType{}
+		c.Examples = map[string]openapi3.ExampleOrRef{
+			"responseOne": {
+				Example: (&openapi3.Example{}).WithSummary("First possible answer").WithValue(O1{Code: "1234567890123456789012"}),
+			},
+			"responseTwo": {
+				Example: (&openapi3.Example{}).WithSummary("Other possible answer").WithValue(O2{Code: "0000000000000000000000"}),
+			},
+		}
+		resp := openapi3.Response{}
+		resp.WithContentItem("application/json", c)
+
+		o3.Operation().Responses.WithMapOfResponseOrRefValuesItem(strconv.Itoa(st), openapi3.ResponseOrRef{
+			Response: &resp,
+		})
+	}
+
+	require.NoError(t, r.AddOperation(op))
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/":{
+		  "get":{
+			"responses":{
+			  "201":{
+				"description":"Created",
+				"content":{
+				  "application/json":{
+					"schema":{
+					  "oneOf":[
+						{"$ref":"#/components/schemas/Openapi3TestO1"},
+						{"$ref":"#/components/schemas/Openapi3TestO2"}
+					  ]
+					},
+					"examples":{
+					  "responseOne":{
+						"summary":"First possible answer",
+						"value":{"code":"1234567890123456789012"}
+					  },
+					  "responseTwo":{
+						"summary":"Other possible answer",
+						"value":{"code":"0000000000000000000000"}
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi3TestO1":{
+			"type":"object",
+			"properties":{"code":{"type":"string"},"f1":{"type":"integer"}}
+		  },
+		  "Openapi3TestO2":{
+			"type":"object",
+			"properties":{"code":{"type":"string"},"f2":{"type":"integer"}}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
+}
