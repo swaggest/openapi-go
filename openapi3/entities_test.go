@@ -4,6 +4,7 @@ package openapi3
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -1058,4 +1059,23 @@ func TestComponentsCallbacks_MarshalJSON_roundtrip(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(marshaled, &v))
 	assertjson.Equal(t, jsonValue, marshaled)
+}
+
+func TestSpec_UnmarshalJSON_openai(t *testing.T) {
+	var s Spec
+
+	j, err := os.ReadFile("testdata/openai-openapi.json")
+	require.NoError(t, err)
+
+	// "oneOf constraint failed for SchemaOrRef with 0 valid results:
+	//   map[Schema:oneOf constraint failed for SchemaOrRef with 0 valid results:
+	//    map[Schema:additional properties not allowed in Schema:
+	//     [$ref] SchemaReference:additional properties not allowed in SchemaReference:
+	//      [description]] SchemaReference:required key missing: $ref]"
+	require.Error(t, s.UnmarshalJSON(j))
+
+	j, err = os.ReadFile("testdata/openai-openapi-fixed.json")
+	require.NoError(t, err)
+
+	require.NoError(t, s.UnmarshalJSON(j))
 }
