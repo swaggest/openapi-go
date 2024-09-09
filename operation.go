@@ -37,8 +37,38 @@ type ContentUnit struct {
 	// IsDefault indicates default response.
 	IsDefault bool
 
-	Description  string
+	Description string
+
+	// Customize allows fine control over prepared content entities.
+	// The cor value can be asserted to one of these types:
+	// *openapi3.RequestBodyOrRef
+	// *openapi3.ResponseOrRef
+	// *openapi31.RequestBodyOrReference
+	// *openapi31.ResponseOrReference
+	Customize func(cor ContentOrReference)
+
 	fieldMapping map[In]map[string]string
+}
+
+// ContentOrReference defines content entity that can be a reference.
+type ContentOrReference interface {
+	SetReference(ref string)
+}
+
+// WithCustomize is a ContentUnit option.
+func WithCustomize(customize func(cor ContentOrReference)) ContentOption {
+	return func(cu *ContentUnit) {
+		cu.Customize = customize
+	}
+}
+
+// WithReference is a ContentUnit option.
+func WithReference(ref string) ContentOption {
+	return func(cu *ContentUnit) {
+		cu.Customize = func(cor ContentOrReference) {
+			cor.SetReference(ref)
+		}
+	}
 }
 
 // ContentUnitPreparer defines self-contained ContentUnit.

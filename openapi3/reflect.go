@@ -300,6 +300,10 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 		if cu.Description != "" && o.RequestBody != nil && o.RequestBody.RequestBody != nil {
 			o.RequestBody.RequestBody.WithDescription(cu.Description)
 		}
+
+		if cu.Customize != nil && o.RequestBody != nil {
+			cu.Customize(o.RequestBody)
+		}
 	}
 
 	return nil
@@ -668,10 +672,16 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			resp.Description = http.StatusText(cu.HTTPStatus)
 		}
 
+		ror := ResponseOrRef{Response: resp}
+
+		if cu.Customize != nil {
+			cu.Customize(&ror)
+		}
+
 		if cu.IsDefault {
-			o.Responses.Default = &ResponseOrRef{Response: resp}
+			o.Responses.Default = &ror
 		} else {
-			o.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ResponseOrRef{Response: resp})
+			o.Responses.WithMapOfResponseOrRefValuesItem(httpStatus, ror)
 		}
 	}
 
