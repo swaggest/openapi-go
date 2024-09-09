@@ -50,6 +50,7 @@ type ContentUnit struct {
 	fieldMapping map[In]map[string]string
 }
 
+// ContentOrReference defines content entity that can be a reference.
 type ContentOrReference interface {
 	SetReference(ref string)
 }

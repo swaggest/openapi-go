@@ -270,11 +270,13 @@ func (s *Spec) SetHTTPBearerTokenSecurity(securityName string, format string, de
 	)
 }
 
+// SetReference sets a reference and discards existing content.
 func (r *ResponseOrReference) SetReference(ref string) {
 	r.ReferenceEns().Ref = ref
 	r.Response = nil
 }
 
+// SetReference sets a reference and discards existing content.
 func (r *RequestBodyOrReference) SetReference(ref string) {
 	r.ReferenceEns().Ref = ref
 	r.RequestBody = nil
