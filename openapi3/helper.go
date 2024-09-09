@@ -210,3 +210,13 @@ func (s *Spec) SetHTTPBearerTokenSecurity(securityName string, format string, de
 		},
 	)
 }
+
+func (r *ResponseOrRef) SetReference(ref string) {
+	r.ResponseReferenceEns().Ref = ref
+	r.Response = nil
+}
+
+func (r *RequestBodyOrRef) SetReference(ref string) {
+	r.RequestBodyReferenceEns().Ref = ref
+	r.RequestBody = nil
+}

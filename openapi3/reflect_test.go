@@ -1298,3 +1298,60 @@ func TestNewReflector_examples(t *testing.T) {
 	  }
 	}`, r.SpecSchema())
 }
+
+func TestWithCustomize(t *testing.T) {
+	r := openapi3.NewReflector()
+
+	op, err := r.NewOperationContext(http.MethodPost, "/{document_id}/{client}")
+	require.NoError(t, err)
+
+	op.AddReqStructure(new(struct {
+		DocumentID string `path:"document_id"`
+		Client     string `path:"client"`
+		Foo        int    `json:"foo"`
+	}), openapi.WithCustomize(func(cor openapi.ContentOrReference) {
+		_, ok := cor.(*openapi3.RequestBodyOrRef)
+		assert.True(t, ok)
+
+		cor.SetReference("../somewhere/components/requests/foo.yaml")
+	}))
+
+	op.AddRespStructure(
+		nil, openapi.WithReference("../somewhere/components/responses/204.yaml"), openapi.WithHTTPStatus(204),
+	)
+	op.AddRespStructure(
+		nil, openapi.WithCustomize(func(cor openapi.ContentOrReference) {
+			_, ok := cor.(*openapi3.ResponseOrRef)
+			assert.True(t, ok)
+
+			cor.SetReference("../somewhere/components/responses/200.yaml")
+		}), openapi.WithHTTPStatus(200),
+	)
+
+	require.NoError(t, r.AddOperation(op))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/{document_id}/{client}":{
+		  "post":{
+			"parameters":[
+			  {
+				"name":"document_id","in":"path","required":true,
+				"schema":{"type":"string"}
+			  },
+			  {
+				"name":"client","in":"path","required":true,
+				"schema":{"type":"string"}
+			  }
+			],
+			"requestBody":{"$ref":"../somewhere/components/requests/foo.yaml"},
+			"responses":{
+			  "200":{"$ref":"../somewhere/components/responses/200.yaml"},
+			  "204":{"$ref":"../somewhere/components/responses/204.yaml"}
+			}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
+}
