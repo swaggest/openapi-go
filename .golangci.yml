@@ -47,10 +47,15 @@ linters:
     - execinquery
     - mnd
     - testifylint
+    - recvcheck
 
 issues:
   exclude-use-default: false
   exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019: strings.Title .+ deprecated"
+
     - linters:
         - gomnd
         - mnd
@@ -59,6 +64,7 @@ issues:
         - noctx
         - funlen
         - dupl
+        - structcheck
         - unused
         - unparam
         - nosnakecase
@@ -68,6 +74,6 @@ issues:
         - gosec
       path: "example_"
     - linters:
-        - staticcheck
-      text: "SA1019: strings.Title .+ deprecated"
+        - revive
+      text: "unused-parameter: parameter"
 

@@ -94,7 +94,9 @@ func objectKeys(b []byte) ([]string, error) {
 			return keys, nil
 		}
 
-		keys = append(keys, t.(string))
+		if s, ok := t.(string); ok {
+			keys = append(keys, s)
+		}
 
 		if err := skipValue(d); err != nil {
 			return nil, err
