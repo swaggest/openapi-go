@@ -22,6 +22,7 @@ For automated HTTP REST service framework built with this library please check [
     * `query`, `path` for parameters in URL
     * `header`, `cookie`, `formData`, `file` for other parameters
     * `form` acts as `query` and `formData`
+    * `contentType` indicates body content type
     * [field tags](https://github.com/swaggest/jsonschema-go#field-tags) named after JSON Schema/OpenAPI 3 Schema constraints
     * `collectionFormat` to unpack slices from string
         * `csv` comma-separated values,

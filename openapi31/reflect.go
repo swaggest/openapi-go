@@ -223,6 +223,7 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 				r.parseRequestBody(o, oc, cu, mimeFormUrlencoded, oc.Method(), cu.FieldMapping(openapi.InFormData), tagFormData, tagForm),
 				r.parseParameters(o, oc, cu),
 				r.parseRequestBody(o, oc, cu, mimeJSON, oc.Method(), nil, tagJSON),
+				r.parseRawRequestBody(o, cu),
 			); err != nil {
 				return err
 			}
@@ -260,6 +261,7 @@ const (
 	tagJSON            = "json"
 	tagFormData        = "formData"
 	tagForm            = "form"
+	tagContentType     = "contentType"
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
@@ -291,6 +293,18 @@ func (r *Reflector) stringRequestBody(
 	format string,
 ) {
 	o.RequestBodyEns().RequestBodyEns().WithContentItem(mime, mediaType(format))
+}
+
+func (r *Reflector) parseRawRequestBody(o *Operation, cu openapi.ContentUnit) error {
+	if cu.Structure == nil {
+		return nil
+	}
+
+	refl.WalkTaggedFields(reflect.ValueOf(cu.Structure), func(v reflect.Value, sf reflect.StructField, tag string) {
+		r.stringRequestBody(o, tag, "")
+	}, tagContentType)
+
+	return nil
 }
 
 func (r *Reflector) parseRequestBody(
@@ -568,6 +582,18 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 	return nil
 }
 
+func (r *Reflector) parseRawResponseBody(resp *Response, cu openapi.ContentUnit) error {
+	if cu.Structure == nil {
+		return nil
+	}
+
+	refl.WalkTaggedFields(reflect.ValueOf(cu.Structure), func(v reflect.Value, sf reflect.StructField, tag string) {
+		resp.WithContentItem(tag, mediaType(""))
+	}, tagContentType)
+
+	return nil
+}
+
 func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) error {
 	for _, cu := range oc.Response() {
 		if cu.HTTPStatus == 0 && !cu.IsDefault {
@@ -601,6 +627,7 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			if err := joinErrors(
 				r.parseJSONResponse(resp, oc, cu),
 				r.parseResponseHeader(resp, oc, cu),
+				r.parseRawResponseBody(resp, cu),
 			); err != nil {
 				return err
 			}

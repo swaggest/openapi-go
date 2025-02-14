@@ -1355,3 +1355,50 @@ func TestWithCustomize(t *testing.T) {
 	  }
 	}`, r.SpecSchema())
 }
+
+func TestRawBody(t *testing.T) {
+	r := openapi3.NewReflector()
+
+	oc, err := r.NewOperationContext(http.MethodPost, "/")
+	require.NoError(t, err)
+
+	type req struct {
+		TextBody string `contentType:"text/plain"`
+		CSVBody  string `contentType:"text/csv"`
+	}
+
+	type resp struct {
+		TextBody string `contentType:"text/plain"`
+		CSVBody  string `contentType:"text/csv"`
+	}
+
+	oc.AddReqStructure(req{})
+	oc.AddRespStructure(resp{})
+
+	require.NoError(t, r.AddOperation(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/":{
+		  "post":{
+			"requestBody":{
+			  "content":{
+				"text/csv":{"schema":{"type":"string"}},
+				"text/plain":{"schema":{"type":"string"}}
+			  }
+			},
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "text/csv":{"schema":{"type":"string"}},
+				  "text/plain":{"schema":{"type":"string"}}
+				}
+			  }
+			}
+		  }
+		}
+	  }
+	}`, r.SpecSchema())
+}
