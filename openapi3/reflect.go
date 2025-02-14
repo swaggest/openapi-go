@@ -279,6 +279,8 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 			); err != nil {
 				return err
 			}
+
+			r.parseRawRequestBody(o, cu)
 		case mimeJSON:
 			if err := joinErrors(
 				r.parseParameters(o, oc, cu),
@@ -314,6 +316,7 @@ const (
 	tagFormData        = "formData"
 	tagForm            = "form"
 	tagHeader          = "header"
+	tagContentType     = "contentType"
 	mimeJSON           = "application/json"
 	mimeFormUrlencoded = "application/x-www-form-urlencoded"
 	mimeMultipart      = "multipart/form-data"
@@ -344,6 +347,16 @@ func (r *Reflector) stringRequestBody(
 	format string,
 ) {
 	o.RequestBodyEns().RequestBodyEns().WithContentItem(mime, mediaType(format))
+}
+
+func (r *Reflector) parseRawRequestBody(o *Operation, cu openapi.ContentUnit) {
+	if cu.Structure == nil {
+		return
+	}
+
+	refl.WalkTaggedFields(reflect.ValueOf(cu.Structure), func(_ reflect.Value, _ reflect.StructField, tag string) {
+		r.stringRequestBody(o, tag, "")
+	}, tagContentType)
 }
 
 func (r *Reflector) parseRequestBody(
@@ -617,6 +630,16 @@ func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationCont
 	return nil
 }
 
+func (r *Reflector) parseRawResponseBody(resp *Response, cu openapi.ContentUnit) {
+	if cu.Structure == nil {
+		return
+	}
+
+	refl.WalkTaggedFields(reflect.ValueOf(cu.Structure), func(_ reflect.Value, _ reflect.StructField, tag string) {
+		r.ensureResponseContentType(resp, tag, "")
+	}, tagContentType)
+}
+
 func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) error {
 	for _, cu := range oc.Response() {
 		if cu.HTTPStatus == 0 && !cu.IsDefault {
@@ -653,6 +676,8 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			); err != nil {
 				return err
 			}
+
+			r.parseRawResponseBody(resp, cu)
 
 			if cu.ContentType != "" {
 				r.ensureResponseContentType(resp, cu.ContentType, cu.Format)
