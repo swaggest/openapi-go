@@ -279,6 +279,7 @@ func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) erro
 			); err != nil {
 				return err
 			}
+
 			r.parseRawRequestBody(o, cu)
 		case mimeJSON:
 			if err := joinErrors(
