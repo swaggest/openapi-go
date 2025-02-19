@@ -12,8 +12,6 @@ linters-settings:
     threshold: 100
   misspell:
     locale: US
-  unused:
-    check-exported: false
   unparam:
     check-exported: true
 
@@ -27,9 +25,10 @@ linters:
     - cyclop
     - gocognit
     - musttag
+    - intrange
+    - copyloopvar
     - lll
     - gochecknoglobals
-    - gomnd
     - wrapcheck
     - paralleltest
     - forbidigo
@@ -44,7 +43,6 @@ linters:
     - dupword
     - depguard
     - tagalign
-    - execinquery
     - mnd
     - testifylint
     - recvcheck
@@ -57,17 +55,13 @@ issues:
       text: "SA1019: strings.Title .+ deprecated"
 
     - linters:
-        - gomnd
         - mnd
         - goconst
-        - err113
         - noctx
         - funlen
         - dupl
-        - structcheck
         - unused
         - unparam
-        - nosnakecase
       path: "_test.go"
     - linters:
         - errcheck # Error checking omitted for brevity.

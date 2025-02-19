@@ -163,7 +163,7 @@ func WithOperationCtx(oc OperationContext, isProcessingResponse bool, in In) fun
 		oc.SetIsProcessingResponse(isProcessingResponse)
 		oc.SetProcessingIn(in)
 
-		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc) //nolint:fatcontext
+		rc.Context = context.WithValue(rc.Context, ocCtxKey{}, oc)
 	}
 }
 
