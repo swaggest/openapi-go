@@ -1402,3 +1402,62 @@ func TestRawBody(t *testing.T) {
 	  }
 	}`, r.SpecSchema())
 }
+
+func TestSelfReference(t *testing.T) {
+	reflector := openapi3.NewReflector()
+
+	type SubEntity struct {
+		Self *SubEntity `json:"self"`
+	}
+
+	type My struct {
+		Foo       string     `json:"foo"`
+		SubEntity *SubEntity `json:"subentity"`
+	}
+
+	putOp, err := reflector.NewOperationContext(http.MethodPut, "/things/")
+	require.NoError(t, err)
+
+	putOp.AddReqStructure(My{})
+	putOp.AddRespStructure(My{})
+
+	require.NoError(t, reflector.AddOperation(putOp))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/things/":{
+		  "put":{
+			"requestBody":{
+			  "content":{
+				"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestMy"}}
+			  }
+			},
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestMy"}}
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi3TestMy":{
+			"type":"object",
+			"properties":{
+			  "foo":{"type":"string"},
+			  "subentity":{"$ref":"#/components/schemas/Openapi3TestSubEntity"}
+			}
+		  },
+		  "Openapi3TestSubEntity":{
+			"type":"object",
+			"properties":{"self":{"$ref":"#/components/schemas/Openapi3TestSubEntity"}}
+		  }
+		}
+	  }
+	}`, reflector.SpecSchema())
+}
