@@ -266,6 +266,7 @@ func ExampleReflector_AddOperation_queryObject() {
 	//               type: string
 	//           type: object
 	//         quux:
+	//           format: double
 	//           type: number
 	//       type: object
 	//     Openapi31TestJsonFilter:
