@@ -1601,7 +1601,8 @@ func TestEnumsPlacement(t *testing.T) {
 	}
 
 	type Response struct {
-		Enum *[]string `json:"enum" enum:"response-enum"`
+		Nullable    []string `json:"nullable" enum:"response-enum-nullable"`
+		NonNullable []string `json:"non_nullable,omitempty" enum:"response-enum-non-nullable"`
 	}
 
 	reflector := openapi31.NewReflector()
@@ -1636,9 +1637,13 @@ func TestEnumsPlacement(t *testing.T) {
 		"schemas":{
 		  "Openapi31TestResponse":{
 			"properties":{
-			  "enum":{
-				"items":{"enum":["response-enum"],"type":"string"},
-				"type":["null","array"]
+			  "nullable":{
+				"items":{"enum":["response-enum-nullable"],"type":"string"},
+				"type":["array", "null"]
+			  },
+			  "non_nullable":{
+				"items":{"enum":["response-enum-non-nullable"],"type":"string"},
+				"type":"array"
 			  }
 			},
 			"type":"object"
