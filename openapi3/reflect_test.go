@@ -1461,3 +1461,56 @@ func TestSelfReference(t *testing.T) {
 	  }
 	}`, reflector.SpecSchema())
 }
+
+func TestEnumsPlacement(t *testing.T) {
+	type Request struct {
+		Enum int `json:"enum" query:"enum" enum:"request-enum"`
+	}
+
+	type Response struct {
+		Enum *[]string `json:"enum" enum:"response-enum"`
+	}
+
+	reflector := openapi3.NewReflector()
+	operation, _ := reflector.NewOperationContext(http.MethodGet, "/entity/")
+	operation.AddReqStructure(Request{})
+	operation.AddRespStructure(Response{})
+	require.NoError(t, reflector.AddOperation(operation))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+		"/entity/":{
+		  "get":{
+			"parameters":[
+			  {
+				"name":"enum","in":"query",
+				"schema":{"enum":["request-enum"],"type":"integer"}
+			  }
+			],
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestResponse"}}
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi3TestResponse":{
+			"type":"object",
+			"properties":{
+			  "enum":{
+				"type":"array","items":{"enum":["response-enum"],"type":"string"},
+				"nullable":true
+			  }
+			}
+		  }
+		}
+	  }
+	}`, reflector.SpecSchema())
+}

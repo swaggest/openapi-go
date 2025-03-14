@@ -1,7 +1,6 @@
 package openapi3
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/swaggest/jsonschema-go"
@@ -225,6 +224,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	os.Description = js.Description
 	os.Required = js.Required
 	os.Default = js.Default
+	os.Enum = js.Enum
 
 	if len(js.Examples) > 0 {
 		os.Example = &js.Examples[0]
@@ -256,18 +256,8 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	}
 
 	if js.Items != nil && js.Items.SchemaOrBool != nil {
-		nested := *js.Items.SchemaOrBool
-		if js.Enum != nil &&
-			js.ReflectType.Kind() == reflect.Slice &&
-			js.ReflectType.Elem().Kind() == nested.TypeObject.ReflectType.Kind() {
-			nested.TypeObject.Enum = js.Enum
-		}
 		os.Items = &SchemaOrRef{}
-		os.Items.FromJSONSchema(nested)
-	}
-
-	if js.Items == nil && js.Enum != nil {
-		os.Enum = js.Enum
+		os.Items.FromJSONSchema(*js.Items.SchemaOrBool)
 	}
 
 	if js.ExclusiveMaximum != nil {
