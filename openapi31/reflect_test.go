@@ -1594,3 +1594,61 @@ func TestSelfReference(t *testing.T) {
 	  }
 	}`, reflector.SpecSchema())
 }
+
+func TestEnumsPlacement(t *testing.T) {
+	type Request struct {
+		Enum int `json:"enum" query:"enum" enum:"request-enum"`
+	}
+
+	type Response struct {
+		Nullable    []string `json:"nullable" enum:"response-enum-nullable"`
+		NonNullable []string `json:"non_nullable,omitempty" enum:"response-enum-non-nullable"`
+	}
+
+	reflector := openapi31.NewReflector()
+	operation, _ := reflector.NewOperationContext(http.MethodGet, "/entity/")
+	operation.AddReqStructure(Request{})
+	operation.AddRespStructure(Response{})
+	require.NoError(t, reflector.AddOperation(operation))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.1.0","info":{"title":"","version":""},
+	  "paths":{
+		"/entity/":{
+		  "get":{
+			"parameters":[
+			  {
+				"name":"enum","in":"query",
+				"schema":{"enum":["request-enum"],"type":"integer"}
+			  }
+			],
+			"responses":{
+			  "200":{
+				"description":"OK",
+				"content":{
+				  "application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestResponse"}}
+				}
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi31TestResponse":{
+			"properties":{
+			  "nullable":{
+				"items":{"enum":["response-enum-nullable"],"type":"string"},
+				"type":["array", "null"]
+			  },
+			  "non_nullable":{
+				"items":{"enum":["response-enum-non-nullable"],"type":"string"},
+				"type":"array"
+			  }
+			},
+			"type":"object"
+		  }
+		}
+	  }
+	}`, reflector.SpecSchema())
+}
