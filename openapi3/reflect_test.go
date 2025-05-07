@@ -1461,3 +1461,59 @@ func TestSelfReference(t *testing.T) {
 	  }
 	}`, reflector.SpecSchema())
 }
+
+func TestReadOnlyWriteOnlyDeprecated(t *testing.T) {
+	type ExampleObject struct {
+		Foo string `json:"foo" readOnly:"true"`
+		Bar string `json:"bar" writeOnly:"true"`
+		Baz string `json:"baz" deprecated:"true"`
+	}
+
+	type ExampleResponse struct {
+		ExampleObject `json:"example"`
+	}
+
+	type ExampleRequest struct {
+		ExampleObject `json:"example"`
+	}
+
+	reflector := openapi3.NewReflector()
+	op, err := reflector.NewOperationContext("GET", "/some/path")
+	require.NoError(t, err)
+
+	op.AddReqStructure(ExampleRequest{})
+	op.AddRespStructure(ExampleResponse{})
+	require.NoError(t, reflector.AddOperation(op))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.0.3","info":{"title":"","version":""},
+	  "paths":{
+	    "/some/path":{
+	      "get":{
+		"responses":{
+		  "200":{
+		    "description":"OK",
+		    "content":{
+		      "application/json":{
+			"schema":{"$ref":"#/components/schemas/Openapi3TestExampleResponse"}
+		      }
+		    }
+		  }
+		}
+	      }
+	    }
+	  },
+	  "components":{
+	    "schemas":{
+	      "Openapi3TestExampleObject":{
+		"type":"object",
+		"properties":{"bar":{"type":"string", "writeOnly": true},"baz":{"type":"string", "deprecated": true},"foo":{"type":"string","readOnly":true}}
+	      },
+	      "Openapi3TestExampleResponse":{
+		"type":"object",
+		"properties":{"example":{"$ref":"#/components/schemas/Openapi3TestExampleObject"}}
+	      }
+	    }
+	  }
+	}`, reflector.SpecSchema())
+}

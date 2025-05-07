@@ -11,11 +11,7 @@ func isDeprecated(schema jsonschema.SchemaOrBool) *bool {
 		return nil
 	}
 
-	if d, ok := schema.TypeObject.ExtraProperties["deprecated"].(bool); ok {
-		return &d
-	}
-
-	return nil
+	return schema.TypeObject.Deprecated
 }
 
 type toJSONSchemaContext struct {

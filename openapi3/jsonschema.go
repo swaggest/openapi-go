@@ -164,6 +164,8 @@ func (s *SchemaOrRef) toJSONSchema(ctx toJSONSchemaContext) jsonschema.SchemaOrB
 	jso.Format = ss.Format
 	jso.Default = ss.Default
 	jso.ReadOnly = ss.ReadOnly
+	jso.WriteOnly = ss.WriteOnly
+	jso.Deprecated = ss.Deprecated
 
 	if ss.Example != nil {
 		jso.WithExamples(*ss.Example)
@@ -186,7 +188,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 
 	js := schema.TypeObject
 	if js.Ref != nil {
-		if deprecated, ok := js.ExtraProperties["deprecated"].(bool); ok && deprecated {
+		if js.Deprecated != nil && *js.Deprecated {
 			s.Schema = (&Schema{}).WithAllOf(
 				SchemaOrRef{
 					Schema: (&Schema{}).WithDeprecated(true),
@@ -230,9 +232,7 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 		os.Example = &js.Examples[0]
 	}
 
-	if deprecated, ok := js.ExtraProperties["deprecated"].(bool); ok {
-		os.Deprecated = &deprecated
-	}
+	os.Deprecated = js.Deprecated
 
 	if js.Type != nil {
 		if js.Type.SimpleTypes != nil {
@@ -309,11 +309,8 @@ func (s *SchemaOrRef) FromJSONSchema(schema jsonschema.SchemaOrBool) {
 	}
 
 	os.ReadOnly = js.ReadOnly
+	os.WriteOnly = js.WriteOnly
 	os.UniqueItems = js.UniqueItems
-
-	if writeOnly, ok := js.ExtraProperties["writeOnly"].(bool); ok {
-		os.WriteOnly = &writeOnly
-	}
 
 	for name, val := range js.ExtraProperties {
 		if strings.HasPrefix(name, "x-") {
