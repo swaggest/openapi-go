@@ -4,3 +4,5 @@
 /.vscode
 /bench-*.txt
 /vendor
+go.work
+go.work.sum
