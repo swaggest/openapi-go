@@ -1594,3 +1594,55 @@ func TestSelfReference(t *testing.T) {
 	  }
 	}`, reflector.SpecSchema())
 }
+
+func TestReflector_AddWebhook(t *testing.T) {
+	r := openapi31.NewReflector()
+
+	oc, err := r.NewOperationContext(http.MethodPost, "newPet")
+	require.NoError(t, err)
+
+	type Pet struct {
+		Name  string `json:"name"`
+		Breed string `json:"breed"`
+	}
+
+	oc.AddReqStructure(Pet{}, func(cu *openapi.ContentUnit) {
+		cu.Description = "Information about a new pet in the system"
+	})
+
+	oc.AddRespStructure(nil, func(cu *openapi.ContentUnit) {
+		cu.Description = "Return a 200 status to indicate that the data was received successfully"
+		cu.HTTPStatus = http.StatusOK
+	})
+
+	require.NoError(t, r.AddWebhook(oc))
+
+	assertjson.EqMarshal(t, `{
+	  "openapi":"3.1.0","info":{"title":"","version":""},"paths":{},
+	  "webhooks":{
+		"newPet":{
+		  "post":{
+			"requestBody":{
+			  "description":"Information about a new pet in the system",
+			  "content":{
+				"application/json":{"schema":{"$ref":"#/components/schemas/Openapi31TestPet"}}
+			  }
+			},
+			"responses":{
+			  "200":{
+				"description":"Return a 200 status to indicate that the data was received successfully"
+			  }
+			}
+		  }
+		}
+	  },
+	  "components":{
+		"schemas":{
+		  "Openapi31TestPet":{
+			"properties":{"breed":{"type":"string"},"name":{"type":"string"}},
+			"type":"object"
+		  }
+		}
+	  }
+	}`, r.SpecEns())
+}

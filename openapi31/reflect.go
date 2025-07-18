@@ -28,7 +28,7 @@ func NewReflector() *Reflector {
 
 	r.DefaultOptions = append(r.DefaultOptions, jsonschema.InterceptSchema(func(params jsonschema.InterceptSchemaParams) (stop bool, err error) {
 		// See https://spec.openapis.org/oas/v3.1.0.html#data-types.
-		switch params.Value.Kind() { //nolint:exhaustive // Not all kinds have formats defined.
+		switch params.Value.Kind() { //nolint // Not all kinds have formats defined.
 		case reflect.Int64:
 			params.Schema.WithFormat("int64")
 		case reflect.Int32:
@@ -46,9 +46,9 @@ func NewReflector() *Reflector {
 }
 
 // NewOperationContext initializes openapi.OperationContext to be prepared
-// and added later with Reflector.AddOperation.
-func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.OperationContext, error) {
-	method, pathPattern, pathParams, err := openapi.SanitizeMethodPath(method, pathPattern)
+// and added later with Reflector.AddOperation or Reflector.AddWebhook.
+func (r *Reflector) NewOperationContext(method, pathPatternOrWebhookName string) (openapi.OperationContext, error) {
+	method, pathPattern, pathParams, err := openapi.SanitizeMethodPath(method, pathPatternOrWebhookName)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (r *Reflector) NewOperationContext(method, pathPattern string) (openapi.Ope
 	}
 
 	if operation != nil {
-		return nil, fmt.Errorf("operation already exists: %s %s", method, pathPattern)
+		return nil, fmt.Errorf("operation already exists: %s %s", method, pathPatternOrWebhookName)
 	}
 
 	operation = &Operation{}
@@ -211,24 +211,43 @@ func (o operationContext) Operation() *Operation {
 
 // AddOperation configures operation request and response schema.
 func (r *Reflector) AddOperation(oc openapi.OperationContext) error {
-	c, ok := oc.(operationContext)
-	if !ok {
-		return fmt.Errorf("wrong operation context %T received, %T expected", oc, operationContext{})
-	}
-
-	if err := r.setupRequest(c.op, oc); err != nil {
-		return fmt.Errorf("setup request %s %s: %w", oc.Method(), oc.PathPattern(), err)
-	}
-
-	if err := c.op.validatePathParams(c.pathParams); err != nil {
-		return fmt.Errorf("validate path params %s %s: %w", oc.Method(), oc.PathPattern(), err)
-	}
-
-	if err := r.setupResponse(c.op, oc); err != nil {
-		return fmt.Errorf("setup response %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	c, err := r.setupOC(oc)
+	if err != nil {
+		return err
 	}
 
 	return r.SpecEns().AddOperation(oc.Method(), oc.PathPattern(), *c.op)
+}
+
+// AddWebhook configures webhook request and response schema.
+func (r *Reflector) AddWebhook(oc openapi.OperationContext) error {
+	c, err := r.setupOC(oc)
+	if err != nil {
+		return err
+	}
+
+	return r.SpecEns().AddWebhook(oc.Method(), c.PathPattern(), *c.op)
+}
+
+func (r *Reflector) setupOC(oc openapi.OperationContext) (operationContext, error) {
+	c, ok := oc.(operationContext)
+	if !ok {
+		return c, fmt.Errorf("wrong operation context %T received, %T expected", oc, operationContext{})
+	}
+
+	if err := r.setupRequest(c.op, oc); err != nil {
+		return c, fmt.Errorf("setup request %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	}
+
+	if err := c.op.validatePathParams(c.pathParams); err != nil {
+		return c, fmt.Errorf("validate path params %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	}
+
+	if err := r.setupResponse(c.op, oc); err != nil {
+		return c, fmt.Errorf("setup response %s %s: %w", oc.Method(), oc.PathPattern(), err)
+	}
+
+	return c, nil
 }
 
 func (r *Reflector) setupRequest(o *Operation, oc openapi.OperationContext) error {
