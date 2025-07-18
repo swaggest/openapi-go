@@ -182,6 +182,41 @@ func (s *Spec) AddOperation(method, path string, operation Operation) error {
 	})
 }
 
+// AddWebhook validates and sets webhook by name and method.
+//
+// It will fail if webhook with same name already exists.
+func (s *Spec) AddWebhook(method, name string, operation Operation) error {
+	if _, found := s.Webhooks[name]; found {
+		return fmt.Errorf("duplicate webhook name: %s", name)
+	}
+
+	method = strings.ToLower(method)
+
+	// Add "No Content" response if there are no responses configured.
+	if len(operation.ResponsesEns().MapOfResponseOrReferenceValues) == 0 && operation.Responses.Default == nil {
+		operation.Responses.WithMapOfResponseOrReferenceValuesItem(strconv.Itoa(http.StatusNoContent), ResponseOrReference{
+			Response: &Response{
+				Description: http.StatusText(http.StatusNoContent),
+			},
+		})
+	}
+
+	method, _, _, err := openapi.SanitizeMethodPath(method, "/")
+	if err != nil {
+		return err
+	}
+
+	pathItem := PathItem{}
+
+	if err := pathItem.SetOperation(method, &operation); err != nil {
+		return err
+	}
+
+	s.WithWebhooksItem(name, pathItem.PathItemOrReference())
+
+	return nil
+}
+
 // UnknownParamIsForbidden indicates forbidden unknown parameters.
 func (o Operation) UnknownParamIsForbidden(in ParameterIn) bool {
 	f, ok := o.MapOfAnything[xForbidUnknown+string(in)].(bool)
@@ -280,4 +315,11 @@ func (r *ResponseOrReference) SetReference(ref string) {
 func (r *RequestBodyOrReference) SetReference(ref string) {
 	r.ReferenceEns().Ref = ref
 	r.RequestBody = nil
+}
+
+// PathItemOrReference exposes PathItem as union type.
+func (p *PathItem) PathItemOrReference() PathItemOrReference {
+	return PathItemOrReference{
+		PathItem: p,
+	}
 }
