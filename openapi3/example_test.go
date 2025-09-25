@@ -244,7 +244,7 @@ paths:
               schema:
                 type: string
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/Pets"
         default:
@@ -585,6 +585,7 @@ func ExampleReflector_AddOperation_queryObject() {
 	//               type: string
 	//           type: object
 	//         quux:
+	//           format: double
 	//           type: number
 	//       type: object
 	//     Openapi3TestJsonFilter:
