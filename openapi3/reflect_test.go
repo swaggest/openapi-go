@@ -1086,7 +1086,7 @@ func TestReflector_AddOperation_defName(t *testing.T) {
 	  "paths":{
 		"/foo":{
 		  "post":{
-			"parameters":[{"name":"bar","in":"header","schema":{"type":"number"}}],
+			"parameters":[{"name":"bar","in":"header","schema":{"type":"number","format":"double"}}],
 			"requestBody":{
 			  "content":{
 				"application/json":{"schema":{"$ref":"#/components/schemas/Openapi3TestReqJSON"}},
