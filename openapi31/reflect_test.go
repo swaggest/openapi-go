@@ -27,6 +27,7 @@ type EmbeddedHeader struct {
 
 type Resp struct {
 	EmbeddedHeader
+
 	Field1 int    `json:"field1"`
 	Field2 string `json:"field2"`
 	Info   struct {

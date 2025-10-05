@@ -18,6 +18,7 @@ import (
 // Reflector builds OpenAPI Schema with reflected structures.
 type Reflector struct {
 	jsonschema.Reflector
+
 	Spec *Spec
 }
 
