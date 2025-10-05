@@ -10,15 +10,21 @@ import (
 )
 
 // WalkResponseJSONSchemas provides JSON schemas for response structure.
-func (r *Reflector) WalkResponseJSONSchemas(cu openapi.ContentUnit, cb openapi.JSONSchemaCallback, done func(oc openapi.OperationContext)) error {
+func (r *Reflector) WalkResponseJSONSchemas(
+	cu openapi.ContentUnit,
+	cb openapi.JSONSchemaCallback,
+	done func(oc openapi.OperationContext),
+) error {
 	oc := operationContext{
 		OperationContext: internal.NewOperationContext(http.MethodGet, "/"),
 		op:               &Operation{},
 	}
 
-	oc.AddRespStructure(nil, func(c *openapi.ContentUnit) {
-		*c = cu
-	})
+	oc.AddRespStructure(
+		nil, func(c *openapi.ContentUnit) {
+			*c = cu
+		},
+	)
 
 	defer func() {
 		if done != nil {
@@ -93,9 +99,11 @@ func (r *Reflector) WalkRequestJSONSchemas(
 		op:               &Operation{},
 	}
 
-	oc.AddReqStructure(nil, func(c *openapi.ContentUnit) {
-		*c = cu
-	})
+	oc.AddReqStructure(
+		nil, func(c *openapi.ContentUnit) {
+			*c = cu
+		},
+	)
 
 	defer func() {
 		if done != nil {
@@ -128,7 +136,7 @@ func (r *Reflector) WalkRequestJSONSchemas(
 			}
 		}
 
-		if ct == mimeFormUrlencoded {
+		if ct == mimeFormUrlencoded || ct == mimeMultipart {
 			if err = provideFormDataSchemas(schema, cb); err != nil {
 				return err
 			}
