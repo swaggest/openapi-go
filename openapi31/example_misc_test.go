@@ -14,7 +14,7 @@ func ExampleReflector_options() {
 	r := openapi31.Reflector{}
 
 	// Reflector embeds jsonschema.Reflector and it is possible to configure optional behavior.
-	r.Reflector.DefaultOptions = append(r.Reflector.DefaultOptions,
+	r.DefaultOptions = append(r.DefaultOptions,
 		jsonschema.InterceptNullability(func(params jsonschema.InterceptNullabilityParams) {
 			// Removing nullability from non-pointer slices (regardless of omitempty).
 			if params.Type.Kind() != reflect.Ptr && params.Schema.HasType(jsonschema.Null) && params.Schema.HasType(jsonschema.Array) {
