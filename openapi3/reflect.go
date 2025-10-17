@@ -131,6 +131,7 @@ type operationContext struct {
 // OperationExposer grants access to underlying *Operation.
 type OperationExposer interface {
 	Operation() *Operation
+	SetOperation(op *Operation)
 }
 
 func (o operationContext) AddSecurity(securityName string, scopes ...string) {
@@ -200,6 +201,11 @@ func (o operationContext) UnknownParamsAreForbidden(in openapi.In) bool {
 // Operation returns OpenAPI 3 operation for customization.
 func (o operationContext) Operation() *Operation {
 	return o.op
+}
+
+// SetOperation directly sets the underlying *Operation.
+func (o operationContext) SetOperation(op *Operation) {
+	*o.op = *op
 }
 
 func toOpCtx(c OperationContext) operationContext {
