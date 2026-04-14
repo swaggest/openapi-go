@@ -20,6 +20,10 @@ type Reflector struct {
 	jsonschema.Reflector
 
 	Spec *Spec
+
+	// ReuseResponses enables moving common response definitions to components/responses
+	// and using references instead of inline definitions.
+	ReuseResponses bool
 }
 
 // NewReflector creates an instance of OpenAPI 3.0 reflector.
@@ -592,6 +596,58 @@ func (r *Reflector) collectDefinition() func(name string, schema jsonschema.Sche
 	}
 }
 
+// generateResponseName creates a consistent name for a response based on its status and schema.
+func (r *Reflector) generateResponseName(httpStatus int, cu openapi.ContentUnit) string {
+	statusText := http.StatusText(httpStatus)
+	if statusText == "" {
+		statusText = strconv.Itoa(httpStatus)
+	}
+
+	// Clean up status text to create a valid name
+	name := strings.ReplaceAll(statusText, " ", "")
+
+	// If there's a structure type, try to use it
+	if cu.Structure != nil {
+		structType := reflect.TypeOf(cu.Structure)
+		if structType != nil {
+			// Handle pointer types
+			if structType.Kind() == reflect.Ptr {
+				structType = structType.Elem()
+			}
+			// If it has a name, use it
+			if structType.Name() != "" {
+				return structType.Name()
+			}
+		}
+	}
+
+	return "Response" + name
+}
+
+// collectResponse stores a response in components/responses if ReuseResponses is enabled.
+// Returns the reference name if stored, empty string otherwise.
+func (r *Reflector) collectResponse(httpStatus int, resp *Response, cu openapi.ContentUnit) string {
+	if !r.ReuseResponses {
+		return ""
+	}
+
+	name := r.generateResponseName(httpStatus, cu)
+
+	// Check if already exists
+	if r.Spec != nil && r.Spec.Components != nil && r.Spec.Components.Responses != nil {
+		if _, exists := r.Spec.Components.Responses.MapOfResponseOrRefValues[name]; exists {
+			return name
+		}
+	}
+
+	// Add to components
+	r.SpecEns().ComponentsEns().ResponsesEns().WithMapOfResponseOrRefValuesItem(name, ResponseOrRef{
+		Response: resp,
+	})
+
+	return name
+}
+
 func (r *Reflector) parseResponseHeader(resp *Response, oc openapi.OperationContext, cu openapi.ContentUnit) error {
 	if cu.Structure == nil {
 		return nil
@@ -714,7 +770,18 @@ func (r *Reflector) setupResponse(o *Operation, oc openapi.OperationContext) err
 			resp.Description = http.StatusText(cu.HTTPStatus)
 		}
 
-		ror := ResponseOrRef{Response: resp}
+		// Try to collect response to components if ReuseResponses is enabled
+		refName := r.collectResponse(cu.HTTPStatus, resp, cu)
+
+		var ror ResponseOrRef
+		if refName != "" {
+			// Use reference to component
+			ror = ResponseOrRef{}
+			ror.SetReference("#/components/responses/" + refName)
+		} else {
+			// Use inline response
+			ror = ResponseOrRef{Response: resp}
+		}
 
 		if cu.Customize != nil {
 			cu.Customize(&ror)
