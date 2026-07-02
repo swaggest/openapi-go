@@ -73,6 +73,37 @@ paths:
 	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
 }
 
+func TestSpec_UnmarshalYAML_OptionalSecurityAlternative(t *testing.T) {
+	var s openapi31.Spec
+
+	spec := `openapi: 3.1.0
+info:
+  title: Optional Security API
+  version: 1.0.0
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      name: x-api-key
+      in: header
+security:
+  - {}
+  - apiKeyAuth: []
+paths:
+  /public-or-authenticated:
+    get:
+      responses:
+        "200":
+          description: OK`
+
+	require.NoError(t, s.UnmarshalYAML([]byte(spec)))
+	require.Len(t, s.Security, 2)
+	require.Empty(t, s.Security[0])
+	scopes, ok := s.Security[1]["apiKeyAuth"]
+	require.True(t, ok)
+	require.Empty(t, scopes)
+}
+
 func TestSpec_MarshalYAML_3(t *testing.T) {
 	var s openapi31.Spec
 
